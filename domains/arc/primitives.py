@@ -1,0 +1,954 @@
+"""
+domains/arc/primitives.py
+=========================
+All grid transformation primitives for ARC-AGI tasks.
+
+Organisation
+------------
+Primitives are grouped into six categories.  All are *unary*:
+Grid -> Grid.  They are registered into the module-level
+``core.primitives.registry`` under domain="arc".
+
+Categories
+----------
+  GEOMETRIC   — rotate, reflect, transpose
+  COLOR       — swap, fill, invert, mod
+  GRAVITY     — cells fall toward an edge
+  SORT        — sort rows/cols
+  STRUCTURAL  — frame, mirror, hollow, diagonal, scale
+  PATTERN     — checkerboard, stripes, tile
+  COUNTING    — bar-chart encoding, row filter, majority
+
+Adding New Primitives
+---------------------
+Add a function below and register it at the bottom of the file:
+
+    def my_new_op(g: Grid) -> Grid:
+        \"\"\"Description of what it does.\"\"\"
+        ...
+
+    registry.register("my_new_op", my_new_op, domain="arc",
+                      description="Description of what it does.")
+
+The beam search will pick it up automatically the next time you call
+``registry.names(domain="arc")``.
+
+ARC color convention
+--------------------
+ARC uses integers 0–9.  0 is conventionally background.
+All primitives treat 0 as background unless stated otherwise.
+"""
+from __future__ import annotations
+
+import copy
+from typing import Callable
+
+from core.primitives import registry
+
+# Type alias for readability
+Grid = list[list[int]]
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _clone(g: Grid) -> Grid:
+    return copy.deepcopy(g)
+
+
+def _rows(g: Grid) -> int:
+    return len(g)
+
+
+def _cols(g: Grid) -> int:
+    return len(g[0]) if g else 0
+
+
+def _safe_grid_op(fn: Callable[[Grid], Grid]) -> Callable[[Grid], Grid]:
+    """
+    Wrap a grid op so it returns an unchanged clone on any error.
+    Prevents a single bad candidate from crashing the whole search run.
+    """
+    def _wrapped(g: Grid) -> Grid:
+        try:
+            return fn(g)
+        except Exception:
+            return _clone(g)
+    _wrapped.__name__ = fn.__name__
+    return _wrapped
+
+
+# ---------------------------------------------------------------------------
+# GEOMETRIC
+# ---------------------------------------------------------------------------
+
+def grot90(g: Grid) -> Grid:
+    """Rotate 90° clockwise."""
+    return [list(row) for row in zip(*g[::-1])]
+
+
+def grot180(g: Grid) -> Grid:
+    """Rotate 180°."""
+    return [row[::-1] for row in g[::-1]]
+
+
+def grot270(g: Grid) -> Grid:
+    """Rotate 270° clockwise (= 90° counter-clockwise)."""
+    return grot90(grot90(grot90(g)))
+
+
+def grefl_h(g: Grid) -> Grid:
+    """Reflect horizontally (flip left-right)."""
+    return [row[::-1] for row in g]
+
+
+def grefl_v(g: Grid) -> Grid:
+    """Reflect vertically (flip top-bottom)."""
+    return g[::-1]
+
+
+def gtrsp(g: Grid) -> Grid:
+    """Transpose (swap rows and columns)."""
+    if not g or not g[0]:
+        return _clone(g)
+    return [list(row) for row in zip(*g)]
+
+
+def ganti_trsp(g: Grid) -> Grid:
+    """Anti-transpose (reflect across the anti-diagonal)."""
+    return grefl_h(gtrsp(grefl_h(g)))
+
+
+# ---------------------------------------------------------------------------
+# COLOR
+# ---------------------------------------------------------------------------
+
+def ginv(g: Grid) -> Grid:
+    """Invert colors: c → max_color - c."""
+    flat = [c for row in g for c in row]
+    if not flat:
+        return _clone(g)
+    m = max(flat)
+    return [[m - c for c in row] for row in g]
+
+
+def gswap_01(g: Grid) -> Grid:
+    """Swap colors 0 and 1."""
+    def s(c): return 1 if c == 0 else (0 if c == 1 else c)
+    return [[s(c) for c in row] for row in g]
+
+
+def gswap_12(g: Grid) -> Grid:
+    """Swap colors 1 and 2."""
+    def s(c): return 2 if c == 1 else (1 if c == 2 else c)
+    return [[s(c) for c in row] for row in g]
+
+
+def gswap_23(g: Grid) -> Grid:
+    """Swap colors 2 and 3."""
+    def s(c): return 3 if c == 2 else (2 if c == 3 else c)
+    return [[s(c) for c in row] for row in g]
+
+
+def gswap_03(g: Grid) -> Grid:
+    """Swap colors 0 and 3."""
+    def s(c): return 3 if c == 0 else (0 if c == 3 else c)
+    return [[s(c) for c in row] for row in g]
+
+
+def gswap_13(g: Grid) -> Grid:
+    """Swap colors 1 and 3."""
+    def s(c): return 3 if c == 1 else (1 if c == 3 else c)
+    return [[s(c) for c in row] for row in g]
+
+
+def gswap_02(g: Grid) -> Grid:
+    """Swap colors 0 and 2."""
+    def s(c): return 2 if c == 0 else (0 if c == 2 else c)
+    return [[s(c) for c in row] for row in g]
+
+
+def gfill_bg(g: Grid) -> Grid:
+    """Replace background (0) with color 5."""
+    return [[5 if c == 0 else c for c in row] for row in g]
+
+
+def gzero_bg(g: Grid) -> Grid:
+    """Replace background (0) with color 9."""
+    return [[9 if c == 0 else c for c in row] for row in g]
+
+
+def gclear_nonbg(g: Grid) -> Grid:
+    """Set all non-zero cells to 0 (clear foreground, keep background)."""
+    return [[0 for _ in row] for row in g]
+
+
+def gmod2(g: Grid) -> Grid:
+    """Replace each color c with c % 2."""
+    return [[c % 2 for c in row] for row in g]
+
+
+def gmod3(g: Grid) -> Grid:
+    """Replace each color c with c % 3."""
+    return [[c % 3 for c in row] for row in g]
+
+
+def gmax_color(g: Grid) -> Grid:
+    """Fill entire grid with the maximum color value present."""
+    flat = [c for row in g for c in row]
+    if not flat:
+        return _clone(g)
+    m = max(flat)
+    return [[m] * _cols(g) for _ in range(_rows(g))]
+
+
+def gmin_color(g: Grid) -> Grid:
+    """Fill entire grid with the minimum color value present."""
+    flat = [c for row in g for c in row]
+    if not flat:
+        return _clone(g)
+    m = min(flat)
+    return [[m] * _cols(g) for _ in range(_rows(g))]
+
+
+def gid(g: Grid) -> Grid:
+    """Identity — return an unchanged copy (useful as a no-op in compositions)."""
+    return _clone(g)
+
+
+# ---------------------------------------------------------------------------
+# GRAVITY  (non-zero cells fall toward an edge)
+# ---------------------------------------------------------------------------
+
+def ggravity_down(g: Grid) -> Grid:
+    """Non-zero cells fall to the bottom of their column."""
+    rows, cols = _rows(g), _cols(g)
+    result = [[0] * cols for _ in range(rows)]
+    for c in range(cols):
+        col = [g[r][c] for r in range(rows) if g[r][c] != 0]
+        for i, v in enumerate(reversed(col)):
+            result[rows - 1 - i][c] = v
+    return result
+
+
+def ggravity_up(g: Grid) -> Grid:
+    """Non-zero cells float to the top of their column."""
+    rows, cols = _rows(g), _cols(g)
+    result = [[0] * cols for _ in range(rows)]
+    for c in range(cols):
+        col = [g[r][c] for r in range(rows) if g[r][c] != 0]
+        for i, v in enumerate(col):
+            result[i][c] = v
+    return result
+
+
+def ggravity_right(g: Grid) -> Grid:
+    """Non-zero cells slide to the right of their row."""
+    result = []
+    for row in g:
+        non_z = [c for c in row if c != 0]
+        zeros = [0] * (len(row) - len(non_z))
+        result.append(zeros + non_z)
+    return result
+
+
+def ggravity_left(g: Grid) -> Grid:
+    """Non-zero cells slide to the left of their row."""
+    result = []
+    for row in g:
+        non_z = [c for c in row if c != 0]
+        zeros = [0] * (len(row) - len(non_z))
+        result.append(non_z + zeros)
+    return result
+
+
+# ---------------------------------------------------------------------------
+# SORT
+# ---------------------------------------------------------------------------
+
+def gsort_rows_asc(g: Grid) -> Grid:
+    """Sort each row in ascending order."""
+    return [sorted(row) for row in g]
+
+
+def gsort_rows_desc(g: Grid) -> Grid:
+    """Sort each row in descending order."""
+    return [sorted(row, reverse=True) for row in g]
+
+
+def gsort_cols_asc(g: Grid) -> Grid:
+    """Sort each column in ascending order."""
+    t = gtrsp(g)
+    t = [sorted(row) for row in t]
+    return gtrsp(t)
+
+
+def gsort_cols_desc(g: Grid) -> Grid:
+    """Sort each column in descending order."""
+    t = gtrsp(g)
+    t = [sorted(row, reverse=True) for row in t]
+    return gtrsp(t)
+
+
+# ---------------------------------------------------------------------------
+# STRUCTURAL
+# ---------------------------------------------------------------------------
+
+def _frame(g: Grid, color: int) -> Grid:
+    rows, cols = _rows(g), _cols(g)
+    if rows < 2 or cols < 2:
+        return _clone(g)
+    g2 = _clone(g)
+    for c in range(cols):
+        g2[0][c] = color
+        g2[rows - 1][c] = color
+    for r in range(rows):
+        g2[r][0] = color
+        g2[r][cols - 1] = color
+    return g2
+
+
+def gframe1(g: Grid) -> Grid:
+    """Draw a border of color 1 around the grid."""
+    return _frame(g, 1)
+
+
+def gframe2(g: Grid) -> Grid:
+    """Draw a border of color 2 around the grid."""
+    return _frame(g, 2)
+
+
+def gframe5(g: Grid) -> Grid:
+    """Draw a border of color 5 around the grid."""
+    return _frame(g, 5)
+
+
+def gframe8(g: Grid) -> Grid:
+    """Draw a border of color 8 around the grid."""
+    return _frame(g, 8)
+
+
+def gframe9(g: Grid) -> Grid:
+    """Draw a border of color 9 around the grid."""
+    return _frame(g, 9)
+
+
+def gmirror_v(g: Grid) -> Grid:
+    """Mirror vertically: bottom half becomes a copy of the top half."""
+    rows = _rows(g)
+    half = rows // 2
+    result = _clone(g)
+    for r in range(half):
+        result[rows - 1 - r] = list(g[r])
+    return result
+
+
+def gmirror_h(g: Grid) -> Grid:
+    """Mirror horizontally: right half becomes a copy of the left half."""
+    result = []
+    for row in g:
+        half = len(row) // 2
+        result.append(row[:half] + row[:half][::-1])
+    return result
+
+
+def ghollow(g: Grid) -> Grid:
+    """
+    Hollow out solid objects: interior cells whose four cardinal neighbours
+    are all the same non-zero color become 0.
+    """
+    rows, cols = _rows(g), _cols(g)
+    result = _clone(g)
+    for r in range(1, rows - 1):
+        for c in range(1, cols - 1):
+            v = g[r][c]
+            if (v != 0
+                    and g[r - 1][c] == v
+                    and g[r + 1][c] == v
+                    and g[r][c - 1] == v
+                    and g[r][c + 1] == v):
+                result[r][c] = 0
+    return result
+
+
+def gdiag1(g: Grid) -> Grid:
+    """Overwrite the main diagonal with color 1."""
+    result = _clone(g)
+    n = min(_rows(g), _cols(g))
+    for i in range(n):
+        result[i][i] = 1
+    return result
+
+
+def gdiag9(g: Grid) -> Grid:
+    """Overwrite the main diagonal with color 9."""
+    result = _clone(g)
+    n = min(_rows(g), _cols(g))
+    for i in range(n):
+        result[i][i] = 9
+    return result
+
+
+def ganti_diag1(g: Grid) -> Grid:
+    """Overwrite the anti-diagonal with color 1."""
+    result = _clone(g)
+    rows, cols = _rows(g), _cols(g)
+    n = min(rows, cols)
+    for i in range(n):
+        result[i][cols - 1 - i] = 1
+    return result
+
+
+def gscale2x(g: Grid) -> Grid:
+    """Scale each cell to a 2×2 block (doubles grid dimensions)."""
+    result = []
+    for row in g:
+        new_row = [c for c in row for _ in range(2)]
+        result.append(new_row)
+        result.append(list(new_row))
+    return result
+
+
+def gcrop_border(g: Grid) -> Grid:
+    """Remove the outermost ring of cells (inverse of gframe*)."""
+    rows, cols = _rows(g), _cols(g)
+    if rows <= 2 or cols <= 2:
+        return _clone(g)
+    return [row[1:-1] for row in g[1:-1]]
+
+
+def gpad1(g: Grid) -> Grid:
+    """Add a ring of zeros around the grid."""
+    rows, cols = _rows(g), _cols(g)
+    top_bot = [[0] * (cols + 2)]
+    result = top_bot + [[0] + row + [0] for row in g] + top_bot
+    return result
+
+
+# ---------------------------------------------------------------------------
+# PATTERN
+# ---------------------------------------------------------------------------
+
+def gcheckerboard(g: Grid) -> Grid:
+    """Fill with a 2-color checkerboard: (r+c) even → 1, odd → 2."""
+    rows, cols = _rows(g), _cols(g)
+    return [[(1 if (r + c) % 2 == 0 else 2) for c in range(cols)]
+            for r in range(rows)]
+
+
+def gcheckerboard03(g: Grid) -> Grid:
+    """Checkerboard in colors 0 and 3."""
+    rows, cols = _rows(g), _cols(g)
+    return [[(0 if (r + c) % 2 == 0 else 3) for c in range(cols)]
+            for r in range(rows)]
+
+
+def gstripe_h2(g: Grid) -> Grid:
+    """Alternating horizontal stripes: even rows → 1, odd rows → 2."""
+    rows, cols = _rows(g), _cols(g)
+    return [[(1 if r % 2 == 0 else 2)] * cols for r in range(rows)]
+
+
+def gstripe_v2(g: Grid) -> Grid:
+    """Alternating vertical stripes: even cols → 1, odd cols → 2."""
+    rows, cols = _rows(g), _cols(g)
+    return [[(1 if c % 2 == 0 else 2) for c in range(cols)]
+            for _ in range(rows)]
+
+
+def gstripe_h3(g: Grid) -> Grid:
+    """Horizontal stripes cycling through colors 1, 2, 3."""
+    rows, cols = _rows(g), _cols(g)
+    return [[(r % 3 + 1)] * cols for r in range(rows)]
+
+
+def gstripe_v3(g: Grid) -> Grid:
+    """Vertical stripes cycling through colors 1, 2, 3."""
+    rows, cols = _rows(g), _cols(g)
+    return [[(c % 3 + 1) for c in range(cols)] for _ in range(rows)]
+
+
+def gtile2x2(g: Grid) -> Grid:
+    """Tile the top-left 2×2 quadrant to fill the entire grid."""
+    rows, cols = _rows(g), _cols(g)
+    if rows < 2 or cols < 2:
+        return _clone(g)
+    return [[g[r % 2][c % 2] for c in range(cols)] for r in range(rows)]
+
+
+def gtile_top_row(g: Grid) -> Grid:
+    """Tile the top row to fill every row."""
+    if not g:
+        return _clone(g)
+    return [list(g[0]) for _ in range(_rows(g))]
+
+
+def gtile_left_col(g: Grid) -> Grid:
+    """Tile the left column to fill every column."""
+    rows, cols = _rows(g), _cols(g)
+    return [[g[r][0]] * cols for r in range(rows)]
+
+
+# ---------------------------------------------------------------------------
+# COUNTING / STRUCTURAL ENCODING
+# ---------------------------------------------------------------------------
+
+def gcountbar(g: Grid) -> Grid:
+    """
+    Per-row bar chart encoding.
+
+    For each row:
+      - Count non-zero cells (= N)
+      - Take the first non-zero color (= C)
+      - Output row: first N cells are C, rest are 0
+    """
+    result = []
+    for row in g:
+        non_z = [c for c in row if c != 0]
+        count = len(non_z)
+        color = non_z[0] if non_z else 0
+        result.append([color] * count + [0] * (len(row) - count))
+    return result
+
+
+def gmajority(g: Grid) -> Grid:
+    """
+    Per-row majority color fill.
+
+    Each row is replaced by its majority (most common) non-zero color,
+    broadcast across the entire row.
+    """
+    result = []
+    for row in g:
+        non_z = [c for c in row if c != 0]
+        if non_z:
+            majority = max(set(non_z), key=non_z.count)
+            result.append([majority] * len(row))
+        else:
+            result.append(list(row))
+    return result
+
+
+def gkeep_rows2(g: Grid) -> Grid:
+    """Zero out rows with fewer than 2 non-zero cells."""
+    result = []
+    for row in g:
+        if sum(1 for c in row if c != 0) >= 2:
+            result.append(list(row))
+        else:
+            result.append([0] * len(row))
+    return result
+
+
+def gkeep_rows3(g: Grid) -> Grid:
+    """Zero out rows with fewer than 3 non-zero cells."""
+    result = []
+    for row in g:
+        if sum(1 for c in row if c != 0) >= 3:
+            result.append(list(row))
+        else:
+            result.append([0] * len(row))
+    return result
+
+
+def gkeep_rows4(g: Grid) -> Grid:
+    """Zero out rows with fewer than 4 non-zero cells."""
+    result = []
+    for row in g:
+        if sum(1 for c in row if c != 0) >= 4:
+            result.append(list(row))
+        else:
+            result.append([0] * len(row))
+    return result
+
+
+def gcol_majority(g: Grid) -> Grid:
+    """Per-column majority color fill (transpose of gmajority)."""
+    return gtrsp(gmajority(gtrsp(g)))
+
+
+# ---------------------------------------------------------------------------
+# Registration
+# ---------------------------------------------------------------------------
+# fmt: off
+
+_ARC_PRIMITIVES: dict[str, tuple[object, str]] = {
+    # Geometric
+    "grot90":       (grot90,       "Rotate 90° clockwise"),
+    "grot180":      (grot180,      "Rotate 180°"),
+    "grot270":      (grot270,      "Rotate 270° clockwise"),
+    "grefl_h":      (grefl_h,      "Reflect left-right"),
+    "grefl_v":      (grefl_v,      "Reflect top-bottom"),
+    "gtrsp":        (gtrsp,        "Transpose rows/cols"),
+    "ganti_trsp":   (ganti_trsp,   "Anti-transpose"),
+    # Color
+    "ginv":         (ginv,         "Invert colors (c → max-c)"),
+    "gswap_01":     (gswap_01,     "Swap colors 0 and 1"),
+    "gswap_02":     (gswap_02,     "Swap colors 0 and 2"),
+    "gswap_03":     (gswap_03,     "Swap colors 0 and 3"),
+    "gswap_12":     (gswap_12,     "Swap colors 1 and 2"),
+    "gswap_13":     (gswap_13,     "Swap colors 1 and 3"),
+    "gswap_23":     (gswap_23,     "Swap colors 2 and 3"),
+    "gfill_bg":     (gfill_bg,     "Replace background(0) with 5"),
+    "gzero_bg":     (gzero_bg,     "Replace background(0) with 9"),
+    "gclear_nonbg": (gclear_nonbg, "Clear all non-background cells"),
+    "gmod2":        (gmod2,        "c → c mod 2"),
+    "gmod3":        (gmod3,        "c → c mod 3"),
+    "gmax_color":   (gmax_color,   "Fill grid with max color present"),
+    "gmin_color":   (gmin_color,   "Fill grid with min color present"),
+    "gid":          (gid,          "Identity (no-op copy)"),
+    # Gravity
+    "ggravity_down":  (ggravity_down,  "Non-zero cells fall downward"),
+    "ggravity_up":    (ggravity_up,    "Non-zero cells float upward"),
+    "ggravity_right": (ggravity_right, "Non-zero cells slide right"),
+    "ggravity_left":  (ggravity_left,  "Non-zero cells slide left"),
+    # Sort
+    "gsort_rows_asc":  (gsort_rows_asc,  "Sort each row ascending"),
+    "gsort_rows_desc": (gsort_rows_desc, "Sort each row descending"),
+    "gsort_cols_asc":  (gsort_cols_asc,  "Sort each column ascending"),
+    "gsort_cols_desc": (gsort_cols_desc, "Sort each column descending"),
+    # Structural
+    "gframe1":      (gframe1,      "Border of color 1"),
+    "gframe2":      (gframe2,      "Border of color 2"),
+    "gframe5":      (gframe5,      "Border of color 5"),
+    "gframe8":      (gframe8,      "Border of color 8"),
+    "gframe9":      (gframe9,      "Border of color 9"),
+    "gmirror_v":    (gmirror_v,    "Mirror: bottom = flipped top"),
+    "gmirror_h":    (gmirror_h,    "Mirror: right = flipped left"),
+    "ghollow":      (ghollow,      "Hollow out solid objects"),
+    "gdiag1":       (gdiag1,       "Overwrite main diagonal with 1"),
+    "gdiag9":       (gdiag9,       "Overwrite main diagonal with 9"),
+    "ganti_diag1":  (ganti_diag1,  "Overwrite anti-diagonal with 1"),
+    "gscale2x":     (gscale2x,     "Scale grid 2× (each cell → 2×2 block)"),
+    "gcrop_border": (gcrop_border, "Remove outermost ring of cells"),
+    "gpad1":        (gpad1,        "Add ring of zeros around grid"),
+    # Pattern
+    "gcheckerboard":    (gcheckerboard,    "Checkerboard in colors 1,2"),
+    "gcheckerboard03":  (gcheckerboard03,  "Checkerboard in colors 0,3"),
+    "gstripe_h2":       (gstripe_h2,       "Horizontal stripes colors 1,2"),
+    "gstripe_v2":       (gstripe_v2,       "Vertical stripes colors 1,2"),
+    "gstripe_h3":       (gstripe_h3,       "Horizontal stripes cycling 1,2,3"),
+    "gstripe_v3":       (gstripe_v3,       "Vertical stripes cycling 1,2,3"),
+    "gtile2x2":         (gtile2x2,         "Tile top-left 2×2 to fill grid"),
+    "gtile_top_row":    (gtile_top_row,    "Tile top row to fill all rows"),
+    "gtile_left_col":   (gtile_left_col,   "Tile left column to fill all cols"),
+    # Counting
+    "gcountbar":    (gcountbar,    "Bar-chart encode row counts"),
+    "gmajority":    (gmajority,    "Fill each row with majority color"),
+    "gcol_majority":(gcol_majority,"Fill each col with majority color"),
+    "gkeep_rows2":  (gkeep_rows2,  "Zero rows with <2 non-zero cells"),
+    "gkeep_rows3":  (gkeep_rows3,  "Zero rows with <3 non-zero cells"),
+    "gkeep_rows4":  (gkeep_rows4,  "Zero rows with <4 non-zero cells"),
+}
+# fmt: on
+
+for _name, (_fn, _desc) in _ARC_PRIMITIVES.items():
+    registry.register(_name, _fn, domain="arc", description=_desc)  # type: ignore[arg-type]
+
+
+# ---------------------------------------------------------------------------
+# ADDITIONAL PRIMITIVES
+# (added for improved ARC-AGI-1 coverage and ARC-AGI-2/3 readiness)
+# ---------------------------------------------------------------------------
+
+# ── More color swaps (covers all same-magnitude pairs 0-9) ────────────────
+
+def gswap_04(g: Grid) -> Grid:
+    """Swap colors 0 and 4."""
+    def s(c): return 4 if c == 0 else (0 if c == 4 else c)
+    return [[s(c) for c in row] for row in g]
+
+
+def gswap_05(g: Grid) -> Grid:
+    """Swap colors 0 and 5."""
+    def s(c): return 5 if c == 0 else (0 if c == 5 else c)
+    return [[s(c) for c in row] for row in g]
+
+
+def gswap_14(g: Grid) -> Grid:
+    """Swap colors 1 and 4."""
+    def s(c): return 4 if c == 1 else (1 if c == 4 else c)
+    return [[s(c) for c in row] for row in g]
+
+
+def gswap_24(g: Grid) -> Grid:
+    """Swap colors 2 and 4."""
+    def s(c): return 4 if c == 2 else (2 if c == 4 else c)
+    return [[s(c) for c in row] for row in g]
+
+
+# ── Structural: crop/pad variants ────────────────────────────────────────────
+
+def gcrop_top(g: Grid) -> Grid:
+    """Remove the top row."""
+    return g[1:] if len(g) > 1 else _clone(g)
+
+
+def gcrop_bottom(g: Grid) -> Grid:
+    """Remove the bottom row."""
+    return g[:-1] if len(g) > 1 else _clone(g)
+
+
+def gcrop_left(g: Grid) -> Grid:
+    """Remove the leftmost column."""
+    return [row[1:] for row in g] if g and len(g[0]) > 1 else _clone(g)
+
+
+def gcrop_right(g: Grid) -> Grid:
+    """Remove the rightmost column."""
+    return [row[:-1] for row in g] if g and len(g[0]) > 1 else _clone(g)
+
+
+# ── Structural: fill operations ───────────────────────────────────────────────
+
+def gfill_ones(g: Grid) -> Grid:
+    """Fill the entire grid with 1 (useful for masking)."""
+    rows, cols = _rows(g), _cols(g)
+    return [[1] * cols for _ in range(rows)]
+
+
+def gfill_zeros(g: Grid) -> Grid:
+    """Fill the entire grid with 0 (clear)."""
+    rows, cols = _rows(g), _cols(g)
+    return [[0] * cols for _ in range(rows)]
+
+
+# ── Color: modular arithmetic variants ───────────────────────────────────────
+
+def gmod4(g: Grid) -> Grid:
+    """Replace each color c with c % 4."""
+    return [[c % 4 for c in row] for row in g]
+
+
+def gmod5(g: Grid) -> Grid:
+    """Replace each color c with c % 5."""
+    return [[c % 5 for c in row] for row in g]
+
+
+def gadd1_mod10(g: Grid) -> Grid:
+    """Increment each color by 1 (mod 10), cycling 9 → 0."""
+    return [[(c + 1) % 10 for c in row] for row in g]
+
+
+def gsub1_mod10(g: Grid) -> Grid:
+    """Decrement each color by 1 (mod 10), cycling 0 → 9."""
+    return [[(c - 1) % 10 for c in row] for row in g]
+
+
+# ── Structural: diagonal fill variants ───────────────────────────────────────
+
+def gdiag2(g: Grid) -> Grid:
+    """Overwrite the main diagonal with color 2."""
+    result = _clone(g)
+    n = min(_rows(g), _cols(g))
+    for i in range(n):
+        result[i][i] = 2
+    return result
+
+
+def gdiag5(g: Grid) -> Grid:
+    """Overwrite the main diagonal with color 5."""
+    result = _clone(g)
+    n = min(_rows(g), _cols(g))
+    for i in range(n):
+        result[i][i] = 5
+    return result
+
+
+def ganti_diag2(g: Grid) -> Grid:
+    """Overwrite the anti-diagonal with color 2."""
+    result = _clone(g)
+    rows, cols = _rows(g), _cols(g)
+    n = min(rows, cols)
+    for i in range(n):
+        result[i][cols - 1 - i] = 2
+    return result
+
+
+# ── Pattern: more frame colors ────────────────────────────────────────────────
+
+def gframe3(g: Grid) -> Grid:
+    """Draw a border of color 3 around the grid."""
+    return _frame(g, 3)
+
+
+def gframe4(g: Grid) -> Grid:
+    """Draw a border of color 4 around the grid."""
+    return _frame(g, 4)
+
+
+def gframe6(g: Grid) -> Grid:
+    """Draw a border of color 6 around the grid."""
+    return _frame(g, 6)
+
+
+def gframe7(g: Grid) -> Grid:
+    """Draw a border of color 7 around the grid."""
+    return _frame(g, 7)
+
+
+# ── Counting: column-oriented variants ───────────────────────────────────────
+
+def gcountbar_cols(g: Grid) -> Grid:
+    """Per-column bar chart encoding (transpose of gcountbar)."""
+    return gtrsp(gcountbar(gtrsp(g)))
+
+
+def gkeep_cols2(g: Grid) -> Grid:
+    """Zero out columns with fewer than 2 non-zero cells."""
+    rows, cols = _rows(g), _cols(g)
+    result = [list(row) for row in g]
+    for c in range(cols):
+        col_vals = [g[r][c] for r in range(rows)]
+        if sum(1 for v in col_vals if v != 0) < 2:
+            for r in range(rows):
+                result[r][c] = 0
+    return result
+
+
+def gkeep_cols3(g: Grid) -> Grid:
+    """Zero out columns with fewer than 3 non-zero cells."""
+    rows, cols = _rows(g), _cols(g)
+    result = [list(row) for row in g]
+    for c in range(cols):
+        col_vals = [g[r][c] for r in range(rows)]
+        if sum(1 for v in col_vals if v != 0) < 3:
+            for r in range(rows):
+                result[r][c] = 0
+    return result
+
+
+# ── Pattern: checkerboard variants ────────────────────────────────────────────
+
+def gcheckerboard14(g: Grid) -> Grid:
+    """Checkerboard in colors 1 and 4."""
+    rows, cols = _rows(g), _cols(g)
+    return [[(1 if (r + c) % 2 == 0 else 4) for c in range(cols)]
+            for r in range(rows)]
+
+
+def gcheckerboard25(g: Grid) -> Grid:
+    """Checkerboard in colors 2 and 5."""
+    rows, cols = _rows(g), _cols(g)
+    return [[(2 if (r + c) % 2 == 0 else 5) for c in range(cols)]
+            for r in range(rows)]
+
+
+# ── Structural: dilation / erosion ────────────────────────────────────────────
+
+def gdilate(g: Grid) -> Grid:
+    """
+    Binary dilation: any cell adjacent (4-connected) to a non-zero cell
+    inherits its non-zero value.  Expands objects outward by one cell.
+    Background (0) cells that touch foreground become the foreground color.
+    """
+    rows, cols = _rows(g), _cols(g)
+    result = _clone(g)
+    for r in range(rows):
+        for c in range(cols):
+            if g[r][c] == 0:
+                # Check 4-connected neighbours
+                for dr, dc in ((-1, 0), (1, 0), (0, -1), (0, 1)):
+                    nr, nc = r + dr, c + dc
+                    if 0 <= nr < rows and 0 <= nc < cols and g[nr][nc] != 0:
+                        result[r][c] = g[nr][nc]
+                        break
+    return result
+
+
+def gerode(g: Grid) -> Grid:
+    """
+    Binary erosion: a non-zero cell is set to 0 if any of its 4-connected
+    neighbours is 0.  Shrinks objects inward by one cell.
+    """
+    rows, cols = _rows(g), _cols(g)
+    result = _clone(g)
+    for r in range(rows):
+        for c in range(cols):
+            if g[r][c] != 0:
+                for dr, dc in ((-1, 0), (1, 0), (0, -1), (0, 1)):
+                    nr, nc = r + dr, c + dc
+                    if not (0 <= nr < rows and 0 <= nc < cols) or g[nr][nc] == 0:
+                        result[r][c] = 0
+                        break
+    return result
+
+
+# ── Structural: connected-component utilities ─────────────────────────────────
+
+def gborder_only(g: Grid) -> Grid:
+    """
+    Keep only cells on the outermost border; set interior to 0.
+    Complement of gcrop_border: this keeps the border, not the interior.
+    """
+    rows, cols = _rows(g), _cols(g)
+    result = [[0] * cols for _ in range(rows)]
+    for r in range(rows):
+        for c in range(cols):
+            if r == 0 or r == rows - 1 or c == 0 or c == cols - 1:
+                result[r][c] = g[r][c]
+    return result
+
+
+def ginterior_only(g: Grid) -> Grid:
+    """
+    Keep only the interior cells (not on the border); set border to 0.
+    Complement of gborder_only.
+    """
+    rows, cols = _rows(g), _cols(g)
+    if rows <= 2 or cols <= 2:
+        return [[0] * cols for _ in range(rows)]
+    result = [[0] * cols for _ in range(rows)]
+    for r in range(1, rows - 1):
+        for c in range(1, cols - 1):
+            result[r][c] = g[r][c]
+    return result
+
+
+# Register the new primitives
+_NEW_ARC_PRIMITIVES: dict[str, tuple[object, str]] = {
+    # More color swaps
+    "gswap_04":         (gswap_04,         "Swap colors 0 and 4"),
+    "gswap_05":         (gswap_05,         "Swap colors 0 and 5"),
+    "gswap_14":         (gswap_14,         "Swap colors 1 and 4"),
+    "gswap_24":         (gswap_24,         "Swap colors 2 and 4"),
+    # Crop variants
+    "gcrop_top":        (gcrop_top,        "Remove top row"),
+    "gcrop_bottom":     (gcrop_bottom,     "Remove bottom row"),
+    "gcrop_left":       (gcrop_left,       "Remove leftmost column"),
+    "gcrop_right":      (gcrop_right,      "Remove rightmost column"),
+    # Fill
+    "gfill_ones":       (gfill_ones,       "Fill grid with 1"),
+    "gfill_zeros":      (gfill_zeros,      "Fill grid with 0"),
+    # Modular arithmetic
+    "gmod4":            (gmod4,            "c → c mod 4"),
+    "gmod5":            (gmod5,            "c → c mod 5"),
+    "gadd1_mod10":      (gadd1_mod10,      "c → (c+1) mod 10"),
+    "gsub1_mod10":      (gsub1_mod10,      "c → (c-1) mod 10"),
+    # Diagonal variants
+    "gdiag2":           (gdiag2,           "Overwrite main diagonal with 2"),
+    "gdiag5":           (gdiag5,           "Overwrite main diagonal with 5"),
+    "ganti_diag2":      (ganti_diag2,      "Overwrite anti-diagonal with 2"),
+    # More frames
+    "gframe3":          (gframe3,          "Border of color 3"),
+    "gframe4":          (gframe4,          "Border of color 4"),
+    "gframe6":          (gframe6,          "Border of color 6"),
+    "gframe7":          (gframe7,          "Border of color 7"),
+    # Column counting
+    "gcountbar_cols":   (gcountbar_cols,   "Bar-chart encode column counts"),
+    "gkeep_cols2":      (gkeep_cols2,      "Zero cols with <2 non-zero cells"),
+    "gkeep_cols3":      (gkeep_cols3,      "Zero cols with <3 non-zero cells"),
+    # Checkerboard variants
+    "gcheckerboard14":  (gcheckerboard14,  "Checkerboard in colors 1,4"),
+    "gcheckerboard25":  (gcheckerboard25,  "Checkerboard in colors 2,5"),
+    # Morphological
+    "gdilate":          (gdilate,          "Morphological dilation (expand objects)"),
+    "gerode":           (gerode,           "Morphological erosion (shrink objects)"),
+    # Border/interior split
+    "gborder_only":     (gborder_only,     "Keep only border cells"),
+    "ginterior_only":   (ginterior_only,   "Keep only interior cells"),
+}
+
+for _name, (_fn, _desc) in _NEW_ARC_PRIMITIVES.items():
+    registry.register(_name, _fn, domain="arc", description=_desc)  # type: ignore[arg-type]
