@@ -3,24 +3,37 @@ domains/arc/runner.py
 =====================
 Run the baseline vs expanded-DSL benchmark and produce a structured report.
 
-Usage (command line)
---------------------
+Usage (command line — programmatic benchmark, 76 tasks)
+-------------------------------------------------------
     python -m domains.arc.runner
-    python -m domains.arc.runner --quick       # fast (~30 s)
-    python -m domains.arc.runner --workers 4   # parallel evaluation
+    python -m domains.arc.runner --quick           # fast (~30 s)
+    python -m domains.arc.runner --workers 4       # parallel evaluation
+
+Usage (command line — real ARC-AGI dataset)
+-------------------------------------------
+    # First clone the dataset:
+    #   git clone https://github.com/fchollet/ARC-AGI arc_data
+    python -m domains.arc.runner --data arc_data/data/evaluation
+    python -m domains.arc.runner --data arc_data/data/evaluation --quick --workers 4
 
 Usage (programmatic)
 --------------------
-    from domains.arc.runner import run_benchmark, BenchmarkConfig
-    from domains.arc.benchmark import get_benchmark
+    from domains.arc.runner import run_benchmark, load_tasks_from_dir, BenchmarkConfig
 
+    # Programmatic benchmark (76 tasks, no download needed):
+    from domains.arc.benchmark import build_benchmark
     cfg = BenchmarkConfig(generations=50, beam_size=15, verbose=False)
-    report = run_benchmark(get_benchmark(), cfg)
-    print(report.summary())
+    baseline, expanded = run_benchmark(build_benchmark(), cfg)
+    print(baseline.summary())
+
+    # Real ARC-AGI dataset:
+    tasks = load_tasks_from_dir("arc_data/data/evaluation")
+    baseline, expanded = run_benchmark(tasks, cfg)
 """
 from __future__ import annotations
 
 import json
+import pathlib
 import sys
 import time
 from dataclasses import dataclass, field
@@ -30,6 +43,63 @@ from core.search import SearchConfig
 from core.primitives import registry
 from domains.arc.benchmark import build_benchmark
 from domains.arc.domain import ARCDomain, ARCTask, grid_cell_accuracy
+
+
+# ---------------------------------------------------------------------------
+# Real-dataset loader
+# ---------------------------------------------------------------------------
+
+def load_tasks_from_dir(data_dir: str) -> list[ARCTask]:
+    """
+    Load ARC-AGI tasks from a directory of JSON files.
+
+    Each file must follow the standard ARC format::
+
+        {
+          "train": [{"input": [...], "output": [...]}, ...],
+          "test":  [{"input": [...], "output": [...]}, ...]
+        }
+
+    Parameters
+    ----------
+    data_dir : str
+        Path to a directory containing ``*.json`` task files.
+        For the official ARC-AGI-1 repo cloned as ``arc_data/``, use:
+            ``arc_data/data/evaluation``   (400 hidden eval tasks)
+            ``arc_data/data/training``     (400 training tasks with solutions)
+
+    Returns
+    -------
+    list[ARCTask]
+        Tasks sorted by filename for reproducibility.
+
+    Raises
+    ------
+    FileNotFoundError
+        If *data_dir* does not exist.
+    ValueError
+        If no ``*.json`` files are found in *data_dir*.
+    """
+    p = pathlib.Path(data_dir)
+    if not p.exists():
+        raise FileNotFoundError(
+            f"Data directory not found: {data_dir!r}\n"
+            "Clone the dataset first:\n"
+            "  git clone https://github.com/fchollet/ARC-AGI arc_data"
+        )
+    files = sorted(p.glob("*.json"))
+    if not files:
+        raise ValueError(
+            f"No JSON files found in {data_dir!r}. "
+            "Check the path — the evaluation tasks are under "
+            "'arc_data/data/evaluation/', not 'arc_data/evaluation/'."
+        )
+    tasks = []
+    for f in files:
+        d = json.loads(f.read_text())
+        d["name"] = f.stem
+        tasks.append(ARCTask.from_dict(d))
+    return tasks
 
 
 # ---------------------------------------------------------------------------
@@ -262,7 +332,9 @@ def run_benchmark(
     Parameters
     ----------
     tasks : list[ARCTask] | None
-        Tasks to evaluate. Builds the default 80-task benchmark if None.
+        Tasks to evaluate. Builds the default 76-task programmatic benchmark
+        if None. Pass the result of ``load_tasks_from_dir()`` to run against
+        the real ARC-AGI dataset.
     cfg : BenchmarkConfig | None
         Configuration. Uses defaults if None.
     save_path : str | None
@@ -336,7 +408,21 @@ def run_benchmark(
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description="ARC-AGI-1 benchmark runner")
+    parser = argparse.ArgumentParser(
+        description="ARC-AGI benchmark runner",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=(
+            "Examples:\n"
+            "  # Programmatic benchmark (76 tasks, no download):\n"
+            "  python -m domains.arc.runner --quick\n\n"
+            "  # Real ARC-AGI-1 evaluation set (400 tasks):\n"
+            "  git clone https://github.com/fchollet/ARC-AGI arc_data\n"
+            "  python -m domains.arc.runner --data arc_data/data/evaluation\n"
+        ),
+    )
+    parser.add_argument("--data",         type=str, default=None,
+                        help="Path to directory of ARC JSON files (e.g. arc_data/data/evaluation). "
+                             "If omitted, uses the built-in 76-task programmatic benchmark.")
     parser.add_argument("--quick",        action="store_true", help="Fast run (fewer generations)")
     parser.add_argument("--baseline-only",action="store_true", help="Run baseline only")
     parser.add_argument("--workers",      type=int, default=1,   help="Parallel workers")
@@ -354,7 +440,14 @@ if __name__ == "__main__":
         baseline_only = args.baseline_only,
     )
 
-    tasks = build_benchmark()
+    if args.data:
+        print(f"Loading real ARC tasks from: {args.data}")
+        tasks = load_tasks_from_dir(args.data)
+        print(f"Loaded {len(tasks)} tasks.")
+    else:
+        print("No --data path given. Using built-in 76-task programmatic benchmark.")
+        tasks = build_benchmark()
+
     if args.tasks:
         tasks = tasks[: args.tasks]
 

@@ -19,14 +19,11 @@ so evaluation is exact. This is used for the baseline vs expanded-DSL
 comparison and for CI regression tests.
 
 To use the real ARC-AGI-1 dataset instead:
-    import json, pathlib
-    from domains.arc.domain import ARCTask
+    from domains.arc.runner import load_tasks_from_dir
 
-    tasks = []
-    for p in pathlib.Path("arc_data/evaluation").glob("*.json"):
-        d = json.loads(p.read_text())
-        d["name"] = p.stem
-        tasks.append(ARCTask.from_dict(d))
+    # Clone first: git clone https://github.com/fchollet/ARC-AGI arc_data
+    tasks = load_tasks_from_dir("arc_data/data/evaluation")   # 400 eval tasks
+    # or: load_tasks_from_dir("arc_data/data/training")       # 400 training tasks
 """
 from __future__ import annotations
 
@@ -209,7 +206,7 @@ def _keep_rows(n):
 
 def build_benchmark(seed: int = 42) -> list[ARCTask]:
     """
-    Build and return the full 80-task benchmark.
+    Build and return the full 76-task programmatic benchmark.
 
     Parameters
     ----------

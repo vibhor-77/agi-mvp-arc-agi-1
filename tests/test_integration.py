@@ -7,6 +7,7 @@ Integration tests covering the full pipeline:
   - run_benchmark() with baseline_only=True on a small task slice
   - JSON serialisation (as_dict, save_path round-trip)
   - build_benchmark / get_benchmark equivalence
+  - load_tasks_from_dir() — real-dataset loader (tested with synthetic JSON)
   - scripts/run_all.py entry-point functions (symreg, cartpole)
 
 These tests are deliberately kept fast by using tiny search configs
@@ -32,6 +33,7 @@ from domains.arc.runner import (
     BenchmarkReport,
     TaskResult,
     evaluate_tasks,
+    load_tasks_from_dir,
     run_benchmark,
 )
 from domains.arc.domain import ARCTask
@@ -505,6 +507,132 @@ class TestARCTaskRoundTrip(unittest.TestCase):
         pct = matched / len(tasks)
         self.assertGreater(pct, 0.60,
                            msg=f"Only {matched}/{len(tasks)} tasks have true_op in registry")
+
+
+# ---------------------------------------------------------------------------
+# 10. load_tasks_from_dir — real-dataset loader
+# ---------------------------------------------------------------------------
+
+class TestLoadTasksFromDir(unittest.TestCase):
+    """
+    Tests for load_tasks_from_dir().
+
+    Because we can't bundle the real 400-task ARC-AGI dataset in the repo,
+    these tests create synthetic JSON files that match the official ARC format
+    exactly, then verify that loading behaves correctly.
+    """
+
+    # ── helpers ──────────────────────────────────────────────────────────
+
+    @staticmethod
+    def _arc_json(n_train: int = 3, n_test: int = 1) -> dict:
+        """Return a minimal valid ARC task dict."""
+        pair = {"input": [[1, 2], [3, 4]], "output": [[3, 1], [4, 2]]}
+        return {
+            "train": [pair] * n_train,
+            "test":  [pair] * n_test,
+        }
+
+    def _make_dir(self, tmpdir: str, n_files: int = 3) -> str:
+        """Write *n_files* synthetic ARC JSON files into *tmpdir*."""
+        for i in range(n_files):
+            p = os.path.join(tmpdir, f"task_{i:04d}.json")
+            with open(p, "w") as f:
+                json.dump(self._arc_json(), f)
+        return tmpdir
+
+    # ── error handling ────────────────────────────────────────────────────
+
+    def test_missing_dir_raises_file_not_found(self):
+        with self.assertRaises(FileNotFoundError) as ctx:
+            load_tasks_from_dir("/nonexistent/path/that/does/not/exist")
+        self.assertIn("arc_data", str(ctx.exception))
+
+    def test_empty_dir_raises_value_error(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with self.assertRaises(ValueError) as ctx:
+                load_tasks_from_dir(tmpdir)
+            # Error message should hint at the correct path
+            self.assertIn("arc_data/data/evaluation", str(ctx.exception))
+
+    # ── happy path ────────────────────────────────────────────────────────
+
+    def test_loads_correct_count(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            self._make_dir(tmpdir, n_files=5)
+            tasks = load_tasks_from_dir(tmpdir)
+            self.assertEqual(len(tasks), 5)
+
+    def test_returns_arc_task_instances(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            self._make_dir(tmpdir, n_files=2)
+            for task in load_tasks_from_dir(tmpdir):
+                self.assertIsInstance(task, ARCTask)
+
+    def test_task_names_are_file_stems(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            self._make_dir(tmpdir, n_files=3)
+            tasks = load_tasks_from_dir(tmpdir)
+            stems = {f"task_{i:04d}" for i in range(3)}
+            self.assertEqual({t.name for t in tasks}, stems)
+
+    def test_train_pairs_loaded(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            self._make_dir(tmpdir, n_files=1)
+            task = load_tasks_from_dir(tmpdir)[0]
+            self.assertEqual(len(task.train_pairs), 3)
+
+    def test_test_pairs_loaded(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            self._make_dir(tmpdir, n_files=1)
+            task = load_tasks_from_dir(tmpdir)[0]
+            self.assertEqual(len(task.test_pairs), 1)
+
+    def test_grid_values_preserved(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            self._make_dir(tmpdir, n_files=1)
+            task = load_tasks_from_dir(tmpdir)[0]
+            inp, out = task.train_pairs[0]
+            self.assertEqual(inp, [[1, 2], [3, 4]])
+            self.assertEqual(out, [[3, 1], [4, 2]])
+
+    def test_sorted_by_filename(self):
+        """Tasks must come back in filename order for reproducibility."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Write files in reverse order to catch unsorted loading
+            for i in [4, 2, 0, 3, 1]:
+                p = os.path.join(tmpdir, f"task_{i:04d}.json")
+                with open(p, "w") as f:
+                    json.dump(self._arc_json(), f)
+            tasks = load_tasks_from_dir(tmpdir)
+            names = [t.name for t in tasks]
+            self.assertEqual(names, sorted(names))
+
+    def test_non_json_files_ignored(self):
+        """Non-.json files in the directory must be silently skipped."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            self._make_dir(tmpdir, n_files=2)
+            # Write a non-JSON file that should be ignored
+            with open(os.path.join(tmpdir, "README.md"), "w") as f:
+                f.write("# not a task")
+            tasks = load_tasks_from_dir(tmpdir)
+            self.assertEqual(len(tasks), 2)
+
+    def test_tasks_are_solvable_with_arc_domain(self):
+        """Tasks loaded from synthetic JSON must work with ARCDomain (no crash)."""
+        from domains.arc.domain import ARCDomain
+        from core.search import SearchConfig
+        with tempfile.TemporaryDirectory() as tmpdir:
+            self._make_dir(tmpdir, n_files=1)
+            task = load_tasks_from_dir(tmpdir)[0]
+            domain = ARCDomain(task)
+            from core.tree import make_leaf_var
+            tree = make_leaf_var(0)
+            # fitness() and check_solution() must not raise
+            f = domain.fitness(tree)
+            self.assertIsInstance(f, float)
+            solved = domain.check_solution(tree)
+            self.assertIsInstance(solved, bool)
 
 
 if __name__ == "__main__":

@@ -8,20 +8,29 @@
 
 ### 1. Download and run on real ARC-AGI-1 data
 
-The benchmark in `domains/arc/benchmark.py` is programmatically generated.
-To test against the real 400-task eval set:
+The benchmark in `domains/arc/benchmark.py` is programmatically generated
+(76 tasks). To test against the real 400-task eval set:
 
 ```bash
-# Download the dataset
+# Download the dataset (real tasks live under data/evaluation/ and data/training/)
 git clone https://github.com/fchollet/ARC-AGI arc_data
 
-# Run the runner against real tasks
-python -m domains.arc.runner --tasks 50 --quick   # smoke test on 50 tasks
-python -m domains.arc.runner                       # full 400-task run
+# Smoke test: 10 real tasks, fast settings
+python -m domains.arc.runner --data arc_data/data/evaluation --quick --tasks 10
+
+# Full 400-task eval run (expect several hours at default settings)
+python -m domains.arc.runner --data arc_data/data/evaluation --workers 4 --save results_real.json
 ```
 
-The `ARCTask.from_dict()` method already handles the ARC JSON format.
-See `domains/arc/benchmark.py` bottom comment for the loading snippet.
+Or use the convenience script:
+
+```bash
+python run_real_arc.py --quick --tasks 10    # smoke test
+python run_real_arc.py                       # full run
+```
+
+The `--data` flag tells the runner to load from real JSON files instead of the
+programmatic benchmark. Without it, the runner always uses the built-in 76 tasks.
 
 Expected result: 20–35% on the eval set with the current 89-op DSL.
 
