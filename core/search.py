@@ -91,6 +91,8 @@ class SearchConfig:
     verbose: bool = True
     log_interval: int = 50
     seed: int | None = None
+    initial_temp: float = 0.5
+    cooling_rate: float = 0.95
 
 
 # ---------------------------------------------------------------------------
@@ -232,7 +234,7 @@ class BeamSearch:
         scored = self._evaluate_all(init_pool)
         
         # Helper to deduplicate a scored pool
-        def _dedupe_pool(pool: list[tuple[float, Node, tuple | None, list[float] | None]], limit: int) -> list[tuple[float, Node, tuple | None, list[float] | None]]:
+        def _dedupe_pool(pool: list[tuple[float, Node, tuple | None, list[float] | None]], limit: int, temperature: float = 0.0) -> list[tuple[float, Node, tuple | None, list[float] | None]]:
             
             seen_exprs: set[str] = set()
             # Map fingerprint -> count of admitted ASTs sharing it. Soft-hashing allows up to 3.
@@ -259,7 +261,15 @@ class BeamSearch:
                         pool[i] = (pool[i][0] - 1000.0, pool[i][1], pool[i][2], pool[i][3])
                         
             # Sort by score ascending, then by tree size ascending (Occam's razor)
-            pool.sort(key=lambda x: (x[0], x[1].size()))
+            # Simulated Annealing: Inject noise bounded by temperature to promote diversity early on
+            def sort_key(x):
+                score = x[0]
+                # Lexicase artificial boost should never be obfuscated by noise
+                if score < -500: return (score, x[1].size())
+                noise = temperature * rng.random()
+                return (score + noise, x[1].size())
+                
+            pool.sort(key=sort_key)
             
             for item in pool:
                 score, tree, fp, lex = item
@@ -286,7 +296,9 @@ class BeamSearch:
                     
             return new_beam
 
-        scored = _dedupe_pool(scored, cfg.beam_size)
+        # gen=0 temp decay
+        current_temp = cfg.initial_temp
+        scored = _dedupe_pool(scored, cfg.beam_size, current_temp)
 
         beam: list[Node] = [t for _, t, _, _ in scored]
         best_fitness = scored[0][0]
@@ -341,8 +353,11 @@ class BeamSearch:
             # Evaluate
             scored = self._evaluate_all(pool)
 
+            # Decay temperature
+            current_temp = current_temp * cfg.cooling_rate
+
             # Deduplicate by semantic hash or string form, keep top beam_size
-            scored = _dedupe_pool(scored, cfg.beam_size)
+            scored = _dedupe_pool(scored, cfg.beam_size, current_temp)
 
             beam = [t for _, t, _, _ in scored]
             gen_best_score = scored[0][0]

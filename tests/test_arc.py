@@ -409,16 +409,20 @@ class TestGridAccuracy(unittest.TestCase):
         self.assertTrue(is_exact_match(g, g))
 
     def test_no_match(self):
-        self.assertEqual(grid_cell_accuracy([[1, 2]], [[3, 4]]), 0.0)
+        # Even with 0 pixel matches, the exact bounds match yields the maximum 0.25 dimensional bonus
+        self.assertEqual(grid_cell_accuracy([[1, 2]], [[3, 4]]), 0.25)
 
     def test_partial_match(self):
-        self.assertAlmostEqual(grid_cell_accuracy([[1, 2]], [[1, 3]]), 0.5)
+        # 50% pixel match (0.375 weight) + exact bounds match (0.25 weight) = 0.625
+        self.assertAlmostEqual(grid_cell_accuracy([[1, 2]], [[1, 3]]), 0.625)
 
     def test_shape_mismatch_returns_zero_row_length(self):
-        self.assertEqual(grid_cell_accuracy([[1, 2]], [[1, 2], [3, 4]]), 0.0)  # row count mismatch
+        # Dimensions: target 2x2, pred 1x2. Dimensional reward falls from 0.25 to 0.1875
+        self.assertEqual(grid_cell_accuracy([[1, 2]], [[1, 2], [3, 4]]), 0.1875)
 
     def test_shape_mismatch_returns_zero_column_length(self):
-        self.assertEqual(grid_cell_accuracy([[1, 2, 3]], [[1, 2]]), 0.0)  # col count mismatch
+        # Dimensions: target 1x2, pred 1x3. Dimensional reward falls from 0.25 to 0.16666666666666669
+        self.assertEqual(grid_cell_accuracy([[1, 2, 3]], [[1, 2]]), 0.16666666666666669)
 
     def test_empty_grid(self):
         self.assertEqual(grid_cell_accuracy([], []), 0.0)

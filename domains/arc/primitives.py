@@ -1039,6 +1039,117 @@ def g_extract_objects(g: Grid) -> Grid:
         
     return out
 
+
+# ---------------------------------------------------------------------------
+# MAP (Higher-Order Object Transforms)
+# ---------------------------------------------------------------------------
+
+def _get_all_objects(g: Grid) -> list[tuple[int, int, list[tuple[int, int]]]]:
+    """Helper to extract all objects with their bounding box offsets."""
+    R, C = len(g), len(g[0])
+    visited = set()
+    objects = []
+    
+    def get_neighbors(r, c, color):
+        for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+            nr, nc = r + dr, c + dc
+            if 0 <= nr < R and 0 <= nc < C and (nr, nc) not in visited:
+                if g[nr][nc] == color:
+                    yield nr, nc
+
+    for r in range(R):
+        for c in range(C):
+            col = g[r][c]
+            if col != 0 and (r, c) not in visited:
+                obj_cells = [(r, c)]
+                visited.add((r, c))
+                queue = [(r, c)]
+                while queue:
+                    curr_r, curr_c = queue.pop(0)
+                    for nr, nc in get_neighbors(curr_r, curr_c, col):
+                        visited.add((nr, nc))
+                        obj_cells.append((nr, nc))
+                        queue.append((nr, nc))
+                
+                # Bounding box
+                min_r = min(cr for cr, cc in obj_cells)
+                max_r = max(cr for cr, cc in obj_cells)
+                min_c = min(cc for cr, cc in obj_cells)
+                max_c = max(cc for cr, cc in obj_cells)
+                
+                # Extract Box Grid
+                box_R = max_r - min_r + 1
+                box_C = max_c - min_c + 1
+                box = [[0] * box_C for _ in range(box_R)]
+                for cr, cc in obj_cells:
+                    box[cr - min_r][cc - min_c] = g[cr][cc]
+                    
+                objects.append((min_r, min_c, box))
+                
+    return objects
+
+
+def _apply_gmap(g: Grid, transform_fn: Callable) -> Grid:
+    """Isolate objects natively, transform their boxes, and composite back onto void."""
+    objs = _get_all_objects(g)
+    if not objs:
+        return _clone(g)
+        
+    # Return to original dimensions. We paste modified objects back into blank.
+    R, C = len(g), len(g[0])
+    out = [[0] * C for _ in range(R)]
+    
+    for (min_r, min_c, box) in objs:
+        transformed = transform_fn(box)
+        tR = len(transformed)
+        tC = len(transformed[0])
+        # Paste back to approximated original bounding anchor
+        for tr in range(tR):
+            for tc in range(tC):
+                if transformed[tr][tc] != 0:
+                    rr = min_r + tr
+                    cc = min_c + tc
+                    if 0 <= rr < R and 0 <= cc < C:
+                        out[rr][cc] = transformed[tr][tc]
+    return out
+
+
+@_safe_grid_op
+def gmap_rot90(g: Grid) -> Grid:
+    """Extract all objects, rotate them 90 deg clockwise in place, overlay back onto bg."""
+    return _apply_gmap(g, grot90)
+
+@_safe_grid_op
+def gmap_rot180(g: Grid) -> Grid:
+    """Extract all objects, rotate them 180 deg in place, overlay back onto bg."""
+    return _apply_gmap(g, grot180)
+
+@_safe_grid_op
+def gmap_reflect_h(g: Grid) -> Grid:
+    """Extract all objects, reflect them horizontally in place, overlay back onto bg."""
+    return _apply_gmap(g, greflect_h)
+
+@_safe_grid_op
+def gmap_reflect_v(g: Grid) -> Grid:
+    """Extract all objects, reflect them vertically in place, overlay back onto bg."""
+    return _apply_gmap(g, greflect_v)
+
+@_safe_grid_op
+def gmap_fill_color(g: Grid) -> Grid:
+    """Fills the interior bounding box of every object uniformly with its dominant color."""
+    def fill_box(box):
+        if not box or not box[0]: return box
+        # dominant color of box
+        freq = {}
+        for row in box:
+            for cell in row:
+                if cell != 0:
+                    freq[cell] = freq.get(cell, 0) + 1
+        color = max(freq.items(), key=lambda x: x[1])[0] if freq else 1
+        return [[color]*len(box[0]) for _ in range(len(box))]
+        
+    return _apply_gmap(g, fill_box)
+
 @_safe_grid_op
 def g_render_object(g1: Grid, g2: Grid) -> Grid:
     """
@@ -1423,6 +1534,12 @@ _NEW_ARC_PRIMITIVES: dict[str, tuple[object, str]] = {
     "g_filter_color":   (g_filter_color,   "Extracts mask of a single color"),
     "g_extract_objects": (g_extract_objects, "Extracts largest grid object to bounding box"),
     "g_render_object":  (g_render_object,  "Pastes a small object into the center of a background grid"),
+    # MAP (Higher-Order)
+    "gmap_rot90":       (gmap_rot90, "Rotate all isolated shapes 90° clockwise in place"),
+    "gmap_rot180":      (gmap_rot180, "Rotate all isolated shapes 180° in place"),
+    "gmap_reflect_h":   (gmap_reflect_h, "Reflect all isolated shapes horizontally in place"),
+    "gmap_reflect_v":   (gmap_reflect_v, "Reflect all isolated shapes vertically in place"),
+    "gmap_fill_color":  (gmap_fill_color, "Fill isolated shape bounding boxes with solid dominant color"),
 }
 
 for _name, (_fn, _desc) in _NEW_ARC_PRIMITIVES.items():
