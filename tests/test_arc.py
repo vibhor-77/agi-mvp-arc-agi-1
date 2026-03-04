@@ -304,12 +304,14 @@ class TestRegistration(unittest.TestCase):
             self.assertTrue(callable(fn), f"'{name}' is not callable")
 
     def test_all_arc_primitives_accept_grid(self):
-        """Every registered ARC primitive must accept and return a Grid."""
+        """Every registered ARC primitive must execute safely (with appropriate dummy args)."""
         test_grid = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         for name in registry.names(domain="arc"):
             fn = registry.get(name)
+            arity = registry.arity(name)
             try:
-                result = fn(test_grid)
+                args = [test_grid] * arity
+                result = fn(*args)
                 self.assertIsInstance(result, list, f"'{name}' did not return a list")
             except Exception as e:
                 self.fail(f"'{name}' raised {type(e).__name__}: {e}")
@@ -388,25 +390,25 @@ class TestARCDomain(unittest.TestCase):
     def test_fitness_perfect_tree_is_near_zero(self):
         task = self._rot90_task()
         domain = ARCDomain(task, lam=0.0)
-        tree = make_node("grot90", make_leaf_var(0))
+        tree = make_node("grot90", [make_leaf_var(0)])
         self.assertLess(domain.fitness(tree), 1e-6)
 
     def test_fitness_wrong_tree_is_positive(self):
         task = self._rot90_task()
         domain = ARCDomain(task, lam=0.0)
-        tree = make_node("grot180", make_leaf_var(0))
+        tree = make_node("grot180", [make_leaf_var(0)])
         self.assertGreater(domain.fitness(tree), 0)
 
     def test_check_solution_correct_tree(self):
         task = self._rot90_task()
         domain = ARCDomain(task)
-        tree = make_node("grot90", make_leaf_var(0))
+        tree = make_node("grot90", [make_leaf_var(0)])
         self.assertTrue(domain.check_solution(tree))
 
     def test_check_solution_wrong_tree(self):
         task = self._rot90_task()
         domain = ARCDomain(task)
-        tree = make_node("grot180", make_leaf_var(0))
+        tree = make_node("grot180", [make_leaf_var(0)])
         self.assertFalse(domain.check_solution(tree))
 
     def test_solve_rot90_end_to_end(self):
@@ -424,13 +426,13 @@ class TestARCDomain(unittest.TestCase):
     def test_train_accuracy_perfect(self):
         task = self._rot90_task()
         domain = ARCDomain(task)
-        tree = make_node("grot90", make_leaf_var(0))
+        tree = make_node("grot90", [make_leaf_var(0)])
         self.assertAlmostEqual(domain.train_accuracy(tree), 1.0)
 
     def test_test_accuracy_perfect(self):
         task = self._rot90_task()
         domain = ARCDomain(task)
-        tree = make_node("grot90", make_leaf_var(0))
+        tree = make_node("grot90", [make_leaf_var(0)])
         self.assertAlmostEqual(domain.test_accuracy(tree), 1.0)
 
     def test_primitive_subset(self):
@@ -445,7 +447,7 @@ class TestARCDomain(unittest.TestCase):
     def test_lam_increases_fitness(self):
         """Higher lambda should increase fitness (more complexity penalty)."""
         task = self._rot90_task()
-        tree = make_node("grot90", make_leaf_var(0))
+        tree = make_node("grot90", [make_leaf_var(0)])
         d_low  = ARCDomain(task, lam=0.0)
         d_high = ARCDomain(task, lam=1.0)
         # With lam=0 and perfect tree, fitness ≈ 0

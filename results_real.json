@@ -2,11 +2,11 @@
   "baseline": {
     "label": "Baseline (8 ops)",
     "n_ops": 8,
-    "n_tasks": 2,
+    "n_tasks": 8,
     "n_solved": 0,
     "pct_solved": 0.0,
-    "mean_test_acc": 0.4184,
-    "total_elapsed_s": 3.6,
+    "mean_test_acc": 0.594,
+    "total_elapsed_s": 20.1,
     "results": [
       {
         "task": "00576224",
@@ -30,18 +30,90 @@
         "solved": false,
         "near_solved": true,
         "n_nodes": 1,
-        "elapsed_s": 3.42
+        "elapsed_s": 3.41
+      },
+      {
+        "task": "00dbd492",
+        "category": "00dbd492",
+        "true_op": "",
+        "found_expr": "x",
+        "train_acc": 0.7756,
+        "test_acc": 0.78,
+        "solved": false,
+        "near_solved": false,
+        "n_nodes": 1,
+        "elapsed_s": 2.11
+      },
+      {
+        "task": "03560426",
+        "category": "03560426",
+        "true_op": "",
+        "found_expr": "grefl_v(x)",
+        "train_acc": 0.7733,
+        "test_acc": 0.76,
+        "solved": false,
+        "near_solved": false,
+        "n_nodes": 2,
+        "elapsed_s": 1.32
+      },
+      {
+        "task": "05a7bcf2",
+        "category": "05a7bcf2",
+        "true_op": "",
+        "found_expr": "x",
+        "train_acc": 0.7259,
+        "test_acc": 0.5811,
+        "solved": false,
+        "near_solved": false,
+        "n_nodes": 1,
+        "elapsed_s": 7.97
+      },
+      {
+        "task": "0607ce86",
+        "category": "0607ce86",
+        "true_op": "",
+        "found_expr": "x",
+        "train_acc": 0.9072,
+        "test_acc": 0.9015,
+        "solved": false,
+        "near_solved": true,
+        "n_nodes": 1,
+        "elapsed_s": 3.7
+      },
+      {
+        "task": "0692e18c",
+        "category": "0692e18c",
+        "true_op": "",
+        "found_expr": "x",
+        "train_acc": 0.0,
+        "test_acc": 0.0,
+        "solved": false,
+        "near_solved": false,
+        "n_nodes": 1,
+        "elapsed_s": 0.19
+      },
+      {
+        "task": "070dd51e",
+        "category": "070dd51e",
+        "true_op": "",
+        "found_expr": "x",
+        "train_acc": 0.9267,
+        "test_acc": 0.8925,
+        "solved": false,
+        "near_solved": true,
+        "n_nodes": 1,
+        "elapsed_s": 1.27
       }
     ]
   },
   "expanded": {
     "label": "Expanded (93 ops)",
     "n_ops": 93,
-    "n_tasks": 2,
+    "n_tasks": 8,
     "n_solved": 0,
     "pct_solved": 0.0,
-    "mean_test_acc": 0.5587,
-    "total_elapsed_s": 7.6,
+    "mean_test_acc": 0.6451,
+    "total_elapsed_s": 36.4,
     "results": [
       {
         "task": "00576224",
@@ -53,7 +125,7 @@
         "solved": false,
         "near_solved": false,
         "n_nodes": 10,
-        "elapsed_s": 1.03
+        "elapsed_s": 1.05
       },
       {
         "task": "009d5c81",
@@ -65,7 +137,79 @@
         "solved": false,
         "near_solved": true,
         "n_nodes": 4,
-        "elapsed_s": 6.52
+        "elapsed_s": 6.46
+      },
+      {
+        "task": "00dbd492",
+        "category": "00dbd492",
+        "true_op": "",
+        "found_expr": "x",
+        "train_acc": 0.7756,
+        "test_acc": 0.78,
+        "solved": false,
+        "near_solved": false,
+        "n_nodes": 1,
+        "elapsed_s": 3.45
+      },
+      {
+        "task": "03560426",
+        "category": "03560426",
+        "true_op": "",
+        "found_expr": "gclear_nonbg(x)",
+        "train_acc": 0.8167,
+        "test_acc": 0.86,
+        "solved": false,
+        "near_solved": true,
+        "n_nodes": 2,
+        "elapsed_s": 2.74
+      },
+      {
+        "task": "05a7bcf2",
+        "category": "05a7bcf2",
+        "true_op": "",
+        "found_expr": "x",
+        "train_acc": 0.7259,
+        "test_acc": 0.5811,
+        "solved": false,
+        "near_solved": false,
+        "n_nodes": 1,
+        "elapsed_s": 11.85
+      },
+      {
+        "task": "0607ce86",
+        "category": "0607ce86",
+        "true_op": "",
+        "found_expr": "gkeep_rows4(x)",
+        "train_acc": 0.9352,
+        "test_acc": 0.9299,
+        "solved": false,
+        "near_solved": true,
+        "n_nodes": 2,
+        "elapsed_s": 7.06
+      },
+      {
+        "task": "0692e18c",
+        "category": "0692e18c",
+        "true_op": "",
+        "found_expr": "x",
+        "train_acc": 0.0,
+        "test_acc": 0.0,
+        "solved": false,
+        "near_solved": false,
+        "n_nodes": 1,
+        "elapsed_s": 0.21
+      },
+      {
+        "task": "070dd51e",
+        "category": "070dd51e",
+        "true_op": "",
+        "found_expr": "x",
+        "train_acc": 0.9267,
+        "test_acc": 0.8925,
+        "solved": false,
+        "near_solved": true,
+        "n_nodes": 1,
+        "elapsed_s": 3.62
       }
     ]
   }

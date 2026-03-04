@@ -57,7 +57,7 @@ class TestSymbolicRegressionDomain(unittest.TestCase):
         xs = [0.0, 1.0, 2.0]
         ys = [0.0, 1.0, 4.0]
         domain = SymbolicRegressionDomain(xs, ys, lam=0.0)
-        tree = make_node("sq", make_leaf_var(0))
+        tree = make_node("sq", [make_leaf_var(0)])
         preds = domain.predict(tree)
         for p, y in zip(preds, ys):
             self.assertAlmostEqual(p, y, places=9)
