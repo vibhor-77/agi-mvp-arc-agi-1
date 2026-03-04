@@ -126,8 +126,14 @@ def grid_cell_accuracy(pred: Grid, target: Grid) -> float:
         return 0.0
     if not isinstance(pred[0], list) or not isinstance(target[0], list):
         return 0.0
+    
+    # Exact dimension check
     if len(pred) != len(target):
         return 0.0
+    for r in range(len(target)):
+        if len(pred[r]) != len(target[r]):
+            return 0.0
+
     total = sum(len(row) for row in target)
     if total == 0:
         return 0.0
@@ -135,7 +141,7 @@ def grid_cell_accuracy(pred: Grid, target: Grid) -> float:
         1
         for r in range(len(target))
         for c in range(len(target[r]))
-        if r < len(pred) and c < len(pred[r]) and pred[r][c] == target[r][c]
+        if pred[r][c] == target[r][c]
     )
     return matches / total
 
