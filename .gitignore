@@ -24,6 +24,8 @@ env/
 # Results (generated — don't commit large JSONs)
 results.json
 results/
+reports/
+models/
 
 # IDE
 .vscode/

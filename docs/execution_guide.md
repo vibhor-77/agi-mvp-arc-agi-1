@@ -71,8 +71,8 @@ python3 train_wake_sleep.py \
     --generations 100 \
     --workers 1 \
     --task-workers 8 \
-    --model arc_library.json \
-    --report wake_sleep_report.md \
+    --model models/arc-agi-1_<timestamp>.json \
+    --report reports/train_<timestamp>.md \
     --seed 42
 ```
 *(Tip: Keeping `--workers 1` ensures internal search tree logging remains clean on your terminal shell.)*
@@ -80,10 +80,10 @@ python3 train_wake_sleep.py \
 ### Specialized Artifact Parameters 
 The evaluation pipeline defaults to writing outputs cleanly, but you have the power to define exactly where these abstraction layers and evaluation heuristics are saved.
 
-- **`--model <filepath>`** (*Default: arc_library.json*)
-  This controls where the mathematical abstractions and transition states discovered during the `train_wake_sleep.py` loops are incrementally written. When executing `evaluate_agi.py`, it automatically pulls abstractions from this path and loads them into the baseline Lexicase selection pool.
-- **`--report <filepath>`** (*Default: wake_sleep_report.md / evaluation_report.md*)
-  Our Introspection diagnostics natively generate comprehensive Markdown files categorized by failures (Dimension Mismatch, Pixel Mismatch). Use this parameter to label iteration testing dynamically (e.g. `--report run_v1_evaluation.md`).
+- **`--model <filepath>`** (*Default: LATEST*)
+  This controls where the mathematical abstractions and transition states discovered during the `train_wake_sleep.py` loops are incrementally written or loaded from. By default, `train_wake_sleep.py` deposits timestamped files into `models/`. When executing `evaluate_agi.py`, it automatically sweeps the `models/` folder and dynamically loads the most recently created compilation.
+- **`--report <filepath>`** (*Default: reports/train_<timestamp>.md / reports/eval_<timestamp>.md*)
+  Our Introspection diagnostics natively generate comprehensive Markdown files categorized by failures (Dimension Mismatch, Pixel Mismatch).
 - **`--seed <integer>`** (*Default: None*)
   If you need 100% deterministic reproducibility for scientific logging across multiple machines, lock the `BeamSearch` evolutionary mutations globally via an exact seed integers.
 

@@ -11,6 +11,7 @@ End-to-end evolutionary AGI training loop leveraging Abstraction and Composabili
 import argparse
 import os
 import sys
+import datetime
 
 from domains.arc.runner import load_tasks_from_dir, BenchmarkConfig, evaluate_tasks
 from domains.arc.domain import ARCTask
@@ -74,6 +75,7 @@ def run_wake_sleep(tasks: list[ARCTask], epochs: int, cfg: BenchmarkConfig, mode
     print(f"Full introspection report saved to: {report_path}")
 
 if __name__ == "__main__":
+    timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     parser = argparse.ArgumentParser()
     parser.add_argument("--data", type=str, default="arc_data/data/training")
     parser.add_argument("--epochs", type=int, default=5, help="Number of Wake/Sleep cycles")
@@ -83,10 +85,13 @@ if __name__ == "__main__":
     parser.add_argument("--beam-size", type=int, default=10, help="Size of the Beam Search queue")
     parser.add_argument("--offspring", type=int, default=20, help="Number of mutations per generation")
     parser.add_argument("--generations", type=int, default=100, help="Number of deep search iterations per task")
-    parser.add_argument("--model", type=str, default="arc_library.json", help="Filepath to save the learned primitive dictionary")
+    parser.add_argument("--model", type=str, default=f"models/arc-agi-1_{timestamp}.json", help="Filepath to save the learned primitive dictionary")
     parser.add_argument("--seed", type=int, default=None, help="Deterministic random seed for the search engine")
-    parser.add_argument("--report", type=str, default="wake_sleep_report.md", help="Markdown file to accumulate Introspection diagnostics")
+    parser.add_argument("--report", type=str, default=f"reports/train_{timestamp}.md", help="Markdown file to accumulate Introspection diagnostics")
     args = parser.parse_args()
+
+    os.makedirs(os.path.dirname(args.model), exist_ok=True)
+    os.makedirs(os.path.dirname(args.report), exist_ok=True)
 
     print("\n" + "="*65)
     print("  WAKE-SLEEP EXECUTOR PARAMETERS")

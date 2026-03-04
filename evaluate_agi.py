@@ -14,6 +14,7 @@ program to solve the provided `train` grids, and applies it to the `test` grid.
 import argparse
 import os
 import sys
+import datetime
 
 from domains.arc.runner import load_tasks_from_dir, BenchmarkConfig, evaluate_tasks
 from core.library import PrimitiveLibrary
@@ -60,6 +61,7 @@ def run_evaluation(data_dir: str, num_tasks: int, cfg: BenchmarkConfig, model_pa
     print(f"Markdown Introspection report saved to: {report_path}")
 
 if __name__ == "__main__":
+    timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     parser = argparse.ArgumentParser()
     # Forces evaluation to ONLY look at the eval subset
     parser.add_argument("--data", type=str, default="arc_data/data/evaluation")
@@ -69,11 +71,25 @@ if __name__ == "__main__":
     parser.add_argument("--beam-size", type=int, default=10, help="Size of the Beam Search queue")
     parser.add_argument("--offspring", type=int, default=20, help="Number of mutations per generation")
     parser.add_argument("--generations", type=int, default=100, help="Number of deep search iterations per task")
-    parser.add_argument("--model", type=str, default="arc_library.json", help="Filepath to load the learned primitive dictionary from")
+    parser.add_argument("--model", type=str, default="LATEST", help="Filepath to load the learned primitive dictionary from. Defaults to latest file in models/")
     parser.add_argument("--seed", type=int, default=None, help="Deterministic random seed for the search engine")
-    parser.add_argument("--report", type=str, default="evaluation_report.md", help="Markdown file to accumulate Introspection diagnostics")
+    parser.add_argument("--report", type=str, default=f"reports/eval_{timestamp}.md", help="Markdown file to accumulate Introspection diagnostics")
     
     args = parser.parse_args()
+
+    if args.model == "LATEST":
+        if not os.path.exists("models"):
+            print("Error: 'models' directory not found. Please run train_wake_sleep.py first or specify --model.")
+            sys.exit(1)
+        model_files = [os.path.join("models", f) for f in os.listdir("models") if f.endswith(".json")]
+        if not model_files:
+            print("Error: No .json models found in 'models' directory.")
+            sys.exit(1)
+        args.model = max(model_files, key=os.path.getmtime)
+        print(f"Auto-selected latest model: {args.model}")
+
+    # Ensure reports directory exists
+    os.makedirs(os.path.dirname(args.report), exist_ok=True)
 
     print("\n" + "="*65)
     print("  AGI EVALUATION PARAMETERS")

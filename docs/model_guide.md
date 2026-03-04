@@ -6,11 +6,11 @@ This document explains what these files are, how to read them, and how to verify
 
 ---
 
-## 1. The Model File (`arc_library.json`)
+## 1. The Model File (`models/arc-agi-1_<timestamp>.json`)
 
 The "model" of this engine is not a massive matrix of unintelligible float variables. It is an explicit library of functional abstractions natively discovered by the algorithm. 
 
-By default, executing `train_wake_sleep.py` saves this file incrementally to `--model arc_library.json`.
+By default, executing `train_wake_sleep.py` saves this file incrementally to uniquely timestamped documents inside the `models/` folder.
 
 ### How to read the `.json` file:
 The JSON model file is structured into two main dictionaries:
@@ -45,7 +45,7 @@ The JSON model file is structured into two main dictionaries:
 
 Both the train and evaluation scripts now feature native Markdown Auto-Generators that output explicitly *why* tasks failed.
 
-By default, the training script generates `wake_sleep_report.md` (spanning all 5 Epochs), and the evaluation script generates `evaluation_report.md`.
+By default, the training script generates `reports/train_<timestamp>.md` (spanning all 5 Epochs), and the evaluation script generates `reports/eval_<timestamp>.md`.
 
 ### How to understand the `Introspection` outputs:
 During the `BeamSearch`, if a task is unsolved, the engine records the final and best AST (by fitness score) and logs the failure category:
@@ -69,8 +69,8 @@ This loop executes the full abstraction-gathering cycle across the 400 ARC train
 python3 train_wake_sleep.py
 ```
 **What happens behind the scenes:**
-- The engine compiles and saves `arc_library.json` continually.
-- The engine writes the Epoch reports to `wake_sleep_report.md`.
+- The engine compiles and saves `models/arc-agi-1_<timestamp>.json` continually.
+- The engine writes the Epoch reports to `reports/train_<timestamp>.md`.
 - No parameters required. It will default to 10-width beam paths across 100 deep-generations per grid.
 
 ### Phase 2: Blind Evaluation
@@ -79,9 +79,9 @@ This validates your generated models purely out-of-sample on unseen arrays.
 python3 evaluate_agi.py
 ```
 **What happens behind the scenes:**
-- The scripts dynamically look for `arc_library.json` and loads all its mathematical theorems into memory memory prior to spawning its workers.
+- The script dynamically sweeps the `models/` directory for the most recently modified `.json` file and assumes it is the target architecture.
 - It parses the 400 separate unseen Evaluation tasks.
-- It writes the final comprehensive Introspection strings natively to `evaluation_report.md`.
+- It writes the final comprehensive Introspection strings natively to `reports/eval_<timestamp>.md`.
 
 ### (Optional) Reproducibility
 If you need to identically reproduce a test bench report for research logging, provide a deterministic kernel seed to lock the uniform mutations:
