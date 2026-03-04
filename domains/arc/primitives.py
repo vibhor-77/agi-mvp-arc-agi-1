@@ -1308,6 +1308,26 @@ def g_repeat_h(g: Grid) -> Grid:
     """Repeat the entire grid horizontally, appending a copy to itself."""
     return [list(r) + list(r) for r in g]
 
+@_safe_grid_op
+def g_repeat_v3(g: Grid) -> Grid:
+    """Repeat the entire grid vertically 3 times."""
+    return [list(r) for r in g] * 3
+
+@_safe_grid_op
+def g_repeat_h3(g: Grid) -> Grid:
+    """Repeat the entire grid horizontally 3 times."""
+    return [list(r) * 3 for r in g]
+
+@_safe_grid_op
+def g_repeat_2x2(g: Grid) -> Grid:
+    """Tile the entire grid 2x2 times (doubles dimensions)."""
+    return [list(r) * 2 for r in g] * 2
+
+@_safe_grid_op
+def g_repeat_3x3(g: Grid) -> Grid:
+    """Tile the entire grid 3x3 times (triples dimensions)."""
+    return [list(r) * 3 for r in g] * 3
+
 # ── Target Color Replacements ──────────────────────────────────────────────────
 
 def g_replace_1_with_2(g: Grid) -> Grid:
@@ -1387,6 +1407,10 @@ _NEW_ARC_PRIMITIVES: dict[str, tuple[object, str]] = {
     # Sequence & Extrapolation
     "g_repeat_v":       (g_repeat_v,       "Repeat grid vertically"),
     "g_repeat_h":       (g_repeat_h,       "Repeat grid horizontally"),
+    "g_repeat_v3":      (g_repeat_v3,      "Repeat grid vertically 3 times"),
+    "g_repeat_h3":      (g_repeat_h3,      "Repeat grid horizontally 3 times"),
+    "g_repeat_2x2":     (g_repeat_2x2,     "Tile grid 2x2 times"),
+    "g_repeat_3x3":     (g_repeat_3x3,     "Tile grid 3x3 times"),
     # Color Target Replacements
     "g_replace_1_with_2": (g_replace_1_with_2, "Transforms color 1 to 2"),
     "g_replace_2_with_1": (g_replace_2_with_1, "Transforms color 2 to 1"),
