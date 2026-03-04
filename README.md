@@ -28,6 +28,11 @@ python -m unittest discover tests/ -v
 
 ## Results
 
+### Programmatic benchmark (76 tasks, built-in)
+
+These tasks were generated specifically to be solvable by the current 89-op DSL —
+they function as unit tests for the primitives, not as a measure of real-world performance.
+
 | System | Ops | Solved | Score |
 |--------|-----|--------|-------|
 | Baseline (geometric only) | 8 | 20/76 | 26% |
@@ -43,6 +48,23 @@ Per-category breakdown (expanded DSL):
 | Pattern (checkerboard, stripe, tile) | 6/12 (50%) |
 | Counting (bar chart, majority, filter) | 7/8 (88%) |
 | Compositional (2+ ops) | 7/12 (58%) |
+
+### Real ARC-AGI-1 (400 tasks, official dataset)
+
+Only **13 of 400 training tasks (~3%)** are solvable by a single primitive from the
+current 89-op DSL. The search engine finds all of them correctly — the ceiling is the
+DSL's expressive power, not the search algorithm.
+
+| Milestone | Tasks solved | What's needed |
+|-----------|-------------|---------------|
+| Current DSL (89 ops, single-op tasks only) | ~3% | — |
+| + object segmentation (`gsegment`) | ~15–20% | Connected component primitive |
+| + conditional logic + multi-op composition | ~30–40% | Binary/ternary tree nodes |
+| + refinement loops + LLM-guided primitives | ~50%+ | Architectural extensions |
+
+Most real ARC tasks require reasoning the current framework cannot express:
+contextual object identification, parametric recoloring, and multi-rule composition.
+See [`docs/next_steps.md`](docs/next_steps.md) for the concrete roadmap.
 
 ---
 
@@ -151,25 +173,26 @@ Planned domains: `arc2` (ARC-AGI-2), `nethack`, `zork`, `minigrid`.
 
 ## How to load real ARC-AGI-1 data
 
+```bash
+# Clone the dataset (one-time)
+git clone https://github.com/fchollet/ARC-AGI arc_data
+
+# Run against real tasks — use training split first (answers are known)
+python run_real_arc.py --split training --quick --tasks 20
+
+# Full evaluation run
+python run_real_arc.py --split evaluation --workers 4 --save results_real.json
+```
+
+Or programmatically:
+
 ```python
-import json
-import pathlib
-from domains.arc.domain import ARCTask, ARCDomain
-from domains.arc.runner import BenchmarkConfig, evaluate_tasks
-from core.primitives import registry
-import domains.arc.primitives  # register ops
+from domains.arc.runner import load_tasks_from_dir, run_benchmark, BenchmarkConfig
 
-# Download the dataset from github.com/fchollet/ARC-AGI
-tasks = []
-for p in pathlib.Path("arc_data/evaluation").glob("*.json"):
-    d = json.loads(p.read_text())
-    d["name"] = p.stem
-    tasks.append(ARCTask.from_dict(d))
-
+tasks = load_tasks_from_dir("arc_data/data/training")   # or data/evaluation
 cfg = BenchmarkConfig(generations=100, beam_size=20)
-expanded_ops = registry.names(domain="arc")
-report = evaluate_tasks(tasks, expanded_ops, cfg, "ARC-AGI-1 Eval")
-print(report.summary())
+baseline, expanded = run_benchmark(tasks, cfg)
+print(expanded.summary())
 ```
 
 ---

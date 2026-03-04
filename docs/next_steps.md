@@ -32,7 +32,9 @@ python run_real_arc.py                       # full run
 The `--data` flag tells the runner to load from real JSON files instead of the
 programmatic benchmark. Without it, the runner always uses the built-in 76 tasks.
 
-Expected result: 20–35% on the eval set with the current 89-op DSL.
+Expected result: ~3% on real tasks with the current 89-op DSL (only tasks expressible
+as a single unary primitive are solvable). Most real ARC tasks require object
+segmentation, conditional logic, or multi-op composition not yet in the framework.
 
 ### 2. Tune beam search hyperparameters
 
@@ -268,8 +270,9 @@ Target venues: NeurIPS 2026 workshop, ICLR 2027.
 | Milestone | Target | What's needed |
 |-----------|--------|---------------|
 | Current (programmatic benchmark) | 76% | Done ✓ |
-| Real ARC-AGI-1 eval (current DSL) | 20–35% | Download real data |
-| Real ARC-AGI-1 eval (+ segmentation) | 35–50% | `gsegment` + conditional |
-| Real ARC-AGI-1 eval (+ refinement loop) | 50–60% | Refinement loop infra |
-| Real ARC-AGI-1 eval (+ LLM-guided prims) | 60–70% | LLM integration |
+| Real ARC-AGI-1 (current DSL, single-op tasks) | ~3% | Done ✓ (13/400 training tasks) |
+| Real ARC-AGI-1 (+ segmentation + multi-op) | ~15–20% | `gsegment` + binary/ternary nodes |
+| Real ARC-AGI-1 (+ conditional logic) | ~30–40% | ConditionalNode, parametric recolor |
+| Real ARC-AGI-1 (+ refinement loops) | ~50%+ | Refinement loop infra |
+| Real ARC-AGI-1 (+ LLM-guided prims) | ~60%+ | LLM integration |
 | ARC-AGI-2 | TBD | Understand task distribution |
