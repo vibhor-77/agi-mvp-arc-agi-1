@@ -47,3 +47,13 @@ Realizing that we were physically fusing Symbolic Regression with Library Learni
 3. **Generative Priors (DreamCoder):** Probabilistic AST generation using $P(child \mid parent)$ Markov dynamics.
 
 This final fusion yielded the robust, intelligent solver documented in the `execution_guide.md` today!
+
+## 6. Let the Engine Train! (The Train/Eval Split)
+**User Prompt:**
+> *(Paraphrased)* "Focus on following the strategy before jumping deep into implementation details. The benchmark has a training set where the answer is known, and an evaluation set where it is not. Enhance the library of primitives and sub-trees using the training dataset... The basic primitives can be made using common sense (rotate, flip, fill_color). Then, discover shape or pattern identification primitives... My ultimate goal is to improve accuracy on the evaluation set of the ARC-AGI benchmark."
+
+**AI Commentary & Reflection:**
+This was the reality check that pushed the MVP from a cool toy into a true ML evaluation framework. 
+While the underlying fusion of SR and LL was working, the model was hopelessly trapped because it could only process grids *mathematically* (e.g., rotating the entire grid). The user correctly identified that we needed generic **Shape and Object isolation abstractions** (`g_extract_objects`, `g_filter_color`, etc.) so the generic primitives could be applied piecemeal.
+
+Furthermore, we structurally partitioned the AGI runtime. We rewrote `train_wake_sleep.py` to loop exclusively over the 400 `training` tasks to build the `.json` library. We then sequestered testing into a completely blind `evaluate_agi.py` script that loads the matured library and evaluates the 400 `evaluation` tasks. We finally uncorked the `--beam-size` limits via CLI configuration, handed the script to `nohup`, and let the M1 CPU spin!

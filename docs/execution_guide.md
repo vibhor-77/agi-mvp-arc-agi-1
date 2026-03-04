@@ -30,30 +30,38 @@ pytest tests/
 
 *Expected Output: >170 tests passing perfectly in ~2 seconds.*
 
-## 3. Running the Base Evaluator
-
-To execute the solver against the baseline `8` operation subset versus the full `93` expanded AGI primitives subset, run the benchmark orchestrator.
-The `--quick` flag limits the tree generations and beam size heavily to test if the orchestrator runs without crashing.
-The `--tasks` flag limits the number of JSON tasks the orchestrator evaluates.
-
-```bash
-python3 run_real_arc.py --quick --tasks 8 --workers 1
-```
-
-**M1 Max Optimization:**
-If you want to unleash the full processing power of your MacBook Pro without blocking on macOS ThreadPool limitations, utilize the `--task-workers` threaded flag to evaluate multiple AST tasks physically simultaneously:
-```bash
-python3 run_real_arc.py --task-workers 8
-```
-
-## 4. Running the Wake-Sleep Paradigm Loop
+## 3. The Training Pipeline (Wake-Sleep)
 
 The crown jewel of this architecture is the cyclic `train_wake_sleep.py` script.
-This script utilizes an end-to-end evolutionary loop:
-1. **WAKE Phase:** Attempt batches of ARC tasks.
+This script utilizes an end-to-end evolutionary loop specifically over the **Training Dataset**:
+1. **WAKE Phase:** Attempt batches of ARC tasks using the current AST search limits.
 2. **SLEEP Phase:** Extract common functional sub-trees from solved tasks and compress them into new reusable primitives (`lib_op_X`), computing a sequence generative prior $P(\text{child} \mid \text{parent})$.
-3. **Repeat:** The expanded DSL tackles harder tasks in subsequent epochs with weighted semantic guidance.
+3. **Repeat:** The expanded DSL tackles harder training tasks in subsequent epochs.
+
+By default, running the script with no arguments runs a deep search across all 400 training tasks. You can parameterize it using standard CLI flags:
+```bash
+python3 train_wake_sleep.py \
+    --tasks 400 \
+    --epochs 5 \
+    --beam-size 100 \
+    --generations 100 \
+    --workers 1 \
+    --task-workers 8
+```
+*(Tip: Keeping `--workers 1` ensures logs print cleanly to your terminal so you can watch tasks solve in real-time, while `--task-workers 8` parallelizes the internal search tree mathematically.)*
+
+## 4. The Evaluation Pipeline
+
+Once the `arc_library.json` file has been fully saturated with learned shape-extraction and logic primitives from the Training set, we test the system's true intelligence on the Unseen Evaluation set.
+
+The `evaluate_agi.py` script is explicitly hardcoded to lock out training data and evaluate against `arc_data/data/evaluation`. It applies the exact logic patterns discovered mathematically in the training pipeline:
 
 ```bash
-python3 train_wake_sleep.py --tasks 10 --epochs 3 --task-workers 8
+python3 evaluate_agi.py \
+    --tasks 400 \
+    --beam-size 100 \
+    --generations 100 \
+    --task-workers 8
 ```
+
+This enforces a strict generalization benchmark devoid of hardcoded logic.
