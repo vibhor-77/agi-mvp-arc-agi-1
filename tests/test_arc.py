@@ -28,6 +28,7 @@ from domains.arc.primitives import (
     gcheckerboard, gstripe_h2, gstripe_v2, gtile2x2,
     gcountbar, gmajority, gkeep_rows2,
     gframe8, gdiag1,
+    g_filter_color, g_extract_objects, g_render_object,
 )
 from domains.arc.domain import (
     ARCTask, ARCDomain, grid_cell_accuracy, is_exact_match
@@ -198,6 +199,54 @@ class TestStructural(unittest.TestCase):
             self.assertEqual(result[i][i], 1)
         self.assertEqual(result[0][1], 0)
 
+
+# ---------------------------------------------------------------------------
+# Shapes and Objects primitives
+# ---------------------------------------------------------------------------
+
+class TestShapes(unittest.TestCase):
+    def test_filter_color(self):
+        g = [
+            [1, 2, 0],
+            [2, 1, 0],
+            [0, 0, 3]
+        ]
+        out = g_filter_color(g, 1)
+        self.assertEqual(out, [[1, 0, 0], [0, 1, 0], [0, 0, 0]])
+
+    def test_extract_objects(self):
+        g = [
+            [0, 0, 0, 0],
+            [0, 1, 1, 0],
+            [0, 1, 0, 0],
+            [0, 0, 0, 2] # 2 is smaller than the 1s cluster
+        ]
+        out = g_extract_objects(g)
+        self.assertEqual(out, [[1, 1], [1, 0]])
+        
+    def test_extract_empty_returns_clone(self):
+        g = [[0, 0], [0, 0]]
+        out = g_extract_objects(g)
+        self.assertEqual(out, [[0, 0], [0, 0]])
+        self.assertIsNot(out, g)
+
+    def test_render_object(self):
+        g1 = [[1, 1], [1, 1]]
+        g2 = [
+            [0, 0, 0, 0],
+            [0, 0, 0, 0],
+            [0, 0, 0, 0],
+            [0, 0, 0, 0]
+        ]
+        out = g_render_object(g1, g2)
+        # Should paste the 2x2 square perfectly in the 4x4 center
+        expected = [
+            [0, 0, 0, 0],
+            [0, 1, 1, 0],
+            [0, 1, 1, 0],
+            [0, 0, 0, 0]
+        ]
+        self.assertEqual(out, expected)
 
 # ---------------------------------------------------------------------------
 # Pattern primitives

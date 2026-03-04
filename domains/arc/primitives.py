@@ -65,16 +65,16 @@ def _cols(g: Grid) -> int:
     return len(g[0]) if g else 0
 
 
-def _safe_grid_op(fn: Callable[[Grid], Grid]) -> Callable[[Grid], Grid]:
+def _safe_grid_op(fn: Callable) -> Callable:
     """
-    Wrap a grid op so it returns an unchanged clone on any error.
-    Prevents a single bad candidate from crashing the whole search run.
+    Wrap a grid op so it returns an unchanged clone of the first argument 
+    on any error. Prevents a single bad candidate from crashing the search.
     """
-    def _wrapped(g: Grid) -> Grid:
+    def _wrapped(*args, **kwargs):
         try:
-            return fn(g)
+            return fn(*args, **kwargs)
         except Exception:
-            return _clone(g)
+            return _clone(args[0]) if args else []
     _wrapped.__name__ = fn.__name__
     return _wrapped
 
@@ -961,6 +961,102 @@ def ginterior_only(g: Grid) -> Grid:
 
 
 # Register the new primitives
+# ---------------------------------------------------------------------------
+# SHAPES & OBJECTS
+# ---------------------------------------------------------------------------
+
+@_safe_grid_op
+def g_filter_color(g: Grid, color: int) -> Grid:
+    """
+    Returns a blank grid where only cells matching `color` are preserved.
+    """
+    R, C = len(g), len(g[0])
+    out = [[0] * C for _ in range(R)]
+    for r in range(R):
+        for c in range(C):
+            if g[r][c] == color:
+                out[r][c] = color
+    return out
+
+@_safe_grid_op
+def g_extract_objects(g: Grid) -> Grid:
+    """
+    Finds the largest 4-way connected non-zero object, extracts it into the smallest bounding box,
+    and returns that extracted grid. If no objects exist, returns the original grid.
+    """
+    R, C = len(g), len(g[0])
+    visited = set()
+    objects = []
+
+    def get_neighbors(r, c, color):
+        for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+            nr, nc = r + dr, c + dc
+            if 0 <= nr < R and 0 <= nc < C and (nr, nc) not in visited:
+                if g[nr][nc] == color:
+                    yield nr, nc
+
+    for r in range(R):
+        for c in range(C):
+            col = g[r][c]
+            if col != 0 and (r, c) not in visited:
+                # BFS to find the object
+                obj_cells = [(r, c)]
+                visited.add((r, c))
+                queue = [(r, c)]
+                while queue:
+                    curr_r, curr_c = queue.pop(0)
+                    for nr, nc in get_neighbors(curr_r, curr_c, col):
+                        visited.add((nr, nc))
+                        obj_cells.append((nr, nc))
+                        queue.append((nr, nc))
+                objects.append(obj_cells)
+
+    if not objects:
+        return _clone(g)
+
+    # Find the largest object by cell count
+    largest_obj = max(objects, key=len)
+
+    # Compute bounding box
+    min_r = min(r for r, c in largest_obj)
+    max_r = max(r for r, c in largest_obj)
+    min_c = min(c for r, c in largest_obj)
+    max_c = max(c for r, c in largest_obj)
+
+    # Extract bounding box
+    box_R = max_r - min_r + 1
+    box_C = max_c - min_c + 1
+    out = [[0] * box_C for _ in range(box_R)]
+    
+    for r, c in largest_obj:
+        out[r - min_r][c - min_c] = g[r][c]
+        
+    return out
+
+@_safe_grid_op
+def g_render_object(g1: Grid, g2: Grid) -> Grid:
+    """
+    g1 is the extracted small object. g2 is the large background grid.
+    This primitive attempts to paste g1 into the center of g2.
+    """
+    r1, c1 = len(g1), len(g1[0])
+    r2, c2 = len(g2), len(g2[0])
+    
+    if r1 > r2 or c1 > c2:
+        return _clone(g2) # Doesn't fit
+        
+    out = _clone(g2)
+    start_r = (r2 - r1) // 2
+    start_c = (c2 - c1) // 2
+    
+    for r in range(r1):
+        for c in range(c1):
+            if g1[r][c] != 0:
+                out[start_r + r][start_c + c] = g1[r][c]
+                
+    return out
+
+
 _NEW_ARC_PRIMITIVES: dict[str, tuple[object, str]] = {
     # More color swaps
     "gswap_04":         (gswap_04,         "Swap colors 0 and 4"),
@@ -1002,6 +1098,10 @@ _NEW_ARC_PRIMITIVES: dict[str, tuple[object, str]] = {
     # Border/interior split
     "gborder_only":     (gborder_only,     "Keep only border cells"),
     "ginterior_only":   (ginterior_only,   "Keep only interior cells"),
+    # Objects
+    "g_filter_color":   (g_filter_color,   "Extracts mask of a single color"),
+    "g_extract_objects": (g_extract_objects, "Extracts largest grid object to bounding box"),
+    "g_render_object":  (g_render_object,  "Pastes a small object into the center of a background grid"),
 }
 
 for _name, (_fn, _desc) in _NEW_ARC_PRIMITIVES.items():
