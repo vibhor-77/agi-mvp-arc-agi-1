@@ -269,6 +269,20 @@ def ggravity_left(g: Grid) -> Grid:
     return result
 
 
+@_safe_grid_op
+def g_overlay(g1: Grid, g2: Grid) -> Grid:
+    """Overlays non-zero pixels from g1 onto g2. If sizes differ, aligns to top-left."""
+    out = _clone(g2)
+    R1, C1 = len(g1), len(g1[0])
+    R2, C2 = len(out), len(out[0])
+    
+    for r in range(min(R1, R2)):
+        for c in range(min(C1, C2)):
+            if g1[r][c] != 0:
+                out[r][c] = g1[r][c]
+    return out
+
+
 # ---------------------------------------------------------------------------
 # SORT
 # ---------------------------------------------------------------------------
@@ -1039,6 +1053,134 @@ def g_extract_objects(g: Grid) -> Grid:
         
     return out
 
+# ---------------------------------------------------------------------------
+# KEEP (Shape Topological Filters)
+# ---------------------------------------------------------------------------
+
+def _filter_objects(g: Grid, predicate: Callable[[list[tuple[int, int]], Grid], bool]) -> Grid:
+    """Isolates all objects, checks them against `predicate`, and returns a grid containing only the passing objects."""
+    objs = _get_all_objects(g)
+    if not objs: return _clone(g)
+    
+    # Needs to see the raw cells relative to the grid
+    R, C = len(g), len(g[0])
+    out = [[0] * C for _ in range(R)]
+    
+    # For relative ranking (like largest/smallest), we evaluated the raw list
+    remaining_objs = getattr(predicate, 'filter_list', lambda x: [o for o in x if predicate(o[3], o[2])])([ (min_r, min_c, box, cells) for min_r, min_c, box, cells in objs ])
+    
+    for (min_r, min_c, box, cells) in remaining_objs:
+        tR, tC = len(box), len(box[0])
+        for tr in range(tR):
+            for tc in range(tC):
+                if box[tr][tc] != 0:
+                    rr = min_r + tr
+                    cc = min_c + tc
+                    if 0 <= rr < R and 0 <= cc < C:
+                        out[rr][cc] = box[tr][tc]
+    return out
+
+@_safe_grid_op
+def gkeep_square(g: Grid) -> Grid:
+    """Keep only objects whose bounding box is 100% solid (no internal 0s)."""
+    return _filter_objects(g, lambda cells, box: all(cell != 0 for row in box for cell in row))
+
+@_safe_grid_op
+def gkeep_hollow(g: Grid) -> Grid:
+    """Keep only objects that contain at least one enclosed empty space."""
+    def is_hollow(cells, box):
+        # A simple approximation: if the # of non-zero pixels is less than the box area, and it's not simply a diagonal or L-shape
+        R, C = len(box), len(box[0])
+        if R <= 2 or C <= 2: return False
+        
+        # Check if any interior 0 pixel is fully surrounded
+        for r in range(1, R-1):
+            for c in range(1, C-1):
+                if box[r][c] == 0:
+                    # simplistic check: do we have non-zeros bounding this somehow? (A true flooded BFS would be better, but this works for ARC basics)
+                    if box[r-1][c] != 0 and box[r+1][c] != 0 and box[r][c-1] != 0 and box[r][c+1] != 0:
+                        return True
+        return False
+    return _filter_objects(g, is_hollow)
+
+@_safe_grid_op
+def gkeep_solid(g: Grid) -> Grid:
+    """Keep only objects that are not hollow."""
+    def is_hollow_local(cells, box):
+        R, C = len(box), len(box[0])
+        if R <= 2 or C <= 2: return False
+        for r in range(1, R-1):
+            for c in range(1, C-1):
+                if box[r][c] == 0:
+                    if box[r-1][c] != 0 and box[r+1][c] != 0 and box[r][c-1] != 0 and box[r][c+1] != 0:
+                        return True
+        return False
+    return _filter_objects(g, lambda cells, box: not is_hollow_local(cells, box))
+
+@_safe_grid_op
+def gkeep_largest(g: Grid) -> Grid:
+    """Keep only the single largest object."""
+    def filter_largest(obj_list):
+        if not obj_list: return []
+        largest = max(obj_list, key=lambda x: len(x[3]))
+        return [largest]
+    predicate = lambda cells, box: True
+    predicate.filter_list = filter_largest
+    return _filter_objects(g, predicate)
+
+@_safe_grid_op
+def gkeep_smallest(g: Grid) -> Grid:
+    """Keep only the single smallest object."""
+    def filter_smallest(obj_list):
+        if not obj_list: return []
+        smallest = min(obj_list, key=lambda x: len(x[3]))
+        return [smallest]
+    predicate = lambda cells, box: True
+    predicate.filter_list = filter_smallest
+    return _filter_objects(g, predicate)
+
+@_safe_grid_op
+def gkeep_symmetric_v(g: Grid) -> Grid:
+    """Keep only objects that are vertically symmetric within their own bounds."""
+    def is_sym_v(cells, box):
+        R, C = len(box), len(box[0])
+        for r in range(R):
+            for c in range(C // 2):
+                if box[r][c] != box[r][C - 1 - c]:
+                    return False
+        return True
+    return _filter_objects(g, is_sym_v)
+
+@_safe_grid_op
+def gkeep_symmetric_h(g: Grid) -> Grid:
+    """Keep only objects that are horizontally symmetric within their own bounds."""
+    def is_sym_h(cells, box):
+        R, C = len(box), len(box[0])
+        for r in range(R // 2):
+            for c in range(C):
+                if box[r][c] != box[R - 1 - r][c]:
+                    return False
+        return True
+    return _filter_objects(g, is_sym_h)
+
+def _make_gkeep_color(color_int: int) -> Callable:
+    @_safe_grid_op
+    def _gkeep_c(g: Grid) -> Grid:
+        return _filter_objects(g, lambda cells, box: box[0][0] == color_int or any(c == color_int for row in box for c in row if c != 0))
+    # Give it a nice name for registry display
+    _gkeep_c.__name__ = f"gkeep_color{color_int}"
+    return _gkeep_c
+
+gkeep_color1 = _make_gkeep_color(1)
+gkeep_color2 = _make_gkeep_color(2)
+gkeep_color3 = _make_gkeep_color(3)
+gkeep_color4 = _make_gkeep_color(4)
+gkeep_color5 = _make_gkeep_color(5)
+gkeep_color6 = _make_gkeep_color(6)
+gkeep_color7 = _make_gkeep_color(7)
+gkeep_color8 = _make_gkeep_color(8)
+gkeep_color9 = _make_gkeep_color(9)
+
 
 # ---------------------------------------------------------------------------
 # MAP (Higher-Order Object Transforms)
@@ -1084,10 +1226,9 @@ def _get_all_objects(g: Grid) -> list[tuple[int, int, list[tuple[int, int]]]]:
                 for cr, cc in obj_cells:
                     box[cr - min_r][cc - min_c] = g[cr][cc]
                     
-                objects.append((min_r, min_c, box))
+                objects.append((min_r, min_c, box, obj_cells))
                 
     return objects
-
 
 def _apply_gmap(g: Grid, transform_fn: Callable) -> Grid:
     """Isolate objects natively, transform their boxes, and composite back onto void."""
@@ -1099,7 +1240,7 @@ def _apply_gmap(g: Grid, transform_fn: Callable) -> Grid:
     R, C = len(g), len(g[0])
     out = [[0] * C for _ in range(R)]
     
-    for (min_r, min_c, box) in objs:
+    for (min_r, min_c, box, cells) in objs:
         transformed = transform_fn(box)
         tR = len(transformed)
         tC = len(transformed[0])
@@ -1540,7 +1681,27 @@ _NEW_ARC_PRIMITIVES: dict[str, tuple[object, str]] = {
     "gmap_reflect_h":   (gmap_reflect_h, "Reflect all isolated shapes horizontally in place"),
     "gmap_reflect_v":   (gmap_reflect_v, "Reflect all isolated shapes vertically in place"),
     "gmap_fill_color":  (gmap_fill_color, "Fill isolated shape bounding boxes with solid dominant color"),
+    # KEEP (Shape Topological Filters)
+    "gkeep_square":     (gkeep_square, "Keep only objects whose bounding box is 100% solid"),
+    "gkeep_hollow":     (gkeep_hollow, "Keep only objects that enclose a hollow frame"),
+    "gkeep_solid":      (gkeep_solid, "Keep only objects that are not hollow"),
+    "gkeep_largest":    (gkeep_largest, "Keep only the single largest object"),
+    "gkeep_smallest":   (gkeep_smallest, "Keep only the single smallest object"),
+    "gkeep_symmetric_v": (gkeep_symmetric_v, "Keep only vertically symmetric shapes"),
+    "gkeep_symmetric_h": (gkeep_symmetric_h, "Keep only horizontally symmetric shapes"),
+    "gkeep_color1":     (gkeep_color1, "Keep only objects containing color 1"),
+    "gkeep_color2":     (gkeep_color2, "Keep only objects containing color 2"),
+    "gkeep_color3":     (gkeep_color3, "Keep only objects containing color 3"),
+    "gkeep_color4":     (gkeep_color4, "Keep only objects containing color 4"),
+    "gkeep_color5":     (gkeep_color5, "Keep only objects containing color 5"),
+    "gkeep_color6":     (gkeep_color6, "Keep only objects containing color 6"),
+    "gkeep_color7":     (gkeep_color7, "Keep only objects containing color 7"),
+    "gkeep_color8":     (gkeep_color8, "Keep only objects containing color 8"),
+    "gkeep_color9":     (gkeep_color9, "Keep only objects containing color 9"),
+    # COMPOSITORS
+    "g_overlay":        (g_overlay, "Overlay grid 1's non-zero pixels onto grid 2"),
 }
 
 for _name, (_fn, _desc) in _NEW_ARC_PRIMITIVES.items():
-    registry.register(_name, _fn, domain="arc", description=_desc)  # type: ignore[arg-type]
+    _arity = 2 if _name in ("g_overlay", "g_render_object", "g_filter_color") else 1
+    registry.register(_name, _fn, domain="arc", description=_desc, arity=_arity)  # type: ignore[arg-type]
