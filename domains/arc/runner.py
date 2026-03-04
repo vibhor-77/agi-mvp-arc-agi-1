@@ -39,7 +39,7 @@ import pathlib
 import sys
 import threading
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from typing import Any, Optional
 
@@ -267,6 +267,56 @@ class BenchmarkReport:
 def _suppress_on_result(result: Any) -> None:
     pass
 
+def _run_task_process(
+    idx: int, 
+    task: ARCTask, 
+    cfg: BenchmarkConfig, 
+    op_subset: list[str], 
+    inner_workers: int,
+    transition_matrix: dict[str, dict[str, float]] | None
+) -> tuple[int, TaskResult]:
+    """Execute the core logic for a single task inside an isolated multiprocessing worker."""
+    if cfg.verbose:
+        print(f"  → [{idx+1:3d}] STARTING  {task.name}", flush=True)
+
+    search_cfg = SearchConfig(
+        beam_size=cfg.beam_size,
+        offspring=cfg.offspring,
+        generations=cfg.generations,
+        workers=inner_workers,
+        converge_threshold=1e-9,
+        verbose=False,
+        seed=idx * 7 + 42,
+    )
+
+    task_t0 = time.time()
+    domain = ARCDomain(task, lam=cfg.lam, primitive_subset=op_subset)
+    domain.on_result = _suppress_on_result  # type: ignore[method-assign]
+
+    result = domain.solve(config=search_cfg, transition_matrix=transition_matrix)
+
+    tree      = result.best_tree
+    train_acc = domain.train_accuracy(tree)
+    test_acc  = domain.test_accuracy(tree)
+    solved    = domain.check_solution(tree)
+    near      = test_acc >= 0.80
+    elapsed   = time.time() - task_t0
+
+    tr = TaskResult(
+        task_name=task.name,
+        category=task.name.split("_")[0],
+        true_op=task.true_op,
+        found_expr=str(tree),
+        train_acc=train_acc,
+        test_acc=test_acc,
+        solved=solved,
+        near_solved=near,
+        n_nodes=tree.size(),
+        elapsed_s=elapsed,
+        best_tree=tree,
+    )
+    return idx, tr
+
 def evaluate_tasks(
     tasks: list[ARCTask],
     op_subset: list[str],
@@ -278,7 +328,7 @@ def evaluate_tasks(
     Run beam search on every task in *tasks* using *op_subset* as primitives.
 
     When ``cfg.task_workers > 1`` tasks run concurrently via
-    ``ThreadPoolExecutor``; the inner beam search's ``workers`` is forced to 1
+    ``ProcessPoolExecutor``; the inner beam search's ``workers`` is forced to 1
     to avoid nested ``multiprocessing.Pool`` issues on macOS.
 
     With ``cfg.verbose=True`` each task prints a "→ STARTING" line when it
@@ -316,91 +366,64 @@ def evaluate_tasks(
             f"success={pct:.1f}%"
         )
 
-    def _run_one(idx: int, task: ARCTask) -> tuple[int, TaskResult]:
-        """Evaluate a single task. Safe to run inside a thread."""
+    def _handle_result(idx: int, tr: TaskResult, task: ARCTask) -> None:
         if cfg.verbose:
-            with lock:
-                counters["active"] += 1
-                print(
-                    f"  → [{idx+1:3d}/{n_total}] STARTING  {task.name}",
-                    flush=True,
-                )
-                print(_scoreboard(), flush=True)
-
-        search_cfg = SearchConfig(
-            beam_size=cfg.beam_size,
-            offspring=cfg.offspring,
-            generations=cfg.generations,
-            workers=inner_workers,
-            converge_threshold=1e-9,
-            verbose=False,
-            seed=idx * 7 + 42,
-        )
-
-        task_t0 = time.time()
-        domain = ARCDomain(task, lam=cfg.lam, primitive_subset=op_subset)
-        # Suppress any domain-level result printing; we handle output here.
-        domain.on_result = _suppress_on_result  # type: ignore[method-assign]
-
-        result = domain.solve(config=search_cfg, transition_matrix=transition_matrix)
-
-        tree      = result.best_tree
-        train_acc = domain.train_accuracy(tree)
-        test_acc  = domain.test_accuracy(tree)
-        solved    = domain.check_solution(tree)
-        near      = test_acc >= 0.80
-        elapsed   = time.time() - task_t0
-
-        tr = TaskResult(
-            task_name=task.name,
-            category=task.name.split("_")[0],
-            true_op=task.true_op,
-            found_expr=str(tree),
-            train_acc=train_acc,
-            test_acc=test_acc,
-            solved=solved,
-            near_solved=near,
-            n_nodes=tree.size(),
-            elapsed_s=elapsed,
-            best_tree=tree,
-        )
-
-        if cfg.verbose:
-            status = "✓" if solved else ("~" if near else "✗")
-            with lock:
-                counters["active"] -= 1
-                counters["done"]   += 1
-                if solved:
-                    counters["solved"] += 1
-                if near and not solved:
-                    counters["near"] += 1
-                print(
-                    f"  {status} [{idx+1:3d}/{n_total}] DONE      "
-                    f"{task.name[:28]:28s} "
-                    f"train={train_acc:.2f} test={test_acc:.2f} "
-                    f"({elapsed:.1f}s) → {str(tree)[:35]}",
-                    flush=True,
-                )
-                print(_scoreboard(), flush=True)
+            status = "✓" if tr.solved else ("~" if tr.near_solved else "✗")
+            counters["active"] -= 1
+            counters["done"]   += 1
+            if tr.solved:
+                counters["solved"] += 1
+            if tr.near_solved and not tr.solved:
+                counters["near"] += 1
+            print(
+                f"  {status} [{idx+1:3d}/{n_total}] DONE      "
+                f"{task.name[:28]:28s} "
+                f"train={tr.train_acc:.2f} test={tr.test_acc:.2f} "
+                f"({tr.elapsed_s:.1f}s) → {tr.found_expr[:50]}",
+                flush=True,
+            )
+            if not tr.solved and tr.best_tree is not None and tr.n_nodes > 1:
+                print(f"    [FAILURE ANALYSIS] Best AST: {tr.found_expr}")
+                pair = task.train_pairs[0]
+                if len(pair) == 2:
+                    inp, expected = pair[0], pair[1]
+                    print("    Input Grid:")
+                    for row in inp: print(f"      {row}")
+                    print("    Expected Output:")
+                    for row in expected: print(f"      {row}")
+                    try:
+                        domain_phantom = ARCDomain(task, primitive_subset=op_subset)
+                        actual = tr.best_tree.eval({"x": inp}, domain_phantom._primitives)
+                        print("    Actual output from AST:")
+                        if isinstance(actual, list) and len(actual) > 0 and isinstance(actual[0], list):
+                            for row in actual: print(f"      {row}")
+                        else:
+                            print(f"      {actual}")
+                    except Exception as e:
+                        print(f"      [EVAL ERROR] {e}")
+                    print(f"    {'-'*40}")
+            print(_scoreboard(), flush=True)
         else:
-            with lock:
-                counters["active"] -= 1
-                counters["done"]   += 1
-                if solved:
-                    counters["solved"] += 1
-
-        return idx, tr
+            counters["active"] -= 1
+            counters["done"]   += 1
+            if tr.solved:
+                counters["solved"] += 1
 
     # ---- dispatch tasks -------------------------------------------------------
     if cfg.task_workers > 1:
-        with ThreadPoolExecutor(max_workers=cfg.task_workers) as exe:
-            futures = {exe.submit(_run_one, i, t): i for i, t in enumerate(tasks)}
+        counters["active"] = n_total
+        with ProcessPoolExecutor(max_workers=cfg.task_workers) as exe:
+            futures = {exe.submit(_run_task_process, i, t, cfg, op_subset, inner_workers, transition_matrix): i for i, t in enumerate(tasks)}
             for fut in as_completed(futures):
                 idx, tr = fut.result()
+                _handle_result(idx, tr, tasks[idx])
                 ordered_results.append((idx, tr))
     else:
         for i, task in enumerate(tasks):
-            idx, tr = _run_one(i, task)
+            counters["active"] += 1
+            print(_scoreboard(), flush=True)
+            idx, tr = _run_task_process(i, task, cfg, op_subset, inner_workers, transition_matrix)
+            _handle_result(idx, tr, task)
             ordered_results.append((idx, tr))
 
     # Re-sort to original task order (parallel runs may finish out-of-order)
