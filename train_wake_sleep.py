@@ -68,7 +68,7 @@ if __name__ == "__main__":
     parser.add_argument("--epochs", type=int, default=3)
     parser.add_argument("--tasks", type=int, default=10)
     parser.add_argument("--workers", type=int, default=1)
-    parser.add_argument("--task-workers", type=int, default=8)
+    parser.add_argument("--task-workers", type=int, default=os.cpu_count() or 1)
     args = parser.parse_args()
 
     try:

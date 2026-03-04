@@ -34,6 +34,7 @@ Usage (programmatic)
 from __future__ import annotations
 
 import json
+import os
 import pathlib
 import sys
 import threading
@@ -128,14 +129,9 @@ class BenchmarkConfig:
         (uses multiprocessing). Set to 1 when task_workers > 1 to avoid
         nested pool issues on macOS (this is enforced automatically).
     task_workers : int
-        Number of tasks to run in parallel via threads. Defaults to 1
-        (sequential).
+        Number of tasks to run in parallel via threads. Defaults to os.cpu_count() or 1.
 
-        **M1 Max recommendation:** ``task_workers=8`` saturates all 8
-        performance cores without contention. The 2 efficiency cores and the
-        GPU / Neural Engine are not applicable to symbolic tree search, so
-        there is no benefit from setting this higher than the number of
-        performance cores.
+        **M1 Max recommendation:** The default saturates performance cores.
 
         When ``task_workers > 1``, the inner ``workers`` param is
         automatically forced to 1 to avoid nested multiprocessing pools.
@@ -150,7 +146,7 @@ class BenchmarkConfig:
     offspring: int = 50
     generations: int = 100
     workers: int = 1
-    task_workers: int = 1
+    task_workers: int = field(default_factory=lambda: os.cpu_count() or 1)
     lam: float = 0.02
     verbose: bool = True
     baseline_only: bool = False
@@ -531,9 +527,8 @@ if __name__ == "__main__":
     parser.add_argument("--workers",      type=int, default=1,
                         help="Beam-search candidate workers per task (default 1). "
                              "Auto-forced to 1 when --task-workers > 1.")
-    parser.add_argument("--task-workers", type=int, default=1,
-                        help="Tasks to run in parallel (default 1). "
-                             "M1 Max sweet spot: --task-workers 8. "
+    parser.add_argument("--task-workers", type=int, default=os.cpu_count() or 1,
+                        help="Tasks to run in parallel (default: os.cpu_count()). "
                              "Forces inner --workers to 1 on macOS.")
     parser.add_argument("--generations",  type=int, default=None, help="Override generations")
     parser.add_argument("--tasks",        type=int, default=None, help="Limit number of tasks")
