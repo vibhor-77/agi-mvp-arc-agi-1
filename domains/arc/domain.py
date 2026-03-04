@@ -127,12 +127,27 @@ def grid_cell_accuracy(pred: Grid, target: Grid) -> float:
     if not isinstance(pred[0], list) or not isinstance(target[0], list):
         return 0.0
     
-    # Exact dimension check
-    if len(pred) != len(target):
-        return 0.0
-    for r in range(len(target)):
-        if len(pred[r]) != len(target[r]):
-            return 0.0
+    # Dimensional Gravity Heuristic
+    MAX_HEURISTIC_BONUS = 0.25
+    r_target, c_target = len(target), len(target[0])
+    r_pred, c_pred = len(pred), len(pred[0])
+    
+    # Calculate dimensional penalty
+    r_diff = abs(r_target - r_pred)
+    c_diff = abs(c_target - c_pred)
+    
+    # Gradient reward: the closer the dimensions, the higher the baseline score.
+    # If dimensions match exactly, r_diff=0, c_diff=0, reward = MAX_HEURISTIC_BONUS
+    # If dimensions are wildly off, reward decays towards 0.0
+    dim_penalty = (r_diff + c_diff) / (r_target + c_target)
+    dimensional_reward = max(0.0, MAX_HEURISTIC_BONUS * (1.0 - dim_penalty))
+    
+    # Exact dimension check for pixel mapping
+    if r_pred != r_target:
+        return dimensional_reward
+    for r in range(r_target):
+        if len(pred[r]) != c_target:
+            return dimensional_reward
 
     total = sum(len(row) for row in target)
     if total == 0:
@@ -143,7 +158,10 @@ def grid_cell_accuracy(pred: Grid, target: Grid) -> float:
         for c in range(len(target[r]))
         if pred[r][c] == target[r][c]
     )
-    return matches / total
+    
+    pixel_accuracy = matches / total
+    # The actual score is the combination of the structural bonus (0.25) and the pixel accuracy (0.75)
+    return dimensional_reward + (pixel_accuracy * (1.0 - MAX_HEURISTIC_BONUS))
 
 
 def is_exact_match(pred: Grid, target: Grid) -> bool:

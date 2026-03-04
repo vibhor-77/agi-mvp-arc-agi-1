@@ -174,6 +174,7 @@ class TaskResult:
     elapsed_s: float
     introspection: str = ""
     best_tree: Optional[Node] = None
+    trace: list | None = None
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -265,6 +266,27 @@ class BenchmarkReport:
             "results": [r.as_dict() for r in self.results],
         }
 
+    def grid_to_html_table(self, grid: list[list[int]]) -> str:
+        """Render an ARC grid as an HTML table with correct ARC colors."""
+        if not isinstance(grid, list) or not all(isinstance(row, list) for row in grid):
+            return str(grid)
+            
+        colors = {
+            0: "#000000", 1: "#0074D9", 2: "#FF4136", 3: "#2ECC40",
+            4: "#FFDC00", 5: "#AAAAAA", 6: "#F012BE", 7: "#FF851B",
+            8: "#7FDBFF", 9: "#870C25"
+        }
+        
+        html = ['<table style="border-collapse: collapse; display: inline-block; margin-right: 20px; vertical-align: top;">']
+        for row in grid:
+            html.append('<tr>')
+            for cell in row:
+                color = colors.get(cell, "#ffffff")
+                html.append(f'<td style="width: 20px; height: 20px; background-color: {color}; border: 1px solid #555;"></td>')
+            html.append('</tr>')
+        html.append('</table>')
+        return "".join(html)
+
     def generate_markdown_report(self) -> str:
         lines = [f"# AGI Execution Report: {self.label}"]
         lines.append(f"\n## Overall Summary")
@@ -301,6 +323,18 @@ class BenchmarkReport:
                     ast_str = r.found_expr if len(r.found_expr) < 120 else r.found_expr[:117] + "..."
                     lines.append(f"  - **Best AST**: `{ast_str}`")
                     lines.append(f"  - **Train Acc**: {r.train_acc:.2f} | **Test Acc**: {r.test_acc:.2f}")
+                
+                # If we have a trace, visualize it!
+                if r.trace:
+                    lines.append("\n  <div style='overflow-x: auto; white-space: nowrap;'>")
+                    for step_name, step_grid in r.trace:
+                        lines.append("    <div style='display: inline-block; text-align: center; margin-right: 15px;'>")
+                        lines.append(f"      <div style='font-family: monospace; font-size: 12px; margin-bottom: 5px; max-width: 150px; overflow: hidden; text-overflow: ellipsis;'>{step_name}</div>")
+                        lines.append(f"      {self.grid_to_html_table(step_grid)}")
+                        lines.append("    </div>")
+                        if step_name != r.trace[-1][0]: # Arrow between steps
+                            lines.append("    <div style='display: inline-block; vertical-align: top; margin-top: 20px; font-weight: bold;'>&#8594;</div>")
+                    lines.append("  </div>\n")
             if len(fails) > 15:
                 lines.append(f"- *...and {len(fails) - 15} more {cat} tasks.*")
                 
@@ -362,7 +396,7 @@ def _run_task_process(
             pair = task.train_pairs[0]
             if len(pair) == 2:
                 inp, expected = pair[0], pair[1]
-                actual = tree.eval([inp], domain._primitives)
+                actual, trace = tree.eval_trace([inp], domain._primitives)
                 
                 if isinstance(actual, list) and len(actual) > 0 and isinstance(actual[0], list):
                     if len(expected) != len(actual) or len(expected[0]) != len(actual[0]):
@@ -397,6 +431,7 @@ def _run_task_process(
         elapsed_s=elapsed,
         introspection=introspection_msg,
         best_tree=tree,
+        trace=trace if 'trace' in locals() else None,
     )
     return idx, tr
 

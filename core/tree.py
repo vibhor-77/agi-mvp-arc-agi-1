@@ -102,6 +102,42 @@ class Node:
         child_vals = [c.eval(variables, primitives) for c in self.children]
         return fn(*child_vals)
 
+    def eval_trace(self, variables: list[Any], primitives: dict[str, Callable]) -> tuple[Any, list[tuple[str, Any]]]:
+        """
+        Recursively evaluate the tree, returning both the final output and a flat trace 
+        of intermediate operations and their output grid states.
+        
+        Returns
+        -------
+        tuple(final_value, [(operation_name, intermediate_output), ...])
+        """
+        if self.op is None:
+            # Leaf node
+            val = variables[self.var_idx] if self.var_idx is not None else self.const
+            # Name for the trace
+            name = f"Leaf(v{self.var_idx})" if self.var_idx is not None else f"Leaf({self.const})"
+            return val, [(name, val)]
+
+        fn = primitives.get(self.op)
+        if fn is None:
+            raise KeyError(f"Unknown primitive '{self.op}'.")
+
+        traces = []
+        child_vals = []
+        for c in self.children:
+            c_val, c_trace = c.eval_trace(variables, primitives)
+            child_vals.append(c_val)
+            traces.extend(c_trace)
+            
+        final_val = fn(*child_vals)
+        touches = []
+        for c in child_vals:
+            touches.append(str(c) if isinstance(c, (int, float)) else "GRID")
+        args_str = ", ".join(touches)
+        
+        traces.append((f"{self.op}({args_str})", final_val))
+        return final_val, traces
+
     # ------------------------------------------------------------------ #
     # Size / complexity (MDL proxy)                                        #
     # ------------------------------------------------------------------ #
