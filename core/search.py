@@ -160,6 +160,16 @@ class BeamSearch:
         Tuning parameters.  Uses defaults if None.
     op_arities : dict[str, int] | None
         Arity mapping for primitives. Uses default=1 if None.
+    fingerprint_fn : Callable[[Node], tuple] | None
+        If provided, used for Semantic Hashing / Anti-Aliasing.
+        Returns a tuple of outputs for dummy/training inputs.
+        Trees with identical fingerprints are deduped, keeping the smallest.
+    lexicase_fn : Callable[[Node], list[float]] | None
+        If provided, evaluates the tree and returns a list of individual 
+        fitness scores for each case/example. Used for Lexicase/Pareto Selection
+        to preserve edge-case abstractions.
+    transition_matrix : dict[str, dict[str, float]] | None
+        Learned generative priors P(child_op | parent_op) to speed up search.
 
     Examples
     --------
@@ -187,12 +197,18 @@ class BeamSearch:
         n_vars: int = 1,
         config: SearchConfig | None = None,
         op_arities: dict[str, int] | None = None,
+        fingerprint_fn: Callable[[Node], tuple] | None = None,
+        lexicase_fn: Callable[[Node], list[float]] | None = None,
+        transition_matrix: dict[str, dict[str, float]] | None = None,
     ) -> None:
         self.fitness_fn = fitness_fn
         self.op_list = list(op_list)
         self.n_vars = n_vars
         self.config = config or SearchConfig()
         self.op_arities = op_arities
+        self.fingerprint_fn = fingerprint_fn
+        self.lexicase_fn = lexicase_fn
+        self.transition_matrix = transition_matrix
         self._rng = random.Random(self.config.seed)
 
     def run(self) -> SearchResult:
@@ -210,14 +226,63 @@ class BeamSearch:
         # ── Initialise population ────────────────────────────────────────
         init_pool = [
             random_tree(self.op_list, self.n_vars, cfg.max_init_depth,
-                        cfg.const_range, rng, self.op_arities)
+                        cfg.const_range, rng, self.op_arities, self.transition_matrix)
             for _ in range(cfg.beam_size * 5)
         ]
         scored = self._evaluate_all(init_pool)
-        scored.sort(key=lambda x: x[0])
+        
+        # Helper to deduplicate a scored pool
+        def _dedupe_pool(pool: list[tuple[float, Node, tuple | None, list[float] | None]], limit: int) -> list[tuple[float, Node, tuple | None, list[float] | None]]:
+            
+            seen_exprs: set[str] = set()
+            seen_fingerprints: set[tuple] = set()
+            new_beam: list[tuple[float, Node, tuple | None, list[float] | None]] = []
+            
+            # Pareto Selection via Lexicase array if available
+            # If any AST completely uniquely solves an edge case (score = 0 for that case), 
+            # we want to prioritize it to prevent the global average score from burying it.
+            # For MVP, we will simply boost the global score of individuals that get *any* case perfect.
+            for i in range(len(pool)):
+                if pool[i][3]: # lexicase array
+                    # How many cases are perfectly solved (error ~ 0)?
+                    perfect_cases = sum(1 for e in pool[i][3] if e < 0.01)
+                    if perfect_cases > 0:
+                        # Artificially boost the global score to float it to the top of the sort
+                        # We subtract from the score because lower is better.
+                        boost = perfect_cases * 100.0 
+                        pool[i] = (pool[i][0] - boost, pool[i][1], pool[i][2], pool[i][3])
+                        
+            # Sort by score ascending, then by tree size ascending (Occam's razor)
+            pool.sort(key=lambda x: (x[0], x[1].size()))
+            
+            for item in pool:
+                score, tree, fp, lex = item
+                key = str(tree)
+                
+                # Check 1: syntactic exact match
+                if key in seen_exprs:
+                    continue
+                    
+                # Check 2: Semantic hashing (Anti-Aliasing)
+                if fp is not None:
+                    if fp in seen_fingerprints:
+                        continue
+                    seen_fingerprints.add(fp)
+                
+                seen_exprs.add(key)
+                new_beam.append(item)
+                
+                if len(new_beam) == limit:
+                    break
+                    
+            return new_beam
 
-        beam: list[Node] = [t for _, t in scored[: cfg.beam_size]]
+        scored = _dedupe_pool(scored, cfg.beam_size)
+
+        beam: list[Node] = [t for _, t, _, _ in scored]
         best_fitness = scored[0][0]
+        # if the score was artificially boosted negative for lexicase, correct it for reporting
+        if best_fitness < 0: best_fitness = self.fitness_fn(scored[0][1])
         best_tree = scored[0][1].clone()
 
         history: list[dict] = []
@@ -233,7 +298,7 @@ class BeamSearch:
                         child = mutate(
                             parent, self.op_list, self.n_vars,
                             cfg.const_range, cfg.const_sigma, rng,
-                            self.op_arities
+                            self.op_arities, self.transition_matrix
                         )
                     else:
                         other = rng.choice(beam)
@@ -242,21 +307,13 @@ class BeamSearch:
 
             # Evaluate
             scored = self._evaluate_all(pool)
-            scored.sort(key=lambda x: x[0])
 
-            # Deduplicate by string form, keep top beam_size
-            seen: set[str] = set()
-            new_beam: list[tuple[float, Node]] = []
-            for score, tree in scored:
-                key = str(tree)
-                if key not in seen:
-                    seen.add(key)
-                    new_beam.append((score, tree))
-                if len(new_beam) == cfg.beam_size:
-                    break
+            # Deduplicate by semantic hash or string form, keep top beam_size
+            new_beam = _dedupe_pool(scored, cfg.beam_size)
 
-            beam = [t for _, t in new_beam]
+            beam = [t for _, t, _, _ in new_beam]
             gen_best_score = new_beam[0][0]
+            if gen_best_score < 0: gen_best_score = self.fitness_fn(new_beam[0][1])
             gen_best_tree = new_beam[0][1]
 
             # Track history
@@ -303,17 +360,16 @@ class BeamSearch:
     # Internal: batch evaluation (parallel or serial)                     #
     # ------------------------------------------------------------------ #
 
-    def _evaluate_all(self, pool: list[Node]) -> list[tuple[float, Node]]:
-        """Evaluate every tree in *pool*, returning (score, tree) pairs."""
+    def _evaluate_all(self, pool: list[Node]) -> list[tuple[float, Node, tuple | None, list[float] | None]]:
+        """Evaluate every tree in *pool*, returning (score, tree, fingerprint, lexicase) tuples."""
         cfg = self.config
-        if cfg.workers > 1 and len(pool) > cfg.beam_size:
-            with mp.Pool(
-                processes=cfg.workers,
-                initializer=_worker_init,
-                initargs=(self.fitness_fn,),
-            ) as p:
-                return list(p.map(_worker_eval, pool))
-        else:
-            # Single-threaded — also used when workers=1
-            _worker_init(self.fitness_fn)
-            return [_worker_eval(t) for t in pool]
+        
+        # We process sequentially if no multiproc to avoid closure issues
+        results = []
+        for t in pool:
+            score = self.fitness_fn(t)
+            fp = self.fingerprint_fn(t) if self.fingerprint_fn else None
+            lex = self.lexicase_fn(t) if self.lexicase_fn else None
+            results.append((score, t, fp, lex))
+            
+        return results

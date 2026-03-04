@@ -186,6 +186,39 @@ class ARCDomain(Domain):
     # Domain interface                                                     #
     # ------------------------------------------------------------------ #
 
+    def fingerprint(self, tree: Node) -> tuple:
+        """
+        Evaluate the AST on the training inputs to generate a semantic hash.
+        Used to deduplicate functionally equivalent trees during search.
+        We return tuple(str(output)) to ensure it's hashable.
+        """
+        fp = []
+        for inp, out in self.task.train_pairs:
+            try:
+                # evaluate tree on the single input variable (the grid)
+                res = tree.eval([inp], self._primitives)
+                fp.append(str(res))
+            except Exception:
+                fp.append("ERR")
+        return tuple(fp)
+        
+    def lexicase_eval(self, tree: Node) -> list[float]:
+        """
+        Evaluate the AST and return the [error_1, error_2, ...] array.
+        Used by the BeamSearch deduplication process to preserve trees
+        that perfectly solve individual edge-cases (error_i == 0.0), even
+        if their global average is poor.
+        """
+        errors = []
+        for inp, out in self.task.train_pairs:
+            try:
+                pred = tree.eval([inp], self._primitives)
+                err = 1.0 - grid_cell_accuracy(pred, out)
+            except Exception:
+                err = 1.0
+            errors.append(err)
+        return errors
+
     def primitive_names(self) -> list[str]:
         return self._op_list
 
@@ -211,6 +244,32 @@ class ARCDomain(Domain):
             total_error += error
         mean_error = total_error / max(len(self.task.train_pairs), 1)
         return mean_error + self.lam * tree.size()
+        
+    def solve(self, config: SearchConfig | None = None, transition_matrix: dict[str, dict[str, float]] | None = None) -> SearchResult:
+        """
+        Execute beam search to find the best generic expression tree
+        that mapping inputs to outputs for this task.
+
+        Returns
+        -------
+        SearchResult
+        """
+        from .primitives import registry
+        from core.search import BeamSearch
+        op_arities = {name: registry.arity(name) for name in self.primitive_names()}
+        searcher = BeamSearch(
+            fitness_fn=self.fitness,
+            op_list=self.primitive_names(),
+            n_vars=self.n_vars(),
+            config=config or SearchConfig(),
+            op_arities=op_arities,
+            fingerprint_fn=self.fingerprint,
+            lexicase_fn=self.lexicase_eval,
+            transition_matrix=transition_matrix,
+        )
+        result = searcher.run()
+        self.on_result(result)
+        return result
 
     def description(self) -> str:
         return f"ARC task '{self.task.name}'"

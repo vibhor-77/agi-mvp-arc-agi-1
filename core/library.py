@@ -22,6 +22,8 @@ class PrimitiveLibrary:
     def __init__(self, filepath: str = "library.json"):
         self.filepath = filepath
         self.learned_ops: dict[str, dict] = {}
+        # P(child_op | parent_op) weights
+        self.transition_matrix: dict[str, dict[str, float]] = defaultdict(lambda: defaultdict(float))
 
     def extract_from_tasks(self, task_trees: dict[str, Node], min_size: int = 3, min_tasks: int = 2) -> None:
         """
@@ -43,6 +45,10 @@ class PrimitiveLibrary:
         subtree_to_node = {}
 
         for task_name, tree in task_trees.items():
+            # 1. Update transition prior probabilities
+            self._update_transitions(tree)
+            
+            # 2. Extract abstractions
             for sub in tree.all_subtrees():
                 if sub.size() >= min_size:
                     key = str(sub)
@@ -54,6 +60,26 @@ class PrimitiveLibrary:
         for key, tasks in subtree_to_tasks.items():
             if len(tasks) >= min_tasks:
                 self._add_to_library(subtree_to_node[key])
+                
+        self._normalize_transitions()
+
+    def _update_transitions(self, tree: Node) -> None:
+        """Walk the AST and count occurrences of (parent_op -> child_op)."""
+        if tree.op is None:
+            return
+            
+        for child in tree.children:
+            if child.op is not None:
+                self.transition_matrix[tree.op][child.op] += 1.0
+            self._update_transitions(child)
+
+    def _normalize_transitions(self) -> None:
+        """Normalize counts into probabilities P(child|parent)."""
+        for parent_op, children_counts in self.transition_matrix.items():
+            total = sum(children_counts.values())
+            if total > 0:
+                for child_op in children_counts:
+                    self.transition_matrix[parent_op][child_op] /= total
 
     def _add_to_library(self, node: Node) -> None:
         """Add a deeply cloned node to the library if it doesn't already exist."""
@@ -111,7 +137,10 @@ class PrimitiveLibrary:
 
     def save(self) -> None:
         """Persist the library expressions to disk."""
-        data = {name: {"expr": meta["expr"], "arity": meta["arity"]} for name, meta in self.learned_ops.items()}
+        data = {
+            "library": {name: {"expr": meta["expr"], "arity": meta["arity"]} for name, meta in self.learned_ops.items()},
+            "transitions": {k: dict(v) for k, v in self.transition_matrix.items()}
+        }
         with open(self.filepath, "w") as f:
             json.dump(data, f, indent=2)
 

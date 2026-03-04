@@ -276,6 +276,7 @@ def evaluate_tasks(
     op_subset: list[str],
     cfg: BenchmarkConfig,
     label: str,
+    transition_matrix: dict[str, dict[str, float]] | None = None,
 ) -> BenchmarkReport:
     """
     Run beam search on every task in *tasks* using *op_subset* as primitives.
@@ -345,7 +346,7 @@ def evaluate_tasks(
         # Suppress any domain-level result printing; we handle output here.
         domain.on_result = _suppress_on_result  # type: ignore[method-assign]
 
-        result = domain.solve(config=search_cfg)
+        result = domain.solve(config=search_cfg, transition_matrix=transition_matrix)
 
         tree      = result.best_tree
         train_acc = domain.train_accuracy(tree)

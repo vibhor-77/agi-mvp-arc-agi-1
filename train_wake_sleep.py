@@ -36,7 +36,8 @@ def run_wake_sleep(tasks: list[ARCTask], epochs: int, cfg: BenchmarkConfig) -> N
             tasks=tasks, 
             op_subset=active_ops, 
             cfg=cfg, 
-            label=f"Epoch {epoch} ({len(active_ops)} ops)"
+            label=f"Epoch {epoch} ({len(active_ops)} ops)",
+            transition_matrix=lib.transition_matrix,
         )
         
         # Sleep: Collect successful trees

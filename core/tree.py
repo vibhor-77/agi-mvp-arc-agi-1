@@ -232,6 +232,8 @@ def random_tree(
     const_range: tuple[float, float] = (-3.0, 3.0),
     rng: random.Random | None = None,
     op_arities: dict[str, int] | None = None,
+    transition_matrix: dict[str, dict[str, float]] | None = None,
+    parent_op: str | None = None,
 ) -> Node:
     """
     Build a random expression tree.
@@ -266,10 +268,20 @@ def random_tree(
         val = round(rng.uniform(*const_range), 3)
         return make_leaf_const(val)
 
-    op = rng.choice(op_list)
+    # DreamCoder Generative Prior: 80% learned transitions, 20% uniform exploration
+    op = None
+    if transition_matrix and parent_op and parent_op in transition_matrix:
+        weights_dict = transition_matrix[parent_op]
+        if weights_dict:
+            weights = [weights_dict.get(o, 0.0) * 0.8 + (0.2 / len(op_list)) for o in op_list]
+            op = rng.choices(op_list, weights=weights, k=1)[0]
+            
+    if op is None:
+        op = rng.choice(op_list)
+        
     arity = op_arities.get(op, 1) if op_arities else 1
     children = [
-        random_tree(op_list, n_vars, max_depth - 1, const_range, rng, op_arities)
+        random_tree(op_list, n_vars, max_depth - 1, const_range, rng, op_arities, transition_matrix, op)
         for _ in range(arity)
     ]
     return make_node(op, children)
@@ -287,6 +299,7 @@ def mutate(
     const_sigma: float = 0.5,
     rng: random.Random | None = None,
     op_arities: dict[str, int] | None = None,
+    transition_matrix: dict[str, dict[str, float]] | None = None,
 ) -> Node:
     """
     Return a mutated copy of *node*.
@@ -321,11 +334,11 @@ def mutate(
     r = rng.random()
 
     if r < 0.50:
-        _replace_random_subtree(tree, op_list, n_vars, const_range, rng, op_arities)
+        _replace_random_subtree(tree, op_list, n_vars, const_range, rng, op_arities, transition_matrix)
     elif r < 0.80:
         if not _tweak_constant(tree, const_sigma, rng):
             # No constants found — fall back to subtree replacement
-            _replace_random_subtree(tree, op_list, n_vars, const_range, rng, op_arities)
+            _replace_random_subtree(tree, op_list, n_vars, const_range, rng, op_arities, transition_matrix)
     else:
         # Wrap self with a new op
         op = rng.choice(op_list)
@@ -338,7 +351,7 @@ def mutate(
             if i == self_idx:
                 children.append(tree)
             else:
-                children.append(random_tree(op_list, n_vars, max_depth=1, const_range=const_range, rng=rng, op_arities=op_arities))
+                children.append(random_tree(op_list, n_vars, max_depth=1, const_range=const_range, rng=rng, op_arities=op_arities, transition_matrix=transition_matrix, parent_op=op))
                 
         wrapped = make_node(op, children)
         return wrapped
@@ -388,13 +401,24 @@ def _replace_random_subtree(
     const_range: tuple[float, float],
     rng: random.Random,
     op_arities: dict[str, int] | None = None,
+    transition_matrix: dict[str, dict[str, float]] | None = None,
 ) -> None:
     """In-place: overwrite a randomly chosen node with a new random sub-tree."""
     nodes = _all_nodes_list(root)
     if not nodes:
         return
+    # Find parent mapping to supply generative prior
+    parent_map = {}
+    def _build_parent_map(n: Node):
+        for c in n.children:
+            parent_map[id(c)] = n.op
+            _build_parent_map(c)
+    _build_parent_map(root)
+    
     target = rng.choice(nodes)
-    new = random_tree(op_list, n_vars, max_depth=2, const_range=const_range, rng=rng, op_arities=op_arities)
+    parent_op = parent_map.get(id(target))
+    
+    new = random_tree(op_list, n_vars, max_depth=2, const_range=const_range, rng=rng, op_arities=op_arities, transition_matrix=transition_matrix, parent_op=parent_op)
     # Copy attributes in-place so references to `target` elsewhere remain valid
     target.op = new.op
     target.children = new.children
