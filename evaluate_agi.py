@@ -58,17 +58,20 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     # Forces evaluation to ONLY look at the eval subset
     parser.add_argument("--data", type=str, default="arc_data/data/evaluation")
-    parser.add_argument("--tasks", type=int, default=10)
-    parser.add_argument("--workers", type=int, default=1)
-    parser.add_argument("--task-workers", type=int, default=os.cpu_count() or 1)
+    parser.add_argument("--tasks", type=int, default=400, help="Number of tasks to evaluate")
+    parser.add_argument("--workers", type=int, default=1, help="Parallel processing across tasks (default 1 to keep feedback clean)")
+    parser.add_argument("--task-workers", type=int, default=os.cpu_count() or 1, help="Parallel processing within a single task's search")
+    parser.add_argument("--beam-size", type=int, default=100, help="Size of the Beam Search queue")
+    parser.add_argument("--offspring", type=int, default=100, help="Number of mutations per generation")
+    parser.add_argument("--generations", type=int, default=100, help="Number of deep search iterations per task")
     
     args = parser.parse_args()
 
-    # Evaluation config (we can afford a larger beam since we aren't looping epochs)
+    # Evaluation config 
     cfg = BenchmarkConfig(
-        beam_size=30, 
-        offspring=50, 
-        generations=60, 
+        beam_size=args.beam_size, 
+        offspring=args.offspring, 
+        generations=args.generations, 
         task_workers=args.task_workers, 
         workers=args.workers, 
         baseline_only=True

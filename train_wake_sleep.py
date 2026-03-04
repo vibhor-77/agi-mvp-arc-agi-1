@@ -65,10 +65,13 @@ def run_wake_sleep(tasks: list[ARCTask], epochs: int, cfg: BenchmarkConfig) -> N
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--data", type=str, default="arc_data/data/training")
-    parser.add_argument("--epochs", type=int, default=3)
-    parser.add_argument("--tasks", type=int, default=10)
-    parser.add_argument("--workers", type=int, default=1)
-    parser.add_argument("--task-workers", type=int, default=os.cpu_count() or 1)
+    parser.add_argument("--epochs", type=int, default=5, help="Number of Wake/Sleep cycles")
+    parser.add_argument("--tasks", type=int, default=400, help="Number of tasks to train on")
+    parser.add_argument("--workers", type=int, default=1, help="Parallel processing across tasks (default 1 to keep feedback loop clean)")
+    parser.add_argument("--task-workers", type=int, default=os.cpu_count() or 1, help="Parallel processing within a single task's search")
+    parser.add_argument("--beam-size", type=int, default=100, help="Size of the Beam Search queue")
+    parser.add_argument("--offspring", type=int, default=100, help="Number of mutations per generation")
+    parser.add_argument("--generations", type=int, default=100, help="Number of deep search iterations per task")
     args = parser.parse_args()
 
     try:
@@ -79,11 +82,10 @@ if __name__ == "__main__":
         from domains.arc.benchmark import build_benchmark
         tasks = build_benchmark()[:args.tasks]
 
-    # Quick search settings 
     cfg = BenchmarkConfig(
-        beam_size=15, 
-        offspring=30, 
-        generations=40, 
+        beam_size=args.beam_size, 
+        offspring=args.offspring, 
+        generations=args.generations, 
         task_workers=args.task_workers, 
         workers=args.workers, 
         baseline_only=True

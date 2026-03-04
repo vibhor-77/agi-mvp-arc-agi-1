@@ -2,11 +2,11 @@
   "baseline": {
     "label": "Baseline (8 ops)",
     "n_ops": 8,
-    "n_tasks": 8,
+    "n_tasks": 10,
     "n_solved": 0,
     "pct_solved": 0.0,
-    "mean_test_acc": 0.594,
-    "total_elapsed_s": 20.1,
+    "mean_test_acc": 0.5213,
+    "total_elapsed_s": 24.7,
     "results": [
       {
         "task": "00576224",
@@ -18,7 +18,7 @@
         "solved": false,
         "near_solved": false,
         "n_nodes": 1,
-        "elapsed_s": 0.14
+        "elapsed_s": 0.15
       },
       {
         "task": "009d5c81",
@@ -30,7 +30,7 @@
         "solved": false,
         "near_solved": true,
         "n_nodes": 1,
-        "elapsed_s": 3.41
+        "elapsed_s": 3.64
       },
       {
         "task": "00dbd492",
@@ -42,7 +42,7 @@
         "solved": false,
         "near_solved": false,
         "n_nodes": 1,
-        "elapsed_s": 2.11
+        "elapsed_s": 2.25
       },
       {
         "task": "03560426",
@@ -54,7 +54,7 @@
         "solved": false,
         "near_solved": false,
         "n_nodes": 2,
-        "elapsed_s": 1.32
+        "elapsed_s": 1.44
       },
       {
         "task": "05a7bcf2",
@@ -66,7 +66,7 @@
         "solved": false,
         "near_solved": false,
         "n_nodes": 1,
-        "elapsed_s": 7.97
+        "elapsed_s": 8.53
       },
       {
         "task": "0607ce86",
@@ -78,7 +78,7 @@
         "solved": false,
         "near_solved": true,
         "n_nodes": 1,
-        "elapsed_s": 3.7
+        "elapsed_s": 3.92
       },
       {
         "task": "0692e18c",
@@ -90,7 +90,7 @@
         "solved": false,
         "near_solved": false,
         "n_nodes": 1,
-        "elapsed_s": 0.19
+        "elapsed_s": 0.2
       },
       {
         "task": "070dd51e",
@@ -102,42 +102,66 @@
         "solved": false,
         "near_solved": true,
         "n_nodes": 1,
-        "elapsed_s": 1.27
+        "elapsed_s": 1.31
+      },
+      {
+        "task": "08573cc6",
+        "category": "08573cc6",
+        "true_op": "",
+        "found_expr": "x",
+        "train_acc": 0.7377,
+        "test_acc": 0.4615,
+        "solved": false,
+        "near_solved": false,
+        "n_nodes": 1,
+        "elapsed_s": 1.6
+      },
+      {
+        "task": "0934a4d8",
+        "category": "0934a4d8",
+        "true_op": "",
+        "found_expr": "-2.006",
+        "train_acc": 0.0,
+        "test_acc": 0.0,
+        "solved": false,
+        "near_solved": false,
+        "n_nodes": 1,
+        "elapsed_s": 1.64
       }
     ]
   },
   "expanded": {
-    "label": "Expanded (93 ops)",
-    "n_ops": 93,
-    "n_tasks": 8,
+    "label": "Expanded (96 ops)",
+    "n_ops": 96,
+    "n_tasks": 10,
     "n_solved": 0,
     "pct_solved": 0.0,
-    "mean_test_acc": 0.6451,
-    "total_elapsed_s": 36.4,
+    "mean_test_acc": 0.5666,
+    "total_elapsed_s": 79.6,
     "results": [
       {
         "task": "00576224",
         "category": "00576224",
         "true_op": "",
-        "found_expr": "grot90(gtile2x2(gsort_cols_asc(gframe7(gsort_cols_asc(gframe7(grot90(gpad1(gscale2x(x)))))))))",
-        "train_acc": 0.4583,
+        "found_expr": "gmax_color(gpad1(gscale2x(gdiag5(x))))",
+        "train_acc": 0.375,
         "test_acc": 0.25,
         "solved": false,
         "near_solved": false,
-        "n_nodes": 10,
-        "elapsed_s": 1.05
+        "n_nodes": 5,
+        "elapsed_s": 0.92
       },
       {
         "task": "009d5c81",
         "category": "009d5c81",
         "true_op": "",
-        "found_expr": "gswap_13(gmod3(gswap_13(x)))",
-        "train_acc": 0.9378,
-        "test_acc": 0.8673,
+        "found_expr": "gmod5(x)",
+        "train_acc": 0.8847,
+        "test_acc": 0.8367,
         "solved": false,
         "near_solved": true,
-        "n_nodes": 4,
-        "elapsed_s": 6.46
+        "n_nodes": 2,
+        "elapsed_s": 7.22
       },
       {
         "task": "00dbd492",
@@ -149,13 +173,13 @@
         "solved": false,
         "near_solved": false,
         "n_nodes": 1,
-        "elapsed_s": 3.45
+        "elapsed_s": 3.71
       },
       {
         "task": "03560426",
         "category": "03560426",
         "true_op": "",
-        "found_expr": "gclear_nonbg(x)",
+        "found_expr": "gtile_top_row(x)",
         "train_acc": 0.8167,
         "test_acc": 0.86,
         "solved": false,
@@ -173,7 +197,7 @@
         "solved": false,
         "near_solved": false,
         "n_nodes": 1,
-        "elapsed_s": 11.85
+        "elapsed_s": 11.86
       },
       {
         "task": "0607ce86",
@@ -185,7 +209,7 @@
         "solved": false,
         "near_solved": true,
         "n_nodes": 2,
-        "elapsed_s": 7.06
+        "elapsed_s": 7.22
       },
       {
         "task": "0692e18c",
@@ -197,7 +221,7 @@
         "solved": false,
         "near_solved": false,
         "n_nodes": 1,
-        "elapsed_s": 0.21
+        "elapsed_s": 0.22
       },
       {
         "task": "070dd51e",
@@ -209,7 +233,31 @@
         "solved": false,
         "near_solved": true,
         "n_nodes": 1,
-        "elapsed_s": 3.62
+        "elapsed_s": 3.64
+      },
+      {
+        "task": "08573cc6",
+        "category": "08573cc6",
+        "true_op": "",
+        "found_expr": "x",
+        "train_acc": 0.7377,
+        "test_acc": 0.4615,
+        "solved": false,
+        "near_solved": false,
+        "n_nodes": 1,
+        "elapsed_s": 1.99
+      },
+      {
+        "task": "0934a4d8",
+        "category": "0934a4d8",
+        "true_op": "",
+        "found_expr": "gsort_cols_desc(gframe4(gstripe_h3(g_extract_objects(x))))",
+        "train_acc": 0.2282,
+        "test_acc": 0.0741,
+        "solved": false,
+        "near_solved": false,
+        "n_nodes": 5,
+        "elapsed_s": 40.05
       }
     ]
   }
