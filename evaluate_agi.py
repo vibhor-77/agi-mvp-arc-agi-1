@@ -53,12 +53,38 @@ def run_evaluation(data_dir: str, num_tasks: int, cfg: BenchmarkConfig, model_pa
         learned_ops=lib.learned_ops,
     )
 
+    markdown_str = report.generate_markdown_report()
     with open(report_path, "w", encoding="utf-8") as f:
-        f.write(report.generate_markdown_report())
+        f.write(markdown_str)
+
+    # Generate HTML Wrapper
+    html_path = report_path.replace(".md", ".html")
+    html_content = f"""<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>AGI Report</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown.min.css">
+  <style>body {{ box-sizing: border-box; min-width: 200px; max-width: 980px; margin: 0 auto; padding: 45px; }}</style>
+</head>
+<body class="markdown-body">
+  <div id="content"></div>
+  <script type="text/markdown" id="md-content">
+{markdown_str}
+  </script>
+  <script>
+    document.getElementById('content').innerHTML = marked.parse(document.getElementById('md-content').textContent);
+  </script>
+</body>
+</html>"""
+    with open(html_path, "w", encoding="utf-8") as f:
+        f.write(html_content)
 
     print("\n✅ Evaluation Complete!")
-    print(f"Metrics JSON saved to: {report.saved_path}")
     print(f"Markdown Introspection report saved to: {report_path}")
+    print(f"Browser-friendly report saved to: {html_path}\n")
+    print(report.summary())
 
 if __name__ == "__main__":
     timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -74,6 +100,7 @@ if __name__ == "__main__":
     parser.add_argument("--model", type=str, default="LATEST", help="Filepath to load the learned primitive dictionary from. Defaults to latest file in models/")
     parser.add_argument("--seed", type=int, default=None, help="Deterministic random seed for the search engine")
     parser.add_argument("--report", type=str, default=f"reports/eval_{timestamp}.md", help="Markdown file to accumulate Introspection diagnostics")
+    parser.add_argument("--task-ids", type=str, default=None, help="Comma-separated list of task IDs to evaluate explicitly (e.g. 007bbfb7,025d127b)")
     
     args = parser.parse_args()
 
@@ -109,4 +136,26 @@ if __name__ == "__main__":
         seed=args.seed
     )
     
-    run_evaluation(args.data, args.tasks, cfg, args.model, args.report)
+    try:
+        tasks = load_tasks_from_dir(args.data)
+        if args.task_ids:
+            target_ids = [t.strip() for t in args.task_ids.split(",")]
+            tasks = [t for t in tasks if t.name in target_ids]
+            if not tasks:
+                print(f"Error: None of the specific task IDs {target_ids} were found in {args.data}")
+                sys.exit(1)
+        else:
+            tasks = tasks[:args.tasks]
+    except Exception as e:
+        print(e)
+        tasks = []
+        from domains.arc.benchmark import build_benchmark
+        tasks = build_benchmark()
+        if args.task_ids:
+            target_ids = [t.strip() for t in args.task_ids.split(",")]
+            tasks = [t for t in tasks if t.name in target_ids]
+        else:
+            tasks = tasks[:args.tasks]
+
+    run_evaluation(args.data, len(tasks), cfg, args.model, args.report)
+
