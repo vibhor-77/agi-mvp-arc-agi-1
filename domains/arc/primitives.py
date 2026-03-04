@@ -1134,6 +1134,195 @@ def g_fractal_inflate(g: Grid) -> Grid:
 
 
 
+# ── Shift & Align ──────────────────────────────────────────────────────────────
+
+@_safe_grid_op
+def g_shift_up(g: Grid) -> Grid:
+    """Shift all pixels up by 1, padding with 0 at the bottom."""
+    R, C = len(g), len(g[0])
+    out = [[0]*C for _ in range(R)]
+    for r in range(1, R):
+        for c in range(C):
+            out[r-1][c] = g[r][c]
+    return out
+
+@_safe_grid_op
+def g_shift_down(g: Grid) -> Grid:
+    """Shift all pixels down by 1, padding with 0 at the top."""
+    R, C = len(g), len(g[0])
+    out = [[0]*C for _ in range(R)]
+    for r in range(R-1):
+        for c in range(C):
+            out[r+1][c] = g[r][c]
+    return out
+
+@_safe_grid_op
+def g_shift_left(g: Grid) -> Grid:
+    """Shift all pixels left by 1, padding with 0 on the right."""
+    R, C = len(g), len(g[0])
+    out = [[0]*C for _ in range(R)]
+    for r in range(R):
+        for c in range(1, C):
+            out[r][c-1] = g[r][c]
+    return out
+
+@_safe_grid_op
+def g_shift_right(g: Grid) -> Grid:
+    """Shift all pixels right by 1, padding with 0 on the left."""
+    R, C = len(g), len(g[0])
+    out = [[0]*C for _ in range(R)]
+    for r in range(R):
+        for c in range(C-1):
+            out[r][c+1] = g[r][c]
+    return out
+
+@_safe_grid_op
+def g_align_up(g: Grid) -> Grid:
+    """Shift all non-zero pixels up as a rigid body until hitting the top wall."""
+    R, C = len(g), len(g[0])
+    min_r = R
+    for r in range(R):
+        if any(c != 0 for c in g[r]):
+            min_r = r
+            break
+    if min_r == R or min_r == 0:
+        return _clone(g)
+    
+    out = [[0]*C for _ in range(R)]
+    for r in range(min_r, R):
+        for c in range(C):
+            out[r - min_r][c] = g[r][c]
+    return out
+
+@_safe_grid_op
+def g_align_down(g: Grid) -> Grid:
+    """Shift all non-zero pixels down as a rigid body until hitting the bottom wall."""
+    R, C = len(g), len(g[0])
+    max_r = -1
+    for r in range(R - 1, -1, -1):
+        if any(c != 0 for c in g[r]):
+            max_r = r
+            break
+    if max_r == -1 or max_r == R - 1:
+        return _clone(g)
+    
+    shift = (R - 1) - max_r
+    out = [[0]*C for _ in range(R)]
+    for r in range(max_r, -1, -1):
+        for c in range(C):
+            out[r + shift][c] = g[r][c]
+    return out
+
+@_safe_grid_op
+def g_align_left(g: Grid) -> Grid:
+    """Shift all non-zero pixels left as a rigid body until hitting the left wall."""
+    R, C = len(g), len(g[0])
+    min_c = C
+    for c in range(C):
+        if any(g[r][c] != 0 for r in range(R)):
+            min_c = c
+            break
+    if min_c == C or min_c == 0:
+        return _clone(g)
+    
+    out = [[0]*C for _ in range(R)]
+    for r in range(R):
+        for c in range(min_c, C):
+            out[r][c - min_c] = g[r][c]
+    return out
+
+@_safe_grid_op
+def g_align_right(g: Grid) -> Grid:
+    """Shift all non-zero pixels right as a rigid body until hitting the right wall."""
+    R, C = len(g), len(g[0])
+    max_c = -1
+    for c in range(C - 1, -1, -1):
+        if any(g[r][c] != 0 for r in range(R)):
+            max_c = c
+            break
+    if max_c == -1 or max_c == C - 1:
+        return _clone(g)
+    
+    shift = (C - 1) - max_c
+    out = [[0]*C for _ in range(R)]
+    for r in range(R):
+        for c in range(max_c, -1, -1):
+            out[r][c + shift] = g[r][c]
+    return out
+
+@_safe_grid_op
+def g_center_h(g: Grid) -> Grid:
+    """Center all non-zero pixels horizontally."""
+    R, C = len(g), len(g[0])
+    cols = [c for c in range(C) if any(g[r][c] != 0 for r in range(R))]
+    if not cols:
+        return _clone(g)
+    
+    min_c, max_c = cols[0], cols[-1]
+    width = max_c - min_c + 1
+    target_c = (C - width) // 2
+    shift = target_c - min_c
+    
+    if shift == 0:
+        return _clone(g)
+        
+    out = [[0]*C for _ in range(R)]
+    for r in range(R):
+        for c in range(C):
+            if g[r][c] != 0 and 0 <= c + shift < C:
+                out[r][c + shift] = g[r][c]
+    return out
+
+@_safe_grid_op
+def g_center_v(g: Grid) -> Grid:
+    """Center all non-zero pixels vertically."""
+    R, C = len(g), len(g[0])
+    rows = [r for r in range(R) if any(c != 0 for c in g[r])]
+    if not rows:
+        return _clone(g)
+        
+    min_r, max_r = rows[0], rows[-1]
+    height = max_r - min_r + 1
+    target_r = (R - height) // 2
+    shift = target_r - min_r
+    
+    if shift == 0:
+        return _clone(g)
+        
+    out = [[0]*C for _ in range(R)]
+    for r in range(R):
+        for c in range(C):
+            if g[r][c] != 0 and 0 <= r + shift < R:
+                out[r + shift][c] = g[r][c]
+    return out
+
+# ── Sequence & Extrapolation ───────────────────────────────────────────────────
+
+@_safe_grid_op
+def g_repeat_v(g: Grid) -> Grid:
+    """Repeat the entire grid vertically, appending a copy to itself."""
+    return [list(r) for r in g] + [list(r) for r in g]
+
+@_safe_grid_op
+def g_repeat_h(g: Grid) -> Grid:
+    """Repeat the entire grid horizontally, appending a copy to itself."""
+    return [list(r) + list(r) for r in g]
+
+# ── Target Color Replacements ──────────────────────────────────────────────────
+
+def g_replace_1_with_2(g: Grid) -> Grid:
+    """Transforms all 1s into 2s."""
+    return [[2 if c == 1 else c for c in row] for row in g]
+
+def g_replace_2_with_1(g: Grid) -> Grid:
+    """Transforms all 2s into 1s."""
+    return [[1 if c == 2 else c for c in row] for row in g]
+
+def g_replace_1_with_3(g: Grid) -> Grid:
+    """Transforms all 1s into 3s."""
+    return [[3 if c == 1 else c for c in row] for row in g]
+
+
 _NEW_ARC_PRIMITIVES: dict[str, tuple[object, str]] = {
     # More color swaps
     "gswap_04":         (gswap_04,         "Swap colors 0 and 4"),
@@ -1183,6 +1372,25 @@ _NEW_ARC_PRIMITIVES: dict[str, tuple[object, str]] = {
     "ghalf_bottom":     (ghalf_bottom,     "Extract bottom half of grid"),
     "ghalf_left":       (ghalf_left,       "Extract left half of grid"),
     "ghalf_right":      (ghalf_right,      "Extract right half of grid"),
+    # Shifts
+    "g_shift_up":       (g_shift_up,       "Shift all pixels up 1 space"),
+    "g_shift_down":     (g_shift_down,     "Shift all pixels down 1 space"),
+    "g_shift_left":     (g_shift_left,     "Shift all pixels left 1 space"),
+    "g_shift_right":    (g_shift_right,    "Shift all pixels right 1 space"),
+    # Alignments
+    "g_align_up":       (g_align_up,       "Align non-zero pixels to top wall"),
+    "g_align_down":     (g_align_down,     "Align non-zero pixels to bottom wall"),
+    "g_align_left":     (g_align_left,     "Align non-zero pixels to left wall"),
+    "g_align_right":    (g_align_right,    "Align non-zero pixels to right wall"),
+    "g_center_h":       (g_center_h,       "Center non-zero pixels horizontally"),
+    "g_center_v":       (g_center_v,       "Center non-zero pixels vertically"),
+    # Sequence & Extrapolation
+    "g_repeat_v":       (g_repeat_v,       "Repeat grid vertically"),
+    "g_repeat_h":       (g_repeat_h,       "Repeat grid horizontally"),
+    # Color Target Replacements
+    "g_replace_1_with_2": (g_replace_1_with_2, "Transforms color 1 to 2"),
+    "g_replace_2_with_1": (g_replace_2_with_1, "Transforms color 2 to 1"),
+    "g_replace_1_with_3": (g_replace_1_with_3, "Transforms color 1 to 3"),
     # Scaling & Inflation
     "g_fractal_inflate": (g_fractal_inflate, "Fractal expansion: tile grid into its own non-zero pixels"),
     "g_scale_2x":       (g_scale_2x,       "Scale up the grid 2x"),
