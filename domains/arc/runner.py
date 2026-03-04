@@ -148,6 +148,7 @@ class BenchmarkConfig:
     lam: float = 0.02
     verbose: bool = True
     baseline_only: bool = False
+    seed: int | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -290,7 +291,7 @@ def _run_task_process(
         workers=inner_workers,
         converge_threshold=1e-9,
         verbose=False,
-        seed=idx * 7 + 42,
+        seed=idx * 7 + 42 if cfg.seed is None else cfg.seed + idx,
     )
 
     task_t0 = time.time()
@@ -583,6 +584,7 @@ if __name__ == "__main__":
         task_workers = args.task_workers,
         verbose      = True,
         baseline_only = args.baseline_only,
+        seed         = None,
     )
 
     if args.data:

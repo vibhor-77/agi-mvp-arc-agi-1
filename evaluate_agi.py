@@ -19,7 +19,7 @@ from domains.arc.runner import load_tasks_from_dir, BenchmarkConfig, evaluate_ta
 from core.library import PrimitiveLibrary
 from core.primitives import registry
 
-def run_evaluation(data_dir: str, num_tasks: int, cfg: BenchmarkConfig) -> None:
+def run_evaluation(data_dir: str, num_tasks: int, cfg: BenchmarkConfig, model_path: str) -> None:
     print(f"\n🧠 AGI Evaluation Phase")
     print(f"Loading tasks from: {data_dir}")
     
@@ -29,7 +29,7 @@ def run_evaluation(data_dir: str, num_tasks: int, cfg: BenchmarkConfig) -> None:
         return
 
     # Load the matured library learned from the Training set
-    lib = PrimitiveLibrary("arc_library.json")
+    lib = PrimitiveLibrary(model_path)
     print(f"Loaded {len(lib.learned_ops)} learned primitives from Sleep phase.")
     
     # Inject them into the active DSL registry
@@ -65,6 +65,8 @@ if __name__ == "__main__":
     parser.add_argument("--beam-size", type=int, default=10, help="Size of the Beam Search queue")
     parser.add_argument("--offspring", type=int, default=20, help="Number of mutations per generation")
     parser.add_argument("--generations", type=int, default=100, help="Number of deep search iterations per task")
+    parser.add_argument("--model", type=str, default="arc_library.json", help="Filepath to load the learned primitive dictionary from")
+    parser.add_argument("--seed", type=int, default=None, help="Deterministic random seed for the search engine")
     
     args = parser.parse_args()
 
@@ -82,7 +84,8 @@ if __name__ == "__main__":
         generations=args.generations, 
         task_workers=args.task_workers, 
         workers=args.workers, 
-        baseline_only=True
+        baseline_only=True,
+        seed=args.seed
     )
     
-    run_evaluation(args.data, args.tasks, cfg)
+    run_evaluation(args.data, args.tasks, cfg, args.model)

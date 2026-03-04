@@ -17,8 +17,8 @@ from domains.arc.domain import ARCTask
 from core.library import PrimitiveLibrary
 from core.primitives import registry
 
-def run_wake_sleep(tasks: list[ARCTask], epochs: int, cfg: BenchmarkConfig) -> None:
-    lib = PrimitiveLibrary("arc_library.json")
+def run_wake_sleep(tasks: list[ARCTask], epochs: int, cfg: BenchmarkConfig, model_path: str) -> None:
+    lib = PrimitiveLibrary(model_path)
     
     print(f"\n🚀 Starting Wake-Sleep Training over {len(tasks)} tasks for {epochs} epochs")
     
@@ -73,6 +73,8 @@ if __name__ == "__main__":
     parser.add_argument("--beam-size", type=int, default=10, help="Size of the Beam Search queue")
     parser.add_argument("--offspring", type=int, default=20, help="Number of mutations per generation")
     parser.add_argument("--generations", type=int, default=100, help="Number of deep search iterations per task")
+    parser.add_argument("--model", type=str, default="arc_library.json", help="Filepath to save the learned primitive dictionary")
+    parser.add_argument("--seed", type=int, default=None, help="Deterministic random seed for the search engine")
     args = parser.parse_args()
 
     print("\n" + "="*65)
@@ -96,7 +98,8 @@ if __name__ == "__main__":
         generations=args.generations, 
         task_workers=args.task_workers, 
         workers=args.workers, 
-        baseline_only=True
+        baseline_only=True,
+        seed=args.seed
     )
     
-    run_wake_sleep(tasks, args.epochs, cfg)
+    run_wake_sleep(tasks, args.epochs, cfg, args.model)
