@@ -70,9 +70,22 @@ python3 train_wake_sleep.py \
     --beam-size 10 \
     --generations 100 \
     --workers 1 \
-    --task-workers 8
+    --task-workers 8 \
+    --model arc_library.json \
+    --report wake_sleep_report.md \
+    --seed 42
 ```
 *(Tip: Keeping `--workers 1` ensures internal search tree logging remains clean on your terminal shell.)*
+
+### Specialized Artifact Parameters 
+The evaluation pipeline defaults to writing outputs cleanly, but you have the power to define exactly where these abstraction layers and evaluation heuristics are saved.
+
+- **`--model <filepath>`** (*Default: arc_library.json*)
+  This controls where the mathematical abstractions and transition states discovered during the `train_wake_sleep.py` loops are incrementally written. When executing `evaluate_agi.py`, it automatically pulls abstractions from this path and loads them into the baseline Lexicase selection pool.
+- **`--report <filepath>`** (*Default: wake_sleep_report.md / evaluation_report.md*)
+  Our Introspection diagnostics natively generate comprehensive Markdown files categorized by failures (Dimension Mismatch, Pixel Mismatch). Use this parameter to label iteration testing dynamically (e.g. `--report run_v1_evaluation.md`).
+- **`--seed <integer>`** (*Default: None*)
+  If you need 100% deterministic reproducibility for scientific logging across multiple machines, lock the `BeamSearch` evolutionary mutations globally via an exact seed integers.
 
 ## 5. Current Performance Metrics
 As of Phase 5 testing (with Deep 35-Depth Search, Dynamic Alignment, and Sequence Extrapolation):

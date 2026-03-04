@@ -39,7 +39,12 @@ import threading
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from dataclasses import dataclass, field
+import signal
 from typing import Any, Optional
+
+def _ignore_sigint_initializer():
+    """Ignore SIGINT in multiprocessing workers so only the parent receives KeyboardInterrupt."""
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
 
 from core.tree import Node
 from core.search import SearchConfig
@@ -505,7 +510,7 @@ def evaluate_tasks(
 
     # ---- dispatch tasks -------------------------------------------------------
     if cfg.task_workers > 1:
-        exe = ProcessPoolExecutor(max_workers=cfg.task_workers)
+        exe = ProcessPoolExecutor(max_workers=cfg.task_workers, initializer=_ignore_sigint_initializer)
         try:
             futures = {exe.submit(_run_task_process, i, t, cfg, op_subset, inner_workers, transition_matrix, learned_ops): i for i, t in enumerate(tasks)}
             for fut in as_completed(futures):
