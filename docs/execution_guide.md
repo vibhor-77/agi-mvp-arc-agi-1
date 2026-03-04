@@ -43,8 +43,8 @@ By default, running the script with no arguments runs a deep search across all 4
 python3 train_wake_sleep.py \
     --tasks 400 \
     --epochs 5 \
-    --beam-size 10 \
-    --generations 20 \
+    --beam-size 100 \
+    --generations 100 \
     --workers 1 \
     --task-workers 8
 ```
@@ -59,8 +59,8 @@ The `evaluate_agi.py` script is explicitly hardcoded to lock out training data a
 ```bash
 python3 evaluate_agi.py \
     --tasks 400 \
-    --beam-size 10 \
-    --generations 20 \
+    --beam-size 100 \
+    --generations 100 \
     --task-workers 8
 ```
 

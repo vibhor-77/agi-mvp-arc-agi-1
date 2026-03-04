@@ -393,7 +393,7 @@ def evaluate_tasks(
                     for row in expected: print(f"      {row}")
                     try:
                         domain_phantom = ARCDomain(task, primitive_subset=op_subset)
-                        actual = tr.best_tree.eval({"x": inp}, domain_phantom._primitives)
+                        actual = tr.best_tree.eval([inp], domain_phantom._primitives)
                         print("    Actual output from AST:")
                         if isinstance(actual, list) and len(actual) > 0 and isinstance(actual[0], list):
                             for row in actual: print(f"      {row}")
@@ -414,7 +414,7 @@ def evaluate_tasks(
                         else:
                             print(f"      {actual}")
                     except Exception as e:
-                        print(f"      [EVAL ERROR] {e}")
+                        print(f"      [EVAL ERROR] {type(e).__name__}: {e}")
                     print(f"    {'-'*40}")
             print(_scoreboard(), flush=True)
         else:
