@@ -266,6 +266,9 @@ class BenchmarkReport:
 # Core evaluation function
 # ---------------------------------------------------------------------------
 
+def _suppress_on_result(result: Any) -> None:
+    pass
+
 def evaluate_tasks(
     tasks: list[ARCTask],
     op_subset: list[str],
@@ -338,7 +341,7 @@ def evaluate_tasks(
         task_t0 = time.time()
         domain = ARCDomain(task, lam=cfg.lam, primitive_subset=op_subset)
         # Suppress any domain-level result printing; we handle output here.
-        domain.on_result = lambda _: None  # type: ignore[method-assign]
+        domain.on_result = _suppress_on_result  # type: ignore[method-assign]
 
         result = domain.solve(config=search_cfg)
 
