@@ -14,6 +14,9 @@ from typing import Callable, Any
 from .tree import Node
 from .primitives import registry
 
+def _default_dict_factory() -> dict[str, float]:
+    return defaultdict(float)
+
 class PrimitiveLibrary:
     """
     Manages loading, saving, and extracting learned primitives.
@@ -23,7 +26,7 @@ class PrimitiveLibrary:
         self.filepath = filepath
         self.learned_ops: dict[str, dict] = {}
         # P(child_op | parent_op) weights
-        self.transition_matrix: dict[str, dict[str, float]] = defaultdict(lambda: defaultdict(float))
+        self.transition_matrix: dict[str, dict[str, float]] = defaultdict(_default_dict_factory)
 
     def extract_from_tasks(self, task_trees: dict[str, Node], min_size: int = 3, min_tasks: int = 2) -> None:
         """
