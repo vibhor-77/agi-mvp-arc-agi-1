@@ -521,7 +521,7 @@ def evaluate_tasks(
             print("\n[!] KeyboardInterrupt received. Forcefully terminating workers...", flush=True)
             for p in exe._processes.keys():
                 try:
-                    p.terminate()
+                    p.kill()
                 except Exception:
                     pass
             exe.shutdown(wait=False, cancel_futures=True)
