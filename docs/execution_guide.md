@@ -55,7 +55,19 @@ python3 evaluate_agi.py
 
 This enforces a strict generalization benchmark devoid of hardcoded logic.
 
-## 5. The "Sweet Spot" (Advanced Parameters)
+## 5. The Master Pipeline Orchestrator
+
+Rather than running the training and evaluation engines manually, you can use the unified sequence script `run_full_pipeline.py` to continuously process Wake-Sleep and pipe the dynamically generated model straight into the Evaluation sandbox seamlessly.
+
+```bash
+python3 run_full_pipeline.py \
+    --train-tasks 400 \
+    --eval-tasks 400 \
+    --epochs 5 \
+    --task-workers 8
+```
+
+## 6. The "Sweet Spot" (Advanced Parameters)
 
 You do not need to pass any arguments to run the engine. However, the default parameters were chosen through rigorous empirical "Sweet Spot Optimization" using the `scripts/sweep_hyperparams.py` matrix on real ARC data.
 
@@ -83,11 +95,13 @@ The evaluation pipeline defaults to writing outputs cleanly, but you have the po
 - **`--model <filepath>`** (*Default: LATEST*)
   This controls where the mathematical abstractions and transition states discovered during the `train_wake_sleep.py` loops are incrementally written or loaded from. By default, `train_wake_sleep.py` deposits timestamped files into `models/`. When executing `evaluate_agi.py`, it automatically sweeps the `models/` folder and dynamically loads the most recently created compilation.
 - **`--report <filepath>`** (*Default: reports/train_<timestamp>.md / reports/eval_<timestamp>.md*)
-  Our Introspection diagnostics natively generate comprehensive Markdown files categorized by failures (Dimension Mismatch, Pixel Mismatch).
+  Our Introspection diagnostics natively generate comprehensive Markdown files categorized by failures (Dimension Mismatch, Pixel Mismatch). **Zero-dependency Javascript `.html` wrappers** are also generated concurrently, so you can dynamically view the grids within your web browser safely.
+- **`--task-ids <string>`** (*Default: None*)
+  Both `train_wake_sleep.py` and `evaluate_agi.py` accept a comma-separated array of specific string IDs (e.g. `--task-ids 007bbfb7,025d127b`) if you demand exact targeting over massive datasets. *Note: When using `run_full_pipeline.py`, this is parameterized cleanly into `--train-task-ids` and `--eval-task-ids` to stop evaluation sets crashing on training UUIDs.*
 - **`--seed <integer>`** (*Default: None*)
   If you need 100% deterministic reproducibility for scientific logging across multiple machines, lock the `BeamSearch` evolutionary mutations globally via an exact seed integers.
 
-## 5. Current Performance Metrics
+## 7. Current Performance Metrics
 As of Phase 5 testing (with Deep 35-Depth Search, Dynamic Alignment, and Sequence Extrapolation):
 - **Empirical Baseline Accuracy:** 20.0% perfect mathematically solved (over a sub-sample of 5 unseen architectures).
 - **Mean Pixel Accuracy:** ~93.0% on training iterations (driven by new geometric primitives like `g_center_h` and object alignment logic).

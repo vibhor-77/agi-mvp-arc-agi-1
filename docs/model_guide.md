@@ -43,9 +43,10 @@ The JSON model file is structured into two main dictionaries:
 
 ## 2. Introspection Reports 
 
-Both the train and evaluation scripts now feature native Markdown Auto-Generators that output explicitly *why* tasks failed.
-
-By default, the training script generates `reports/train_<timestamp>.md` (spanning all 5 Epochs), and the evaluation script generates `reports/eval_<timestamp>.md`.
+45: Both the train and evaluation scripts now feature native Markdown Auto-Generators that output explicitly *why* tasks failed.
+46: 
+47: By default, the training script generates `reports/train_<timestamp>.md` (spanning all 5 Epochs), and the evaluation script generates `reports/eval_<timestamp>.md`.
+48: Zero-dependency Javascript `.html` wrappers are generated uniformly alongside them for seamless GUI browser rendering.
 
 ### How to understand the `Introspection` outputs:
 During the `BeamSearch`, if a task is unsolved, the engine records the final and best AST (by fitness score) and logs the failure category:
@@ -82,6 +83,14 @@ python3 evaluate_agi.py
 - The script dynamically sweeps the `models/` directory for the most recently modified `.json` file and assumes it is the target architecture.
 - It parses the 400 separate unseen Evaluation tasks.
 - It writes the final comprehensive Introspection strings natively to `reports/eval_<timestamp>.md`.
+
+### Phase 3: The Unified Pipeline Engine
+If you don't want to run the training and evaluation steps manually, you can use the unified sequence script to orchestrate the entire end-to-end extraction natively:
+```bash
+python3 run_full_pipeline.py --train-tasks 400 --eval-tasks 400
+```
+**What happens behind the scenes:**
+- It securely executes `train_wake_sleep.py` and passes the resulting absolute timestamp ID down structurally into `evaluate_agi.py` to prevent race conditions across parallel invocations.
 
 ### (Optional) Reproducibility
 If you need to identically reproduce a test bench report for research logging, provide a deterministic kernel seed to lock the uniform mutations:

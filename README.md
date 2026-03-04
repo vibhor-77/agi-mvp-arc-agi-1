@@ -16,7 +16,7 @@ To keep the repository clean and easy to read, the documentation is divided into
 
 ### 1. Core Guides
 1. **[Quickstart & Execution Guide](docs/execution_guide.md)**
-   * How to install dependencies, run the solver frameworks, and evaluate the full benchmark. Expected results and baseline execution targets.
+   * How to explicitly install dependencies, run the solver frameworks (`train_wake_sleep.py`, `evaluate_agi.py`, `run_full_pipeline.py`), target datasets via `--task-ids`, and evaluate the benchmark cleanly using Native HTML introspection.
 2. **[Architecture & Philosophy](docs/architecture.md)**
    * Explanation of the N-ary AST abstraction engine, code structure, testing strategy, and paradigm fusion (Semantic Hashing, Lexicase Selection, Generative Priors).
 3. **[Model & Report Guide](docs/model_guide.md)**

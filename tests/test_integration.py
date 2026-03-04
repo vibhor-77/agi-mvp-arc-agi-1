@@ -635,5 +635,32 @@ class TestLoadTasksFromDir(unittest.TestCase):
             self.assertIsInstance(solved, bool)
 
 
+# ---------------------------------------------------------------------------
+# 11. run_full_pipeline.py integration
+# ---------------------------------------------------------------------------
+
+class TestRunFullPipeline(unittest.TestCase):
+    """Smoke-test the run_full_pipeline.py orchestrator."""
+    def test_pipeline_smoke_test(self):
+        import subprocess
+        script_path = os.path.join(os.path.dirname(__file__), "..", "run_full_pipeline.py")
+        cmd = [
+            sys.executable, script_path,
+            "--train-tasks", "1",
+            "--eval-tasks", "1",
+            "--epochs", "1",
+            "--beam-size", "2",
+            "--generations", "2",
+            "--task-workers", "1",
+            "--workers", "1"
+        ]
+        # Should complete without error
+        res = subprocess.run(cmd, capture_output=True, text=True)
+        self.assertEqual(res.returncode, 0, msg=f"Pipeline failed:\n{res.stderr}")
+        self.assertIn("PHASE 1: WAKE-SLEEP TRAINING", res.stdout)
+        self.assertIn("PHASE 2: EVALUATION", res.stdout)
+        self.assertIn("END-TO-END PIPELINE COMPLETE SUMMARY", res.stdout)
+        self.assertIn(".html", res.stdout)
+
 if __name__ == "__main__":
     unittest.main()
