@@ -505,18 +505,36 @@ def evaluate_tasks(
 
     # ---- dispatch tasks -------------------------------------------------------
     if cfg.task_workers > 1:
-        with ProcessPoolExecutor(max_workers=cfg.task_workers) as exe:
+        exe = ProcessPoolExecutor(max_workers=cfg.task_workers)
+        try:
             futures = {exe.submit(_run_task_process, i, t, cfg, op_subset, inner_workers, transition_matrix, learned_ops): i for i, t in enumerate(tasks)}
             for fut in as_completed(futures):
                 idx, tr = fut.result()
                 _handle_result(idx, tr, tasks[idx])
                 ordered_results.append((idx, tr))
+        except KeyboardInterrupt:
+            print("\n[!] KeyboardInterrupt received. Forcefully terminating workers...", flush=True)
+            for p in exe._processes.keys():
+                try:
+                    p.terminate()
+                except Exception:
+                    pass
+            exe.shutdown(wait=False, cancel_futures=True)
+            import os
+            os._exit(130)
+        finally:
+            exe.shutdown(wait=True)
     else:
-        for i, task in enumerate(tasks):
-            print(_scoreboard(), flush=True)
-            idx, tr = _run_task_process(i, task, cfg, op_subset, inner_workers, transition_matrix, learned_ops)
-            _handle_result(idx, tr, task)
-            ordered_results.append((idx, tr))
+        try:
+            for i, task in enumerate(tasks):
+                print(_scoreboard(), flush=True)
+                idx, tr = _run_task_process(i, task, cfg, op_subset, inner_workers, transition_matrix, learned_ops)
+                _handle_result(idx, tr, task)
+                ordered_results.append((idx, tr))
+        except KeyboardInterrupt:
+            print("\n[!] KeyboardInterrupt received. Aborting evaluation...", flush=True)
+            import sys
+            sys.exit(130)
 
     # Re-sort to original task order (parallel runs may finish out-of-order)
     ordered_results.sort(key=lambda x: x[0])
