@@ -42,6 +42,7 @@ def run_wake_sleep(tasks: list[ARCTask], epochs: int, cfg: BenchmarkConfig, mode
             label=f"Epoch {epoch} ({len(active_ops)} ops)",
             transition_matrix=lib.transition_matrix,
             learned_ops=lib.learned_ops,
+            epoch_str=f"Epoch {epoch}/{epochs}",
         )
         
         # Sleep: Collect successful trees

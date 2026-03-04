@@ -407,6 +407,7 @@ def evaluate_tasks(
     label: str,
     transition_matrix: dict[str, dict[str, float]] | None = None,
     learned_ops: dict[str, dict] | None = None,
+    epoch_str: str = "",
 ) -> BenchmarkReport:
     """
     Run beam search on every task in *tasks* using *op_subset* as primitives.
@@ -445,8 +446,10 @@ def evaluate_tasks(
         
         pct   = 100.0 * sol / done if done else 0.0
         unsol = done - sol
+        
+        prefix = f" [{epoch_str}]" if epoch_str else ""
         return (
-            f"  ┌ scoreboard ─ "
+            f"  ┌ scoreboard{prefix} ─ "
             f"✓ solved={sol}  ✗ unsolved={unsol}  "
             f"→ active={act}  ⏳ pending={pend}  "
             f"done={done}/{n_total}  "
