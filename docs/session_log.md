@@ -228,3 +228,29 @@ A critical structural stabilization of the Wake-Sleep evaluation orchestrators t
 - Intercepted the command line initialization internally to render a clean, tabular `WAKE-SLEEP EXECUTOR PARAMETERS` pre-flight checklist.
 - Fixed the visual scoreboard `active=400` logic flaw, accurately bounding active thread reporting to `min(cfg.task_workers, remaining_tasks)` without polluting the internal loop counters. 
 - The repository is now 100% resilient for scaling the ARC dataset without manual parameter configuration.
+
+---
+
+## Session 6 — Deep Learning Analogues & Epoch Theory (March 4, 2026)
+
+### Vibhor's prompt
+
+> Why does the training need to run for 5 epochs? Why isn't just 1 epoch enough? Can you make randomness deterministic? Why 2 scripts? How about a configurable 'model' save file where primitives are stored like model weights?
+
+### What was built
+
+A conceptual bridge aligning the symbolic engine's CLI with standard Deep Learning architecture paradigms. 
+
+**1. The `--model` Parameter (Weight Persistence)**
+- Treating the symbolic `PrimitiveLibrary` exactly like a Neural Network's `weights.h5` file.
+- Updated `train_wake_sleep.py` and `evaluate_agi.py` to accept `--model <filename.json>`.
+- The engine now explicitly saves "learned abstractions" (Sub-ASTs) and its "Generative Priors" (Markov transition matrices) to the target file.
+- `evaluate_agi.py` dynamically loads this explicit file, enforcing the "train once, infer anywhere" paradigm.
+
+**2. The `--seed` Parameter (Deterministic Evaluation)**
+- Plumbed a deterministic integer seed from the terminal `argparse` down through the `BenchmarkConfig` into the physical `SearchConfig`.
+- Guarantees that random tree mutations and initial population instantiations within the `BeamSearch` are perfectly reproducible across multiple runs on the exact same architecture.
+
+**3. Theoretical Clarification on Epochs & Search Ceilings**
+- Clarified that **Epochs** dictate hierarchical composability. Epoch 1 invents abstractions built of base logic. Epoch 2 invents abstractions built out of Epoch 1 abstractions. 5 epochs allows exponentially deep macro logic.
+- Acknowledged why Evaluation is slow: Symbolic search isn't a matrix multiplication forward-pass. Even with a brilliant Library reducing the depth of the tree, the engine still executes a literal Beam Search to map the exact sequence of primitives to the specific unseen 5x5 grid.

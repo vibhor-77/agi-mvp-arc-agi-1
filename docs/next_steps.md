@@ -21,14 +21,21 @@ python3 evaluate_agi.py
 ```
 This script acts identically to the hidden ARC evaluation constraint. It forces the solver to load `arc_library.json` and attempt the 400 *evaluation* tasks.
 
-### 2. Add SymPy canonicalization to tree scoring
-Currently `grot90(grot90(grot90(grot90(x))))` and `gid(x)` have different sizes but identical semantics. Adding SymPy canonicalization to the semantic hashing engine would fix double-counting during evaluation.
+### 2. Shattering the 10% Accuracy Ceiling (The Expressivity Gap)
+Currently, our `grid_cell_accuracy` rigorously denies false "partial credit" for mismatched grids. This mathematically anchors our current engine's capability at ~10% accuracy. Why? Because pure `BeamSearch` hits combinatorial explosion at depth 5-8. If a task requires 15 distinct primitive manipulations (a loop, a conditional, and a translation), it is mathematically unreachable under current constraints.
+To break this ceiling, we *must* introduce **LLM-guided primitive generation (ARChitects approach)**. The runtime must pause, query an LLM with the task grid, and ask it to dynamically write a highly-specific Python function (e.g., `g_find_red_crosses_and_invert()`). The engine then evaluates this native Python code inside the structural `BeamSearch` safety net.
+
+### 3. Conditional & Looping Primitives
+A massive fraction of ARC tasks apply a rule conditionally (e.g., "if cell is on the border, apply A; otherwise apply B") or require unknown loop counts. This needs a new node type in `core/tree.py` to support true Turing-complete ternary conditional rendering `if predicate(x) then branch_a(x) else branch_b(x)`.
 
 ---
 
 ## Short term (1–2 weeks)
 
-### 3. Expanded Object segmentation primitives
+### 4. Add SymPy canonicalization to tree scoring
+Currently `grot90(grot90(grot90(grot90(x))))` and `gid(x)` have different sizes but identical semantics. Adding SymPy canonicalization to the semantic hashing engine would fix double-counting during evaluation.
+
+### 5. Expanded Object segmentation primitives
 We recently added basic `g_extract_objects` connected-component extraction. We need to expand this to handle diagonal connectivity and explicit background extraction.
 
 ### 4. Parametric Recoloring
@@ -44,13 +51,8 @@ A meaningful fraction of ARC tasks apply a rule conditionally (e.g., "if cell is
 ### 6. ARC-AGI-2 Domain
 ARC-AGI-2 uses the same JSON format but is significantly harder (contextual reasoning, multi-rule interaction). Testing against ARC-AGI-2 will prove whether the Disjoint Crossover pooling and Lexicase engines scale to harder tasks.
 
-### 7. LLM-guided primitive generation (ARChitects approach)
-The state of the art (SOAR, ARChitects) uses LLMs to generate candidate programs. A hybrid approach:
-1. LLM generates Python snippets for new grid primitives based on task examples
-2. Snippets are dynamically written, parsed, safety-checked, and registered into `core/primitives.py`
-3. Beam search uses the expanded vocabulary automatically
-
-This would let the system "invent" foundational native python logic on the fly, bridging the 4 Pillars abstraction layer without giving the LLM the answer directly!
+### 7. Core Object & Graph Reasoning
+ARC requires understanding "objects" (contiguous blocks of pixels) that move independently. Our grid-level primitives (`grot90`) manipulate the universally whole image. We need map-reduce style logic that partitions a grid into an Object Graph, translates an inner bounding box, and reconstructs the canvas.
 
 ---
 

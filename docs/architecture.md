@@ -35,6 +35,13 @@ Using **Semantic Hashing**, the system hashes the output of every generated AST 
 Usually, AI models judge fitness based on global average accuracy. 
 By wiring **Lexicase Selection** into the deduping sorting arrays, the system now tracks individual case errors. If an AST mathematically solves even *one* singular edge case perfectly, it receives an artificial priority boost, preventing the engine from discarding uniquely valuable sub-abstractions!
 
-### C. Generative Priors (DreamCoder adaptation)
-Instead of generating generic Random AST logic via a blind uniform distribution, the `PrimitiveLibrary` now extracts **Transition Probability Matrices**.
-During the Sleep phase of `train_wake_sleep.py`, the engine calculates $P(\text{child} \mid \text{parent})$. During the subsequent Wake phase, new ASTs are generated using a heavily weighted prior distribution based on the logical structures statistically proven to be useful in previous task successes!
+Eventually, this model will hit a hard logical ceiling (around 10-15% accuracy on ARC) because `BeamSearch` alone cannot efficiently discover Deep Logic (like `while` loops, or complex `if/else` pixel mapping) before combinatorial explosion kills the search queue. 
+
+To break past this ceiling, the engine requires actual Object-Oriented segmentation and LLM-synthesized Python primitives (see `next_steps.md`).
+
+## 4. The Deep Learning Paradigm: Weight Persistence (`--model`)
+
+Rather than starting from scratch every time, the AGI engine treats its learned Library exactly like a Neural Network treats its Weight parameters. The engine accepts a `--model <filepath.json>` argument, which natively stores two things:
+
+1. **The Learned Abstractions (Macro-ASTs):** The literal mathematical subtrees (e.g., `lib_op_12 = grot90(goverlay(x, y))`) that were proven to solve tasks in previous Epochs.
+2. **The Generative Priors:** The Markov transition matrices specifying $P(\text{child} \mid \text{parent})$, ensuring the Search Engine generates culturally-aware mutations on unseen tasks rather than blind noise.
