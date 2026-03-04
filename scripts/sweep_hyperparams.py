@@ -20,8 +20,13 @@ def main():
     print("\n🔍 AGI Sweet Spot Hyperparameter Sweep")
     print("Testing combinatorial matrix of [Beam Size] x [Generations]")
     
-    # Use a challenging programmatic 10-task subset for fast but rigorous benchmarking
-    tasks = build_benchmark()[:10]
+    # Use a challenging programmatic 5-task subset for fast but rigorous benchmarking on real data
+    try:
+        tasks = load_tasks_from_dir("arc_data/data/training")[:5]
+    except Exception as e:
+        print(f"Warning: {e}. Falling back to programmatic benchmarks.")
+        tasks = build_benchmark()[:5]
+
     active_ops = registry.names(domain="arc")
 
     beam_sizes = [10, 25, 50]
@@ -59,7 +64,7 @@ def main():
             solves = report.n_solved
             mean_acc = report.mean_test_acc
 
-            print(f"Solved: {solves}/10 | Mean Acc: {mean_acc:.3f} | Time: {elapsed:.1f}s")
+            print(f"Solved: {solves}/5 | Mean Acc: {mean_acc:.3f} | Time: {elapsed:.1f}s")
             
             if mean_acc > best_acc:
                 best_acc = mean_acc
