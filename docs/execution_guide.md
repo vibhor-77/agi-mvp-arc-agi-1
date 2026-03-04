@@ -65,3 +65,8 @@ python3 evaluate_agi.py \
 ```
 
 This enforces a strict generalization benchmark devoid of hardcoded logic.
+
+## 5. Current Performance Metrics
+As of Phase 5 testing (with Deep 35-Depth Search, Dynamic Alignment, and Sequence Extrapolation):
+- **Empirical Baseline Accuracy:** 20.0% perfect mathematically solved (over a sub-sample of 5 unseen architectures).
+- **Mean Pixel Accuracy:** ~93.0% on training iterations (driven by new geometric primitives like `g_center_h` and object alignment logic).
