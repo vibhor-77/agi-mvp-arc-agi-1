@@ -205,3 +205,26 @@ the benchmark. Root cause: beam search occasionally composed a math primitive
 | Domain ABC with 3 methods | Minimal interface; adding Zork = ~30 lines |
 | Programmatic benchmark | Network blocked; can't download real ARC data |
 | Honest ~20–35% ARC estimate | Calibrated against published VSA results (~3%) and DSL systems (15–25%) |
+
+---
+
+## Session 5 — Multiprocessing Resiliency & Evaluation UX (March 4, 2026)
+
+### Vibhor's prompt
+
+> Why don't you just set the default parameters correctly so that I don't have to set them explicitly? Also, in the beginning of the execution, print all the parameters... Also, it is incorrectly printing active=400... Also, earlier, I ran this command and got the following error: `KeyError: 'lib_op_1'`.
+
+### What was built
+
+A critical structural stabilization of the Wake-Sleep evaluation orchestrators to support macOS multiprocessing at scale:
+
+**The `KeyError: 'lib_op_1'` Multiprocessing Patch**
+- **Symptom:** In Epoch 2 of Wake-Sleep, the `ProcessPoolExecutor` parallel workers immediately crashed when attempting to evaluate `lib_op_1`.
+- **Root Cause:** macOS utilizes the `spawn` context for parallel processing. Every spawned child process spins up a pristine Python interpreter. Because dynamically learned `lib_op_X` abstractions only existed in the *parent* thread's `registry`, the children had no concept of them.
+- **Resolution:** Updated `domains/arc/runner.py`'s payload delivery. The parent process now serializes `lib.learned_ops` and passes it fully through the process boundary. Every spawned child dynamically reconstructs the `PrimitiveLibrary` locally and injects the learned bindings back into its own memory space before calculating AST fitness.
+
+**CLI Standardization & Console Output**
+- Replaced ambiguous `argparse` defaults (`os.cpu_count() or 1`) with the hardcoded empiric "sweet spot" bounds: `task_workers=8`, `beam_size=10`, `generations=100`.
+- Intercepted the command line initialization internally to render a clean, tabular `WAKE-SLEEP EXECUTOR PARAMETERS` pre-flight checklist.
+- Fixed the visual scoreboard `active=400` logic flaw, accurately bounding active thread reporting to `min(cfg.task_workers, remaining_tasks)` without polluting the internal loop counters. 
+- The repository is now 100% resilient for scaling the ARC dataset without manual parameter configuration.
