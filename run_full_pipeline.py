@@ -62,6 +62,9 @@ def main():
     except subprocess.CalledProcessError as e:
         print(f"\n[!] Training Pipeline failed with exit code {e.returncode}. Aborting.")
         sys.exit(e.returncode)
+    except KeyboardInterrupt:
+        print("\n[!] Pipeline interrupted by user during training. Aborting.")
+        sys.exit(130)
 
     print("\n" + "="*65)
     print("  🧠 PHASE 2: EVALUATION")
@@ -89,6 +92,9 @@ def main():
     except subprocess.CalledProcessError as e:
         print(f"\n[!] Evaluation Pipeline failed with exit code {e.returncode}. Aborting.")
         sys.exit(e.returncode)
+    except KeyboardInterrupt:
+        print("\n[!] Pipeline interrupted by user during evaluation. Aborting.")
+        sys.exit(130)
 
     print("\n" + "="*65)
     print("  🏆 END-TO-END PIPELINE COMPLETE SUMMARY")

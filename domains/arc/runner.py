@@ -519,7 +519,7 @@ def evaluate_tasks(
                 ordered_results.append((idx, tr))
         except KeyboardInterrupt:
             print("\n[!] KeyboardInterrupt received. Forcefully terminating workers...", flush=True)
-            for p in exe._processes.keys():
+            for p in exe._processes.values():
                 try:
                     p.kill()
                 except Exception:
