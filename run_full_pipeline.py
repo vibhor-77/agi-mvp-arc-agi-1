@@ -25,7 +25,8 @@ def main():
     parser.add_argument("--offspring", type=int, default=20, help="Number of mutations per generation")
     parser.add_argument("--generations", type=int, default=100, help="Number of deep search iterations per task")
     parser.add_argument("--seed", type=int, default=None, help="Deterministic random seed")
-    parser.add_argument("--task-ids", type=str, default=None, help="Comma-separated list of train task IDs")
+    parser.add_argument("--train-task-ids", type=str, default=None, help="Comma-separated list of train task IDs")
+    parser.add_argument("--eval-task-ids", type=str, default=None, help="Comma-separated list of eval task IDs")
     args = parser.parse_args()
 
     timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -52,8 +53,8 @@ def main():
     ]
     if args.seed is not None:
         train_cmd.extend(["--seed", str(args.seed)])
-    if args.task_ids is not None:
-        train_cmd.extend(["--task-ids", args.task_ids])
+    if args.train_task_ids is not None:
+        train_cmd.extend(["--task-ids", args.train_task_ids])
 
     try:
         # Popen inherently pipes to stdout so user sees dynamic print logs
@@ -80,7 +81,8 @@ def main():
     ]
     if args.seed is not None:
         eval_cmd.extend(["--seed", str(args.seed)])
-    # Omitting 'task-ids' structurally protects the evaluation runner loop.
+    if args.eval_task_ids is not None:
+        eval_cmd.extend(["--task-ids", args.eval_task_ids])
 
     try:
         subprocess.run(eval_cmd, check=True)
