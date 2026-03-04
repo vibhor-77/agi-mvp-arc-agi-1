@@ -17,10 +17,12 @@ from domains.arc.domain import ARCTask
 from core.library import PrimitiveLibrary
 from core.primitives import registry
 
-def run_wake_sleep(tasks: list[ARCTask], epochs: int, cfg: BenchmarkConfig, model_path: str) -> None:
+def run_wake_sleep(tasks: list[ARCTask], epochs: int, cfg: BenchmarkConfig, model_path: str, report_path: str) -> None:
     lib = PrimitiveLibrary(model_path)
     
     print(f"\n🚀 Starting Wake-Sleep Training over {len(tasks)} tasks for {epochs} epochs")
+    
+    full_report = f"# Wake-Sleep Training Log\n\n**Total Epochs**: {epochs} | **Tasks**: {len(tasks)}\n\n---\n\n"
     
     for epoch in range(1, epochs + 1):
         # The op subset is whatever is currently registered in 'arc' domain
@@ -60,8 +62,16 @@ def run_wake_sleep(tasks: list[ARCTask], epochs: int, cfg: BenchmarkConfig, mode
         lib.register_all(domain="arc")
         lib.save()
 
+        # Append Epoch report
+        full_report += report.generate_markdown_report() + "\n\n---\n\n"
+        
+        # Save cumulative report after each epoch
+        with open(report_path, "w", encoding="utf-8") as f:
+            f.write(full_report)
+
     print("\n🎉 Wake-Sleep Training Complete!")
     print(f"Total Learned Primitives: {len(lib.learned_ops)}")
+    print(f"Full introspection report saved to: {report_path}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -75,6 +85,7 @@ if __name__ == "__main__":
     parser.add_argument("--generations", type=int, default=100, help="Number of deep search iterations per task")
     parser.add_argument("--model", type=str, default="arc_library.json", help="Filepath to save the learned primitive dictionary")
     parser.add_argument("--seed", type=int, default=None, help="Deterministic random seed for the search engine")
+    parser.add_argument("--report", type=str, default="wake_sleep_report.md", help="Markdown file to accumulate Introspection diagnostics")
     args = parser.parse_args()
 
     print("\n" + "="*65)
@@ -102,4 +113,4 @@ if __name__ == "__main__":
         seed=args.seed
     )
     
-    run_wake_sleep(tasks, args.epochs, cfg, args.model)
+    run_wake_sleep(tasks, args.epochs, cfg, args.model, args.report)

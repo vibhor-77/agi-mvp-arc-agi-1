@@ -23,7 +23,7 @@ This script acts identically to the hidden ARC evaluation constraint. It forces 
 
 ### 2. Shattering the 10% Accuracy Ceiling (The Expressivity Gap)
 Currently, our `grid_cell_accuracy` rigorously denies false "partial credit" for mismatched grids. This mathematically anchors our current engine's capability at ~10% accuracy. Why? Because pure `BeamSearch` hits combinatorial explosion at depth 5-8. If a task requires 15 distinct primitive manipulations (a loop, a conditional, and a translation), it is mathematically unreachable under current constraints.
-To break this ceiling, we *must* introduce **LLM-guided primitive generation (ARChitects approach)**. The runtime must pause, query an LLM with the task grid, and ask it to dynamically write a highly-specific Python function (e.g., `g_find_red_crosses_and_invert()`). The engine then evaluates this native Python code inside the structural `BeamSearch` safety net.
+To break this ceiling, we *must* introduce **Native Turing-Complete Mechanisms**. The runtime must be upgraded to support dynamic algorithmic abstractions like unbounded `while` loops, iterators, and graph traversals. By expanding the symbolic engine's literal grammar depth, the Library Learning algorithm can map these structures without relying on fuzzy LLM synthesis.
 
 ### 3. Conditional & Looping Primitives
 A massive fraction of ARC tasks apply a rule conditionally (e.g., "if cell is on the border, apply A; otherwise apply B") or require unknown loop counts. This needs a new node type in `core/tree.py` to support true Turing-complete ternary conditional rendering `if predicate(x) then branch_a(x) else branch_b(x)`.

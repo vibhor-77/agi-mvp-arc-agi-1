@@ -167,6 +167,7 @@ class TaskResult:
     near_solved: bool     # test_acc >= 0.80
     n_nodes: int
     elapsed_s: float
+    introspection: str = ""
     best_tree: Optional[Node] = None
 
     def as_dict(self) -> dict[str, Any]:
@@ -181,6 +182,7 @@ class TaskResult:
             "near_solved": self.near_solved,
             "n_nodes": self.n_nodes,
             "elapsed_s": round(self.elapsed_s, 2),
+            "introspection": self.introspection,
         }
 
 
@@ -258,6 +260,47 @@ class BenchmarkReport:
             "results": [r.as_dict() for r in self.results],
         }
 
+    def generate_markdown_report(self) -> str:
+        lines = [f"# AGI Execution Report: {self.label}"]
+        lines.append(f"\n## Overall Summary")
+        lines.append(f"- **Total Tasks**: {self.n_tasks}")
+        lines.append(f"- **Solved**: {self.n_solved} ({self.pct_solved:.1f}%)")
+        lines.append(f"- **Near-solved (≥80%)**: {self.n_near}")
+        lines.append(f"- **Mean Test Accuracy**: {self.mean_test_acc:.3f}")
+        lines.append(f"- **Total Time**: {self.total_elapsed_s:.1f}s")
+        
+        lines.append(f"\n## Performance by Category")
+        cats = self.by_category()
+        for cat, d in sorted(cats.items()):
+            pct = 100 * d["solved"] / d["total"] if d["total"] > 0 else 0
+            lines.append(f"- **{cat}**: {d['solved']}/{d['total']} ({pct:.1f}%)")
+            
+        lines.append(f"\n## Introspection Analysis (Failures by Category)")
+        
+        failed_by_cat = {}
+        for r in self.results:
+            if not r.solved:
+                if r.category not in failed_by_cat:
+                    failed_by_cat[r.category] = []
+                failed_by_cat[r.category].append(r)
+                
+        if not failed_by_cat:
+            lines.append("No failures! All tasks solved.")
+        
+        for cat, fails in sorted(failed_by_cat.items()):
+            lines.append(f"\n### {cat} ({len(fails)} failures)")
+            for r in fails[:15]: 
+                lines.append(f"- **{r.task_name}**:")
+                lines.append(f"  - **Introspection**: {r.introspection}")
+                if r.best_tree:
+                    ast_str = r.found_expr if len(r.found_expr) < 120 else r.found_expr[:117] + "..."
+                    lines.append(f"  - **Best AST**: `{ast_str}`")
+                    lines.append(f"  - **Train Acc**: {r.train_acc:.2f} | **Test Acc**: {r.test_acc:.2f}")
+            if len(fails) > 15:
+                lines.append(f"- *...and {len(fails) - 15} more {cat} tasks.*")
+                
+        return "\n".join(lines)
+
 
 # ---------------------------------------------------------------------------
 # Core evaluation function
@@ -307,6 +350,35 @@ def _run_task_process(
     near      = test_acc >= 0.80
     elapsed   = time.time() - task_t0
 
+    introspection_msg = ""
+    if not solved and tree is not None:
+        try:
+            # We must re-evaluate the best tree on the first train instance to generate the diff heuristic
+            pair = task.train_pairs[0]
+            if len(pair) == 2:
+                inp, expected = pair[0], pair[1]
+                actual = tree.eval([inp], domain._primitives)
+                
+                if isinstance(actual, list) and len(actual) > 0 and isinstance(actual[0], list):
+                    if len(expected) != len(actual) or len(expected[0]) != len(actual[0]):
+                        introspection_msg = f"Dimension mismatch: Expected {len(expected)}x{len(expected[0])}, Actual {len(actual)}x{len(actual[0])}"
+                    else:
+                        mismatches = 0
+                        total = len(expected) * len(expected[0])
+                        for r in range(len(expected)):
+                            for c in range(len(expected[0])):
+                                if expected[r][c] != actual[r][c]:
+                                    mismatches += 1
+                        introspection_msg = f"Pixel mismatch: {mismatches}/{total} pixels incorrect"
+                else:
+                    introspection_msg = f"Logical Failure: Output is not a valid 2D grid (got {type(actual).__name__})"
+            else:
+                introspection_msg = "Logical Failure: Invalid train pair format"
+        except Exception as e:
+            introspection_msg = f"Evaluation Crash: {type(e).__name__}: {str(e)}"
+    elif not solved:
+        introspection_msg = "Search Capacity Exhausted: No valid logical AST discovered within generation limits."
+
     tr = TaskResult(
         task_name=task.name,
         category=task.name.split("_")[0],
@@ -316,8 +388,9 @@ def _run_task_process(
         test_acc=test_acc,
         solved=solved,
         near_solved=near,
-        n_nodes=tree.size(),
+        n_nodes=tree.size() if tree else 0,
         elapsed_s=elapsed,
+        introspection=introspection_msg,
         best_tree=tree,
     )
     return idx, tr

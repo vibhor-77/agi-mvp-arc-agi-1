@@ -19,7 +19,7 @@ from domains.arc.runner import load_tasks_from_dir, BenchmarkConfig, evaluate_ta
 from core.library import PrimitiveLibrary
 from core.primitives import registry
 
-def run_evaluation(data_dir: str, num_tasks: int, cfg: BenchmarkConfig, model_path: str) -> None:
+def run_evaluation(data_dir: str, num_tasks: int, cfg: BenchmarkConfig, model_path: str, report_path: str) -> None:
     print(f"\n🧠 AGI Evaluation Phase")
     print(f"Loading tasks from: {data_dir}")
     
@@ -52,8 +52,12 @@ def run_evaluation(data_dir: str, num_tasks: int, cfg: BenchmarkConfig, model_pa
         learned_ops=lib.learned_ops,
     )
 
+    with open(report_path, "w", encoding="utf-8") as f:
+        f.write(report.generate_markdown_report())
+
     print("\n✅ Evaluation Complete!")
-    print(f"Metrics saved to: {report.saved_path}")
+    print(f"Metrics JSON saved to: {report.saved_path}")
+    print(f"Markdown Introspection report saved to: {report_path}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -67,6 +71,7 @@ if __name__ == "__main__":
     parser.add_argument("--generations", type=int, default=100, help="Number of deep search iterations per task")
     parser.add_argument("--model", type=str, default="arc_library.json", help="Filepath to load the learned primitive dictionary from")
     parser.add_argument("--seed", type=int, default=None, help="Deterministic random seed for the search engine")
+    parser.add_argument("--report", type=str, default="evaluation_report.md", help="Markdown file to accumulate Introspection diagnostics")
     
     args = parser.parse_args()
 
@@ -88,4 +93,4 @@ if __name__ == "__main__":
         seed=args.seed
     )
     
-    run_evaluation(args.data, args.tasks, cfg, args.model)
+    run_evaluation(args.data, args.tasks, cfg, args.model, args.report)

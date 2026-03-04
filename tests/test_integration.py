@@ -189,7 +189,7 @@ class TestTaskResult(unittest.TestCase):
         d = self._make().as_dict()
         for key in ("task", "category", "true_op", "found_expr",
                     "train_acc", "test_acc", "solved", "near_solved",
-                    "n_nodes", "elapsed_s"):
+                    "n_nodes", "elapsed_s", "introspection"):
             self.assertIn(key, d, msg=f"Missing key: {key}")
 
     def test_as_dict_values_serialisable(self):
