@@ -427,6 +427,49 @@ def gpad1(g: Grid) -> Grid:
 
 
 # ---------------------------------------------------------------------------
+# BINARY COMBINATORS
+# ---------------------------------------------------------------------------
+
+def goverlay(g1: Grid, g2: Grid) -> Grid:
+    """Overlay g2 on top of g1. Non-zero cells in g2 overwrite g1."""
+    if not g1 or not g2 or len(g1) != len(g2) or len(g1[0]) != len(g2[0]):
+        return _clone(g1)
+    
+    result = _clone(g1)
+    for r in range(len(result)):
+        for c in range(len(result[0])):
+            if g2[r][c] != 0:
+                result[r][c] = g2[r][c]
+    return result
+
+def ghstack(g1: Grid, g2: Grid) -> Grid:
+    """Stack g1 and g2 horizontally."""
+    if not g1 or not g2 or len(g1) != len(g2):
+        return _clone(g1)
+    
+    return [row1 + row2 for row1, row2 in zip(g1, g2)]
+
+def gvstack(g1: Grid, g2: Grid) -> Grid:
+    """Stack g1 and g2 vertically."""
+    if not g1 or not g2 or len(g1[0]) != len(g2[0]):
+        return _clone(g1)
+    
+    return _clone(g1) + _clone(g2)
+
+def gmask(g1: Grid, mask_g: Grid) -> Grid:
+    """Keep cells from g1 where mask_g is non-zero, else set to 0."""
+    if not g1 or not mask_g or len(g1) != len(mask_g) or len(g1[0]) != len(mask_g[0]):
+        return _clone(g1)
+    
+    result = _clone(g1)
+    for r in range(len(result)):
+        for c in range(len(result[0])):
+            if mask_g[r][c] == 0:
+                result[r][c] = 0
+    return result
+
+
+# ---------------------------------------------------------------------------
 # PATTERN
 # ---------------------------------------------------------------------------
 
@@ -641,10 +684,21 @@ _ARC_PRIMITIVES: dict[str, tuple[object, str]] = {
     "gkeep_rows3":  (gkeep_rows3,  "Zero rows with <3 non-zero cells"),
     "gkeep_rows4":  (gkeep_rows4,  "Zero rows with <4 non-zero cells"),
 }
+
+_ARC_BINARY_PRIMITIVES: dict[str, tuple[object, str]] = {
+    # Combinators
+    "goverlay":     (goverlay,     "Overlay obj2 on obj1 (obj2 non-zero overwrites)"),
+    "ghstack":      (ghstack,      "Horizontally stack obj1 and obj2"),
+    "gvstack":      (gvstack,      "Vertically stack obj1 and obj2"),
+    "gmask":        (gmask,        "Mask obj1 using obj2's non-zero pixels"),
+}
 # fmt: on
 
 for _name, (_fn, _desc) in _ARC_PRIMITIVES.items():
-    registry.register(_name, _fn, domain="arc", description=_desc)  # type: ignore[arg-type]
+    registry.register(_name, _fn, domain="arc", description=_desc, arity=1)  # type: ignore[arg-type]
+
+for _name, (_fn, _desc) in _ARC_BINARY_PRIMITIVES.items():
+    registry.register(_name, _fn, domain="arc", description=_desc, arity=2)  # type: ignore[arg-type]
 
 
 # ---------------------------------------------------------------------------

@@ -4,13 +4,13 @@ core/tree.py
 Expression tree data structure used by the beam search engine.
 
 A tree is either a leaf (variable or constant) or an internal node
-(a named primitive applied to one child sub-tree).  All primitives
-are *unary*, so each internal node has exactly one child.
+(a named primitive applied to sub-trees). Primitives can be unary, binary,
+or multi-ary, so each internal node has a list of children.
 
 This single structure is reused across every domain:
-  - Symbolic regression:  Node("sin", Node("sq", Leaf(var=0)))  →  sin(x²)
-  - ARC grid transforms:  Node("grot90", Node("grefl_h", Leaf(var=0))) → rotate(reflect(grid))
-  - CartPole policy:      Node("sq", Leaf(var=2))  →  θ²  used as force signal
+  - Symbolic regression:  Node("compose", [Node("sin", ...), Node("sq", Leaf(var=0))])
+  - ARC grid transforms:  Node("overlay", [Node("grot90", [Leaf(0)]), Leaf(0)])
+  - CartPole policy:      Node("sq", [Leaf(var=2)])  →  θ²  used as force signal
 
 Design decisions
 ----------------
@@ -43,25 +43,25 @@ class Node:
     op : str | None
         Primitive name (must exist in the registry used for evaluation),
         or None for leaves.
-    child : Node | None
-        Single child for internal nodes; None for leaves.
+    children : list[Node]
+        Children for internal nodes; empty list for leaves.
     var_idx : int | None
         For variable leaves: which input variable (0-indexed).
     const : float | None
         For constant leaves: the numeric value.
     """
 
-    __slots__ = ("op", "child", "var_idx", "const")
+    __slots__ = ("op", "children", "var_idx", "const")
 
     def __init__(
         self,
         op: str | None = None,
-        child: "Node | None" = None,
+        children: list["Node"] | None = None,
         var_idx: int | None = None,
         const: float | None = None,
     ) -> None:
         self.op = op
-        self.child = child
+        self.children = children or []
         self.var_idx = var_idx
         self.const = const
 
@@ -99,8 +99,8 @@ class Node:
         if fn is None:
             raise KeyError(f"Unknown primitive '{self.op}'. Check your registry.")
 
-        child_val = self.child.eval(variables, primitives)
-        return fn(child_val)
+        child_vals = [c.eval(variables, primitives) for c in self.children]
+        return fn(*child_vals)
 
     # ------------------------------------------------------------------ #
     # Size / complexity (MDL proxy)                                        #
@@ -113,11 +113,9 @@ class Node:
         Used as the complexity term in MDL fitness:
             fitness = error + λ * tree.size()
 
-        A leaf has size 1; Node("sin", Leaf(x)) has size 2.
+        A leaf has size 1; Node("sin", [Leaf(x)]) has size 2.
         """
-        if self.child is None:
-            return 1
-        return 1 + self.child.size()
+        return 1 + sum(c.size() for c in self.children)
 
     # ------------------------------------------------------------------ #
     # String representation                                                #
@@ -130,7 +128,8 @@ class Node:
                 _NAMES = ["x", "y", "z", "w", "x0", "x1", "x2", "x3"]
                 return _NAMES[self.var_idx] if self.var_idx < len(_NAMES) else f"v{self.var_idx}"
             return f"{self.const:.4g}"
-        return f"{self.op}({self.child})"
+        args = ", ".join(str(c) for c in self.children)
+        return f"{self.op}({args})"
 
     def __repr__(self) -> str:
         return f"Node({self})"
@@ -162,8 +161,8 @@ class Node:
         all solutions, find frequent ones, promote to new primitives.
         """
         result: list[Node] = [self]
-        if self.child is not None:
-            result.extend(self.child.all_subtrees())
+        for c in self.children:
+            result.extend(c.all_subtrees())
         return result
 
     # ------------------------------------------------------------------ #
@@ -221,9 +220,9 @@ def make_leaf_const(value: float) -> Node:
     return Node(const=value)
 
 
-def make_node(op: str, child: Node) -> Node:
+def make_node(op: str, children: list[Node]) -> Node:
     """Return an internal (operator) node."""
-    return Node(op=op, child=child)
+    return Node(op=op, children=children)
 
 
 def random_tree(
@@ -232,6 +231,7 @@ def random_tree(
     max_depth: int = 3,
     const_range: tuple[float, float] = (-3.0, 3.0),
     rng: random.Random | None = None,
+    op_arities: dict[str, int] | None = None,
 ) -> Node:
     """
     Build a random expression tree.
@@ -249,6 +249,8 @@ def random_tree(
         for grid domains constants are unused (all leaves are variables).
     rng : random.Random | None
         Optional RNG instance for reproducibility.
+    op_arities : dict[str, int] | None
+        Arity mapping for all primitives. Defaults to 1 for all if not provided.
 
     Returns
     -------
@@ -265,8 +267,12 @@ def random_tree(
         return make_leaf_const(val)
 
     op = rng.choice(op_list)
-    child = random_tree(op_list, n_vars, max_depth - 1, const_range, rng)
-    return make_node(op, child)
+    arity = op_arities.get(op, 1) if op_arities else 1
+    children = [
+        random_tree(op_list, n_vars, max_depth - 1, const_range, rng, op_arities)
+        for _ in range(arity)
+    ]
+    return make_node(op, children)
 
 
 # ---------------------------------------------------------------------------
@@ -280,6 +286,7 @@ def mutate(
     const_range: tuple[float, float] = (-3.0, 3.0),
     const_sigma: float = 0.5,
     rng: random.Random | None = None,
+    op_arities: dict[str, int] | None = None,
 ) -> Node:
     """
     Return a mutated copy of *node*.
@@ -304,6 +311,8 @@ def mutate(
         Standard deviation for Gaussian perturbation of constants.
     rng : random.Random | None
         Optional RNG for reproducibility.
+    op_arities : dict[str, int] | None
+        Arities for all primitives.
     """
     if rng is None:
         rng = random.Random()
@@ -312,15 +321,26 @@ def mutate(
     r = rng.random()
 
     if r < 0.50:
-        _replace_random_subtree(tree, op_list, n_vars, const_range, rng)
+        _replace_random_subtree(tree, op_list, n_vars, const_range, rng, op_arities)
     elif r < 0.80:
         if not _tweak_constant(tree, const_sigma, rng):
             # No constants found — fall back to subtree replacement
-            _replace_random_subtree(tree, op_list, n_vars, const_range, rng)
+            _replace_random_subtree(tree, op_list, n_vars, const_range, rng, op_arities)
     else:
         # Wrap self with a new op
         op = rng.choice(op_list)
-        wrapped = make_node(op, tree)
+        arity = op_arities.get(op, 1) if op_arities else 1
+        
+        # Self becomes one child (randomly chosen position)
+        self_idx = rng.randrange(arity)
+        children = []
+        for i in range(arity):
+            if i == self_idx:
+                children.append(tree)
+            else:
+                children.append(random_tree(op_list, n_vars, max_depth=1, const_range=const_range, rng=rng, op_arities=op_arities))
+                
+        wrapped = make_node(op, children)
         return wrapped
 
     return tree
@@ -357,8 +377,7 @@ def _all_nodes_list(root: Node) -> list[Node]:
     while stack:
         n = stack.pop()
         result.append(n)
-        if n.child is not None:
-            stack.append(n.child)
+        stack.extend(n.children)
     return result
 
 
@@ -368,16 +387,17 @@ def _replace_random_subtree(
     n_vars: int,
     const_range: tuple[float, float],
     rng: random.Random,
+    op_arities: dict[str, int] | None = None,
 ) -> None:
     """In-place: overwrite a randomly chosen node with a new random sub-tree."""
     nodes = _all_nodes_list(root)
     if not nodes:
         return
     target = rng.choice(nodes)
-    new = random_tree(op_list, n_vars, max_depth=2, const_range=const_range, rng=rng)
+    new = random_tree(op_list, n_vars, max_depth=2, const_range=const_range, rng=rng, op_arities=op_arities)
     # Copy attributes in-place so references to `target` elsewhere remain valid
     target.op = new.op
-    target.child = new.child
+    target.children = new.children
     target.var_idx = new.var_idx
     target.const = new.const
 
@@ -394,16 +414,16 @@ def _tweak_constant(root: Node, sigma: float, rng: random.Random) -> bool:
 
 def _splice_at_random(root: Node, subtree: Node, rng: random.Random) -> None:
     """In-place: replace a random node (excluding root) with *subtree*."""
-    # Collect (parent, 'child') pairs
-    pairs: list[Node] = []
+    # Collect (parent, child_idx) pairs
+    pairs: list[tuple[Node, int]] = []
 
     def _collect(node: Node) -> None:
-        if node.child is not None:
-            pairs.append(node)
-            _collect(node.child)
+        for i, c in enumerate(node.children):
+            pairs.append((node, i))
+            _collect(c)
 
     _collect(root)
     if not pairs:
         return
-    parent = rng.choice(pairs)
-    parent.child = subtree
+    parent, idx = rng.choice(pairs)
+    parent.children[idx] = subtree

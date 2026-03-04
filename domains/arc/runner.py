@@ -40,8 +40,9 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Optional
 
+from core.tree import Node
 from core.search import SearchConfig
 from core.primitives import registry
 from domains.arc.benchmark import build_benchmark
@@ -171,6 +172,7 @@ class TaskResult:
     near_solved: bool     # test_acc >= 0.80
     n_nodes: int
     elapsed_s: float
+    best_tree: Optional[Node] = None
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -363,6 +365,7 @@ def evaluate_tasks(
             near_solved=near,
             n_nodes=tree.size(),
             elapsed_s=elapsed,
+            best_tree=tree,
         )
 
         if cfg.verbose:

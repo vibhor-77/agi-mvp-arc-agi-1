@@ -158,6 +158,8 @@ class BeamSearch:
         Number of input variables (determines variable leaf indices).
     config : SearchConfig | None
         Tuning parameters.  Uses defaults if None.
+    op_arities : dict[str, int] | None
+        Arity mapping for primitives. Uses default=1 if None.
 
     Examples
     --------
@@ -184,11 +186,13 @@ class BeamSearch:
         op_list: list[str],
         n_vars: int = 1,
         config: SearchConfig | None = None,
+        op_arities: dict[str, int] | None = None,
     ) -> None:
         self.fitness_fn = fitness_fn
         self.op_list = list(op_list)
         self.n_vars = n_vars
         self.config = config or SearchConfig()
+        self.op_arities = op_arities
         self._rng = random.Random(self.config.seed)
 
     def run(self) -> SearchResult:
@@ -206,7 +210,7 @@ class BeamSearch:
         # ── Initialise population ────────────────────────────────────────
         init_pool = [
             random_tree(self.op_list, self.n_vars, cfg.max_init_depth,
-                        cfg.const_range, rng)
+                        cfg.const_range, rng, self.op_arities)
             for _ in range(cfg.beam_size * 5)
         ]
         scored = self._evaluate_all(init_pool)
@@ -228,7 +232,8 @@ class BeamSearch:
                     if rng.random() < cfg.mutation_rate or len(beam) < 2:
                         child = mutate(
                             parent, self.op_list, self.n_vars,
-                            cfg.const_range, cfg.const_sigma, rng
+                            cfg.const_range, cfg.const_sigma, rng,
+                            self.op_arities
                         )
                     else:
                         other = rng.choice(beam)

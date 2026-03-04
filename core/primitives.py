@@ -42,10 +42,8 @@ class PrimitiveRegistry:
     """
     A dict-like store mapping  name -> (callable, metadata).
 
-    All primitives are *unary*: they accept one value and return one value.
-    Binary operations are handled at the expression-tree level by having two
-    child sub-trees whose results are passed as separate arguments — but that
-    is a tree-construction concern, not a registry concern.
+    Primitives can have different arities (number of arguments).
+    By default, they are assumed to be unary (arity=1).
 
     Parameters
     ----------
@@ -67,6 +65,7 @@ class PrimitiveRegistry:
         *,
         domain: str = "general",
         description: str = "",
+        arity: int = 1,
         overwrite: bool = False,
     ) -> "PrimitiveRegistry":
         """
@@ -77,8 +76,7 @@ class PrimitiveRegistry:
         name : str
             Unique identifier used in expression trees and output strings.
         fn : Callable
-            Unary callable.  Will be wrapped in a safe-call guard if
-            ``safe_wrap=True`` is set on the registry.
+            Callable matching the specified arity.
         domain : str
             Logical grouping (e.g. "math", "arc", "cartpole").
             Used for filtering when building domain-specific op lists.
@@ -100,6 +98,7 @@ class PrimitiveRegistry:
             "fn": fn,
             "domain": domain,
             "description": description,
+            "arity": arity,
         }
         return self
 
@@ -125,6 +124,10 @@ class PrimitiveRegistry:
 
     def __getitem__(self, name: str) -> Callable:
         return self.get(name)
+
+    def arity(self, name: str) -> int:
+        """Return the arity (number of arguments) of primitive *name*."""
+        return self._store[name]["arity"]
 
     def __contains__(self, name: str) -> bool:
         return name in self._store

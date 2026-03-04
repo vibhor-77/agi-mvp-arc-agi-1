@@ -151,11 +151,14 @@ class Domain(ABC):
         -------
         SearchResult
         """
+        from .primitives import registry
+        op_arities = {name: registry.arity(name) for name in self.primitive_names()}
         searcher = BeamSearch(
             fitness_fn=self.fitness,
             op_list=self.primitive_names(),
             n_vars=self.n_vars(),
             config=config or SearchConfig(),
+            op_arities=op_arities,
         )
         result = searcher.run()
         self.on_result(result)

@@ -92,22 +92,22 @@ class TestNode(unittest.TestCase):
         self.assertAlmostEqual(leaf.eval([], {}), 3.14, places=9)
 
     def test_node_eval_sin(self):
-        node = make_node("sin", make_leaf_var(0))
+        node = make_node("sin", [make_leaf_var(0)])
         p = self._prims()
         result = node.eval([math.pi / 2], p)
         self.assertAlmostEqual(result, 1.0, places=9)
 
     def test_nested_eval(self):
-        tree = make_node("sin", make_node("sq", make_leaf_var(0)))
+        tree = make_node("sin", [make_node("sq", [make_leaf_var(0)])])
         p = self._prims()
         self.assertAlmostEqual(tree.eval([1.0], p), math.sin(1.0), places=9)
 
     def test_size(self):
         leaf = make_leaf_var(0)
         self.assertEqual(leaf.size(), 1)
-        node = make_node("sin", leaf)
+        node = make_node("sin", [leaf])
         self.assertEqual(node.size(), 2)
-        deeper = make_node("cos", node)
+        deeper = make_node("cos", [node])
         self.assertEqual(deeper.size(), 3)
 
     def test_str_leaf_var(self):
@@ -115,29 +115,29 @@ class TestNode(unittest.TestCase):
         self.assertEqual(str(make_leaf_var(1)), "y")
 
     def test_str_node(self):
-        tree = make_node("sin", make_leaf_var(0))
+        tree = make_node("sin", [make_leaf_var(0)])
         self.assertEqual(str(tree), "sin(x)")
 
     def test_clone_independence(self):
-        tree = make_node("sin", make_leaf_var(0))
+        tree = make_node("sin", [make_leaf_var(0)])
         clone = tree.clone()
-        clone.child.var_idx = 1
-        self.assertEqual(tree.child.var_idx, 0)
+        clone.children[0].var_idx = 1
+        self.assertEqual(tree.children[0].var_idx, 0)
 
     def test_all_subtrees_count(self):
-        tree = make_node("sin", make_node("sq", make_leaf_var(0)))
+        tree = make_node("sin", [make_node("sq", [make_leaf_var(0)])])
         subtrees = tree.all_subtrees()
         self.assertEqual(len(subtrees), 3)
 
     def test_fingerprint_scalar(self):
-        tree = make_node("sq", make_leaf_var(0))
+        tree = make_node("sq", [make_leaf_var(0)])
         p = self._prims()
         test_inputs = [[1.0], [2.0], [3.0]]
         fp = tree.fingerprint(test_inputs, p)
         self.assertEqual(fp, (1.0, 4.0, 9.0))
 
     def test_unknown_primitive_raises(self):
-        tree = make_node("unknown_op", make_leaf_var(0))
+        tree = make_node("unknown_op", [make_leaf_var(0)])
         with self.assertRaises(KeyError):
             tree.eval([1.0], {})
 
@@ -157,15 +157,15 @@ class TestMutations(unittest.TestCase):
 
     def test_mutate_returns_new_tree(self):
         rng = random.Random(42)
-        tree = make_node("sin", make_leaf_var(0))
+        tree = make_node("sin", [make_leaf_var(0)])
         mutated = mutate(tree, self._ops(), n_vars=1, rng=rng)
         self.assertIsInstance(mutated, Node)
         self.assertEqual(str(tree), "sin(x)")
 
     def test_crossover_returns_node(self):
         rng = random.Random(7)
-        a = make_node("sin", make_leaf_var(0))
-        b = make_node("cos", make_leaf_var(0))
+        a = make_node("sin", [make_leaf_var(0)])
+        b = make_node("cos", [make_leaf_var(0)])
         result = crossover(a, b, rng)
         self.assertIsInstance(result, Node)
 

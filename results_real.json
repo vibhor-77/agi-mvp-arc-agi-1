@@ -2,11 +2,11 @@
   "baseline": {
     "label": "Baseline (8 ops)",
     "n_ops": 8,
-    "n_tasks": 8,
+    "n_tasks": 2,
     "n_solved": 0,
     "pct_solved": 0.0,
-    "mean_test_acc": 0.594,
-    "total_elapsed_s": 26.5,
+    "mean_test_acc": 0.4184,
+    "total_elapsed_s": 1.9,
     "results": [
       {
         "task": "00576224",
@@ -18,7 +18,7 @@
         "solved": false,
         "near_solved": false,
         "n_nodes": 1,
-        "elapsed_s": 3.01
+        "elapsed_s": 0.1
       },
       {
         "task": "009d5c81",
@@ -30,90 +30,18 @@
         "solved": false,
         "near_solved": true,
         "n_nodes": 1,
-        "elapsed_s": 3.41
-      },
-      {
-        "task": "00dbd492",
-        "category": "00dbd492",
-        "true_op": "",
-        "found_expr": "x",
-        "train_acc": 0.7756,
-        "test_acc": 0.78,
-        "solved": false,
-        "near_solved": false,
-        "n_nodes": 1,
-        "elapsed_s": 3.31
-      },
-      {
-        "task": "03560426",
-        "category": "03560426",
-        "true_op": "",
-        "found_expr": "grefl_v(x)",
-        "train_acc": 0.7733,
-        "test_acc": 0.76,
-        "solved": false,
-        "near_solved": false,
-        "n_nodes": 2,
-        "elapsed_s": 3.25
-      },
-      {
-        "task": "05a7bcf2",
-        "category": "05a7bcf2",
-        "true_op": "",
-        "found_expr": "x",
-        "train_acc": 0.7259,
-        "test_acc": 0.5811,
-        "solved": false,
-        "near_solved": false,
-        "n_nodes": 1,
-        "elapsed_s": 3.75
-      },
-      {
-        "task": "0607ce86",
-        "category": "0607ce86",
-        "true_op": "",
-        "found_expr": "x",
-        "train_acc": 0.9072,
-        "test_acc": 0.9015,
-        "solved": false,
-        "near_solved": true,
-        "n_nodes": 1,
-        "elapsed_s": 3.5
-      },
-      {
-        "task": "0692e18c",
-        "category": "0692e18c",
-        "true_op": "",
-        "found_expr": "x",
-        "train_acc": 0.0,
-        "test_acc": 0.0,
-        "solved": false,
-        "near_solved": false,
-        "n_nodes": 1,
-        "elapsed_s": 2.99
-      },
-      {
-        "task": "070dd51e",
-        "category": "070dd51e",
-        "true_op": "",
-        "found_expr": "x",
-        "train_acc": 0.9267,
-        "test_acc": 0.8925,
-        "solved": false,
-        "near_solved": true,
-        "n_nodes": 1,
-        "elapsed_s": 3.31
+        "elapsed_s": 1.77
       }
     ]
   },
   "expanded": {
     "label": "Expanded (89 ops)",
     "n_ops": 89,
-    "n_tasks": 8,
+    "n_tasks": 2,
     "n_solved": 0,
     "pct_solved": 0.0,
-    "mean_test_acc": 0.6139,
-    "total_elapsed_s": 27.3,
+    "mean_test_acc": 0.4337,
+    "total_elapsed_s": 2.3,
     "results": [
       {
         "task": "00576224",
@@ -125,7 +53,7 @@
         "solved": false,
         "near_solved": false,
         "n_nodes": 1,
-        "elapsed_s": 3.01
+        "elapsed_s": 0.1
       },
       {
         "task": "009d5c81",
@@ -137,79 +65,7 @@
         "solved": false,
         "near_solved": true,
         "n_nodes": 3,
-        "elapsed_s": 3.53
-      },
-      {
-        "task": "00dbd492",
-        "category": "00dbd492",
-        "true_op": "",
-        "found_expr": "x",
-        "train_acc": 0.7756,
-        "test_acc": 0.78,
-        "solved": false,
-        "near_solved": false,
-        "n_nodes": 1,
-        "elapsed_s": 3.32
-      },
-      {
-        "task": "03560426",
-        "category": "03560426",
-        "true_op": "",
-        "found_expr": "gmirror_v(x)",
-        "train_acc": 0.8167,
-        "test_acc": 0.86,
-        "solved": false,
-        "near_solved": true,
-        "n_nodes": 2,
-        "elapsed_s": 3.3
-      },
-      {
-        "task": "05a7bcf2",
-        "category": "05a7bcf2",
-        "true_op": "",
-        "found_expr": "x",
-        "train_acc": 0.7259,
-        "test_acc": 0.5811,
-        "solved": false,
-        "near_solved": false,
-        "n_nodes": 1,
-        "elapsed_s": 3.89
-      },
-      {
-        "task": "0607ce86",
-        "category": "0607ce86",
-        "true_op": "",
-        "found_expr": "gkeep_rows4(x)",
-        "train_acc": 0.9352,
-        "test_acc": 0.9299,
-        "solved": false,
-        "near_solved": true,
-        "n_nodes": 2,
-        "elapsed_s": 3.65
-      },
-      {
-        "task": "0692e18c",
-        "category": "0692e18c",
-        "true_op": "",
-        "found_expr": "x",
-        "train_acc": 0.0,
-        "test_acc": 0.0,
-        "solved": false,
-        "near_solved": false,
-        "n_nodes": 1,
-        "elapsed_s": 3.22
-      },
-      {
-        "task": "070dd51e",
-        "category": "070dd51e",
-        "true_op": "",
-        "found_expr": "x",
-        "train_acc": 0.9267,
-        "test_acc": 0.8925,
-        "solved": false,
-        "near_solved": true,
-        "n_nodes": 1,
-        "elapsed_s": 3.44
+        "elapsed_s": 2.23
       }
     ]
   }
