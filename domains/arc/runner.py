@@ -443,6 +443,7 @@ def evaluate_tasks(
     transition_matrix: dict[str, dict[str, float]] | None = None,
     learned_ops: dict[str, dict] | None = None,
     epoch_str: str = "",
+    report_callback=None,
 ) -> BenchmarkReport:
     """
     Run beam search on every task in *tasks* using *op_subset* as primitives.
@@ -545,6 +546,13 @@ def evaluate_tasks(
             counters["done"]   += 1
             if tr.solved:
                 counters["solved"] += 1
+
+        if report_callback:
+            # Temporarily build the list of ordered results including this current TaskResult
+            # before it gets officially appended to the ordered_results array in the main loop
+            report.results = [r for _, r in sorted(ordered_results + [(idx, tr)], key=lambda x: x[0])]
+            report.total_elapsed_s = time.time() - t0
+            report_callback(report)
 
     # ---- dispatch tasks -------------------------------------------------------
     if cfg.task_workers > 1:

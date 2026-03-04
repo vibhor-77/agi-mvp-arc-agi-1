@@ -23,7 +23,38 @@ def run_wake_sleep(tasks: list[ARCTask], epochs: int, cfg: BenchmarkConfig, mode
     
     print(f"\n🚀 Starting Wake-Sleep Training over {len(tasks)} tasks for {epochs} epochs")
     
+    # Pre-generate the empty model.json file so the user can verify its location immediately
+    lib.save()
+    
     full_report = f"# Wake-Sleep Training Log\n\n**Total Epochs**: {epochs} | **Tasks**: {len(tasks)}\n\n---\n\n"
+    
+    def _save_live_report(added_markdown: str):
+        current_markdown = full_report + added_markdown
+        with open(report_path, "w", encoding="utf-8") as f:
+            f.write(current_markdown)
+
+        html_path = report_path.replace(".md", ".html")
+        html_content = f"""<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>AGI Report</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown.min.css">
+  <style>body {{ box-sizing: border-box; min-width: 200px; max-width: 980px; margin: 0 auto; padding: 45px; }}</style>
+</head>
+<body class="markdown-body">
+  <div id="content"></div>
+  <script type="text/markdown" id="md-content">
+{current_markdown}
+  </script>
+  <script>
+    document.getElementById('content').innerHTML = marked.parse(document.getElementById('md-content').textContent);
+  </script>
+</body>
+</html>"""
+        with open(html_path, "w", encoding="utf-8") as f:
+            f.write(html_content)
     
     for epoch in range(1, epochs + 1):
         # The op subset is whatever is currently registered in 'arc' domain
@@ -34,6 +65,10 @@ def run_wake_sleep(tasks: list[ARCTask], epochs: int, cfg: BenchmarkConfig, mode
         print(f"  EPOCH {epoch}/{epochs}  —  WAKE PHASE  [{len(active_ops)} ops available]")
         print(f"{'='*65}")
         
+        
+        def epoch_report_callback(rep):
+            _save_live_report(rep.generate_markdown_report() + "\n\n---\n\n")
+            
         # Wake: Attempt to solve all tasks
         report = evaluate_tasks(
             tasks=tasks, 
@@ -43,6 +78,7 @@ def run_wake_sleep(tasks: list[ARCTask], epochs: int, cfg: BenchmarkConfig, mode
             transition_matrix=lib.transition_matrix,
             learned_ops=lib.learned_ops,
             epoch_str=f"Epoch {epoch}/{epochs}",
+            report_callback=epoch_report_callback,
         )
         
         # Sleep: Collect successful trees
@@ -64,41 +100,13 @@ def run_wake_sleep(tasks: list[ARCTask], epochs: int, cfg: BenchmarkConfig, mode
         lib.register_all(domain="arc")
         lib.save()
 
-        # Append Epoch report
+        # Append Epoch report for next loops
         full_report += report.generate_markdown_report() + "\n\n---\n\n"
-        
-        # Save cumulative report after each epoch
-        with open(report_path, "w", encoding="utf-8") as f:
-            f.write(full_report)
-
-        # Generate HTML Wrapper
-        html_path = report_path.replace(".md", ".html")
-        html_content = f"""<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>AGI Report</title>
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown.min.css">
-  <style>body {{ box-sizing: border-box; min-width: 200px; max-width: 980px; margin: 0 auto; padding: 45px; }}</style>
-</head>
-<body class="markdown-body">
-  <div id="content"></div>
-  <script type="text/markdown" id="md-content">
-{full_report}
-  </script>
-  <script>
-    document.getElementById('content').innerHTML = marked.parse(document.getElementById('md-content').textContent);
-  </script>
-</body>
-</html>"""
-        with open(html_path, "w", encoding="utf-8") as f:
-            f.write(html_content)
 
     print("\n🎉 Wake-Sleep Training Complete!")
     print(f"Total Learned Primitives: {len(lib.learned_ops)}")
     print(f"Full introspection report saved to: {report_path}")
-    print(f"Browser-friendly report saved to: {html_path}")
+    print(f"Browser-friendly report saved to: {report_path.replace('.md', '.html')}")
     print(f"Model saved to: {model_path}\n")
 
     # Print summary of the model

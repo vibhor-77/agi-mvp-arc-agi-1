@@ -42,24 +42,13 @@ def run_evaluation(data_dir: str, num_tasks: int, cfg: BenchmarkConfig, model_pa
     print(f"  EVALUATING {len(tasks)} UNSEEN TASKS")
     print(f"{'='*65}")
     
-    # Run a generic BeamSearch, but equipped with the Generative Priors (transition matrix)
-    # to guide the discovery tree toward likely structures.
-    report = evaluate_tasks(
-        tasks=tasks, 
-        op_subset=active_ops, 
-        cfg=cfg, 
-        label=f"Evaluation Mode",
-        transition_matrix=lib.transition_matrix,
-        learned_ops=lib.learned_ops,
-    )
+    def live_eval_callback(rep):
+        markdown_str = rep.generate_markdown_report()
+        with open(report_path, "w", encoding="utf-8") as f:
+            f.write(markdown_str)
 
-    markdown_str = report.generate_markdown_report()
-    with open(report_path, "w", encoding="utf-8") as f:
-        f.write(markdown_str)
-
-    # Generate HTML Wrapper
-    html_path = report_path.replace(".md", ".html")
-    html_content = f"""<!DOCTYPE html>
+        html_path = report_path.replace(".md", ".html")
+        html_content = f"""<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
@@ -78,12 +67,24 @@ def run_evaluation(data_dir: str, num_tasks: int, cfg: BenchmarkConfig, model_pa
   </script>
 </body>
 </html>"""
-    with open(html_path, "w", encoding="utf-8") as f:
-        f.write(html_content)
+        with open(html_path, "w", encoding="utf-8") as f:
+            f.write(html_content)
+
+    # Run a generic BeamSearch, but equipped with the Generative Priors (transition matrix)
+    # to guide the discovery tree toward likely structures.
+    report = evaluate_tasks(
+        tasks=tasks, 
+        op_subset=active_ops, 
+        cfg=cfg, 
+        label=f"Evaluation Mode",
+        transition_matrix=lib.transition_matrix,
+        learned_ops=lib.learned_ops,
+        report_callback=live_eval_callback,
+    )
 
     print("\n✅ Evaluation Complete!")
     print(f"Markdown Introspection report saved to: {report_path}")
-    print(f"Browser-friendly report saved to: {html_path}\n")
+    print(f"Browser-friendly report saved to: {report_path.replace('.md', '.html')}\n")
     print(report.summary())
 
 if __name__ == "__main__":

@@ -43,20 +43,23 @@ The JSON model file is structured into two main dictionaries:
 
 ## 2. Introspection Reports 
 
-45: Both the train and evaluation scripts now feature native Markdown Auto-Generators that output explicitly *why* tasks failed.
-46: 
-47: By default, the training script generates `reports/train_<timestamp>.md` (spanning all 5 Epochs), and the evaluation script generates `reports/eval_<timestamp>.md`.
-48: Zero-dependency Javascript `.html` wrappers are generated uniformly alongside them for seamless GUI browser rendering.
+Both the train and evaluation scripts now feature native Markdown Auto-Generators that output explicitly *why* tasks failed.
 
-### How to understand the `Introspection` outputs:
+By default, the training script generates `reports/train_<timestamp>.md` (spanning all 5 Epochs), and the evaluation script generates `reports/eval_<timestamp>.md`.
+Zero-dependency Javascript `.html` wrappers are generated uniformly alongside them for seamless GUI browser rendering. Even better, these files stream to your disk **live, task-by-task**, so you can monitor progress dynamically while the engine is running instead of waiting for epochs to close.
+
+### How to read the `Introspection` outputs:
 During the `BeamSearch`, if a task is unsolved, the engine records the final and best AST (by fitness score) and logs the failure category:
 
 - **Dimension Mismatch**: `Expected 4x4, Actual 6x6`
-  *(The AI learned rules to manipulate the colors, but failed to crop the boundary).*
+  *(The AI learned rules to manipulate the colors, but failed to crop the boundary. Note: with our **Dimensional Gravity** heuristic, the AI now gets continuous fitness rewards computationally the closer the output geometry bounds match the exact expected goal geometry, steering the genetic beam search closer to target even before the correct pixels align).*
 - **Pixel Mismatch**: `3/16 pixels incorrect` 
   *(The AI brilliantly solved the structure, but failed on a few edge-case details. Usually indicates it is missing an `if/else` control flow mechanism).*
 - **Capacity Exhausted**: `No valid logical AST discovered within generation limits`
   *(The required combination of functions is so mathematically complex that it would take billions of guesses. Pure proof that we need more macro rules in the library).*
+
+### Visual Execution Tracing
+Our HTML reporting natively logs `eval_trace` step-by-step matrices. If an AST is the "Best Failing" candidate, the HTML Report dynamically renders the array transformation step-by-step from input all the way to outputs using colored ARC grids mimicking the canonical datasets exactly.
 
 ---
 
