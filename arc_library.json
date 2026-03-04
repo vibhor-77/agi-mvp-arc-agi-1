@@ -1,4 +1,80 @@
 {
-  "library": {},
-  "transitions": {}
+  "library": {
+    "lib_op_1": {
+      "expr": "gmirror_v(g_repeat_v(x))",
+      "arity": 1
+    },
+    "lib_op_2": {
+      "expr": "gmirror_h(g_repeat_h(x))",
+      "arity": 1
+    }
+  },
+  "transitions": {
+    "gswap_23": {
+      "gadd1_mod10": 1.0
+    },
+    "gadd1_mod10": {
+      "gswap_14": 1.0
+    },
+    "gswap_14": {
+      "gswap_05": 1.0
+    },
+    "gswap_05": {
+      "gswap_02": 0.25,
+      "gswap_05": 0.25,
+      "gpad1": 0.25,
+      "gdiag5": 0.25
+    },
+    "gswap_02": {
+      "gcrop_bottom": 1.0
+    },
+    "gcrop_bottom": {
+      "g_extract_objects": 1.0
+    },
+    "g_extract_objects": {
+      "gmirror_h": 0.3333333333333333,
+      "gswap_24": 0.3333333333333333,
+      "gborder_only": 0.3333333333333333
+    },
+    "gmirror_h": {
+      "ghalf_bottom": 0.25,
+      "g_repeat_h": 0.75
+    },
+    "g_repeat_h": {
+      "g_remove_empty_rows": 0.3333333333333333,
+      "gmirror_v": 0.3333333333333333,
+      "ghalf_top": 0.3333333333333333
+    },
+    "g_remove_empty_rows": {
+      "g_remove_empty_cols": 0.5,
+      "gswap_01": 0.5
+    },
+    "gdilate": {
+      "gswap_05": 1.0
+    },
+    "gmirror_v": {
+      "grefl_v": 0.2857142857142857,
+      "g_repeat_v": 0.42857142857142855,
+      "gtrsp": 0.14285714285714285,
+      "gswap_05": 0.14285714285714285
+    },
+    "grefl_v": {
+      "g_repeat_v": 1.0
+    },
+    "g_align_left": {
+      "g_remove_empty_rows": 1.0
+    },
+    "g_center_v": {
+      "gmod3": 1.0
+    },
+    "gmask": {
+      "gtile_left_col": 1.0
+    },
+    "ghalf_top": {
+      "gmax_color": 1.0
+    },
+    "gtrsp": {
+      "gmirror_v": 1.0
+    }
+  }
 }

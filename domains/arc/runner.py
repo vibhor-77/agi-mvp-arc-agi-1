@@ -6,16 +6,14 @@ Run the baseline vs expanded-DSL benchmark and produce a structured report.
 Usage (command line — programmatic benchmark, 76 tasks)
 -------------------------------------------------------
     python -m domains.arc.runner
-    python -m domains.arc.runner --quick                     # fast (~30 s)
     python -m domains.arc.runner --task-workers 8            # parallel tasks (M1 Max)
-    python -m domains.arc.runner --quick --task-workers 8    # fast + parallel
 
 Usage (command line — real ARC-AGI dataset)
 -------------------------------------------
     # First clone the dataset:
     #   git clone https://github.com/fchollet/ARC-AGI arc_data
     python -m domains.arc.runner --data arc_data/data/evaluation
-    python -m domains.arc.runner --data arc_data/data/evaluation --quick --task-workers 8
+    python -m domains.arc.runner --data arc_data/data/evaluation --task-workers 8
 
 Usage (programmatic)
 --------------------
@@ -554,7 +552,7 @@ if __name__ == "__main__":
         epilog=(
             "Examples:\n"
             "  # Programmatic benchmark (76 tasks, no download):\n"
-            "  python -m domains.arc.runner --quick\n\n"
+            "  python -m domains.arc.runner\n\n"
             "  # Real ARC-AGI-1 evaluation set (400 tasks):\n"
             "  git clone https://github.com/fchollet/ARC-AGI arc_data\n"
             "  python -m domains.arc.runner --data arc_data/data/evaluation\n\n"
@@ -565,7 +563,6 @@ if __name__ == "__main__":
     parser.add_argument("--data",         type=str, default=None,
                         help="Path to directory of ARC JSON files (e.g. arc_data/data/evaluation). "
                              "If omitted, uses the built-in 76-task programmatic benchmark.")
-    parser.add_argument("--quick",        action="store_true", help="Fast run (fewer generations)")
     parser.add_argument("--baseline-only",action="store_true", help="Run baseline only")
     parser.add_argument("--workers",      type=int, default=1,
                         help="Beam-search candidate workers per task (default 1). "
@@ -573,15 +570,15 @@ if __name__ == "__main__":
     parser.add_argument("--task-workers", type=int, default=os.cpu_count() or 1,
                         help="Tasks to run in parallel (default: os.cpu_count()). "
                              "Forces inner --workers to 1 on macOS.")
-    parser.add_argument("--generations",  type=int, default=None, help="Override generations")
+    parser.add_argument("--generations",  type=int, default=100, help="Override generations")
     parser.add_argument("--tasks",        type=int, default=None, help="Limit number of tasks")
     parser.add_argument("--save",         type=str, default="results.json", help="Output JSON path")
     args = parser.parse_args()
 
     cfg = BenchmarkConfig(
-        beam_size    = 10 if args.quick else 20,
-        offspring    = 25 if args.quick else 50,
-        generations  = args.generations or (40 if args.quick else 100),
+        beam_size    = 10,
+        offspring    = 20,
+        generations  = args.generations,
         workers      = args.workers,
         task_workers = args.task_workers,
         verbose      = True,

@@ -6,7 +6,6 @@ Run all three domains and print a unified summary.
 
 Usage:
     python scripts/run_all.py
-    python scripts/run_all.py --quick
 """
 import sys
 import os
@@ -15,25 +14,28 @@ import time
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 
-def run_symbolic_regression(quick: bool = False) -> None:
-    """Demonstrate symbolic regression on y = sin(x²)."""
+def run_symbolic_regression() -> None:
+    print("\n" + "="*50)
+    print("  PHASE 1: SYMBOLIC REGRESSION (y = sin(x^2) + 2x)")
+    print("="*50)
+
     import math
     from domains.symbolic_reg.domain import SymbolicRegressionDomain
     from core.search import SearchConfig
 
-    print("\n" + "=" * 60)
-    print("  SYMBOLIC REGRESSION  —  y = sin(x²)")
-    print("=" * 60)
-
-    xs = [i * 0.2 for i in range(-20, 21)]
-    ys = [math.sin(x ** 2) for x in xs]
-
-    domain = SymbolicRegressionDomain(xs, ys)
+    domain = SymbolicRegressionDomain.from_function(
+        lambda x: math.sin(x**2) + 2*x,
+        x_range=(-2.0, 2.0),
+        n_points=40,
+        lam=0.01,
+    )
+    # Using low search boundaries for quick smoke tests
     cfg = SearchConfig(
-        beam_size   = 5 if quick else 20,
-        offspring   = 15 if quick else 40,
-        generations = 30 if quick else 150,
-        verbose     = False,
+        beam_size   = 5,
+        offspring   = 15,
+        generations = 30,
+        workers     = 1,
+        verbose     = True,
         seed        = 42,
     )
     t0 = time.time()
@@ -44,25 +46,26 @@ def run_symbolic_regression(quick: bool = False) -> None:
     print(f"  Time:     {elapsed:.1f}s")
 
 
-def run_cartpole(quick: bool = False) -> None:
-    """Demonstrate symbolic RL on CartPole."""
+def run_cartpole() -> None:
+    print("\n" + "="*50)
+    print("  PHASE 2: CARTPOLE (Symbolic Controller)")
+    print("="*50)
+
     from domains.cartpole.domain import CartPoleDomain, run_episode
     from core.search import SearchConfig
 
-    print("\n" + "=" * 60)
-    print("  CARTPOLE  —  symbolic control policy")
-    print("=" * 60)
-
+    # Hardcoding low episodes for quick smoke tests
     domain = CartPoleDomain(
-        n_episodes = 3 if quick else 10,
-        seeds      = list(range(3 if quick else 10)),
+        n_episodes = 3,
+        seeds      = list(range(3)),
     )
     cfg = SearchConfig(
-        beam_size   = 5 if quick else 15,
-        offspring   = 10 if quick else 30,
-        generations = 15 if quick else 80,
-        verbose     = False,
-        seed        = 0,
+        beam_size   = 5,
+        offspring   = 10,
+        generations = 15,
+        workers     = 1,
+        verbose     = True,
+        seed        = 42,
     )
     t0 = time.time()
     result = domain.solve(cfg)
@@ -85,13 +88,11 @@ def run_cartpole(quick: bool = False) -> None:
 
 
 if __name__ == "__main__":
-    quick = "--quick" in sys.argv
-    if quick:
-        print("Running in quick mode (reduced generations)...")
+    t0 = time.time()
 
-    run_symbolic_regression(quick)
-    run_cartpole(quick)
+    # We now default exclusively to fast configurations in run_all
+    run_symbolic_regression()
+    run_cartpole()
 
-    print("\n" + "=" * 60)
-    print("  ALL DONE")
+    print(f"\nAll phases finished in {time.time() - t0:.1f}s")
     print("=" * 60)

@@ -436,7 +436,7 @@ class TestRunAllFunctions(unittest.TestCase):
     """Smoke-test the two entry-point functions from scripts/run_all.py."""
 
     def test_run_symbolic_regression_quick(self):
-        """run_symbolic_regression(quick=True) must complete without error."""
+        """run_symbolic_regression() must complete without error."""
         import importlib.util, types
         spec = importlib.util.spec_from_file_location(
             "run_all",
@@ -445,10 +445,10 @@ class TestRunAllFunctions(unittest.TestCase):
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
         # Must not raise
-        mod.run_symbolic_regression(quick=True)
+        mod.run_symbolic_regression()
 
     def test_run_cartpole_quick(self):
-        """run_cartpole(quick=True) must complete without error."""
+        """run_cartpole() must complete without error."""
         import importlib.util
         spec = importlib.util.spec_from_file_location(
             "run_all",
@@ -456,7 +456,7 @@ class TestRunAllFunctions(unittest.TestCase):
         )
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
-        mod.run_cartpole(quick=True)
+        mod.run_cartpole()
 
 
 # ---------------------------------------------------------------------------

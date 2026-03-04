@@ -414,8 +414,11 @@ class TestGridAccuracy(unittest.TestCase):
     def test_partial_match(self):
         self.assertAlmostEqual(grid_cell_accuracy([[1, 2]], [[1, 3]]), 0.5)
 
-    def test_shape_mismatch_returns_zero(self):
+    def test_shape_mismatch_returns_zero_row_length(self):
         self.assertEqual(grid_cell_accuracy([[1, 2]], [[1, 2], [3, 4]]), 0.0)  # row count mismatch
+
+    def test_shape_mismatch_returns_zero_column_length(self):
+        self.assertEqual(grid_cell_accuracy([[1, 2, 3]], [[1, 2]]), 0.0)  # col count mismatch
 
     def test_empty_grid(self):
         self.assertEqual(grid_cell_accuracy([], []), 0.0)

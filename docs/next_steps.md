@@ -11,13 +11,13 @@ The MVP has officially transitioned from programmatic toy tasks to real ARC-AGI 
 
 **Step A (The Wake-Sleep Abstraction Gathering):**
 ```bash
-python3 train_wake_sleep.py --tasks 400 --epochs 5 --beam-size 10 --generations 100 --workers 1 --task-workers 8
+python3 train_wake_sleep.py
 ```
-This loops the 400 training tasks. Over 5 epochs, the `PrimitiveLibrary` will natively invent macro-primitives out of solved ASTs and compress the logic space into `arc_library.json`.
+This loops the 400 training tasks leveraging the native Sweet Spot defaults (`10x100`, 8 cores). Over 5 epochs, the `PrimitiveLibrary` will natively invent macro-primitives out of solved ASTs and compress the logic space into `arc_library.json`.
 
 **Step B (The Out-of-Sample Evaluation):**
 ```bash
-python3 evaluate_agi.py --tasks 400 --beam-size 10 --generations 100 --task-workers 8
+python3 evaluate_agi.py
 ```
 This script acts identically to the hidden ARC evaluation constraint. It forces the solver to load `arc_library.json` and attempt the 400 *evaluation* tasks.
 
