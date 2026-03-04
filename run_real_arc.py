@@ -19,7 +19,7 @@ Usage
     python run_real_arc.py --quick                  # fast settings
     python run_real_arc.py --quick --tasks 10       # smoke test, 10 tasks
     python run_real_arc.py --split training         # run on training set instead
-    python run_real_arc.py --workers 4              # parallel (uses CPU cores)
+    python run_real_arc.py --task-workers 8         # 8 parallel tasks (M1 Max sweet spot)
     python run_real_arc.py --save my_results.json   # custom output path
 """
 import argparse
@@ -52,7 +52,12 @@ def main() -> None:
     )
     parser.add_argument("--quick",        action="store_true", help="Fast run (fewer generations)")
     parser.add_argument("--baseline-only",action="store_true", help="Run baseline DSL only")
-    parser.add_argument("--workers",      type=int, default=1,   help="Parallel workers")
+    parser.add_argument("--workers",      type=int, default=1,
+                        help="Beam-search candidate workers per task (default 1). "
+                             "Auto-forced to 1 when --task-workers > 1.")
+    parser.add_argument("--task-workers", type=int, default=1,
+                        help="Tasks to run in parallel (default 1). "
+                             "M1 Max sweet spot: --task-workers 8.")
     parser.add_argument("--generations",  type=int, default=None, help="Override generations")
     parser.add_argument("--tasks",        type=int, default=None, help="Limit number of tasks")
     parser.add_argument("--save",         type=str, default="results_real.json",
@@ -73,6 +78,7 @@ def main() -> None:
         offspring     = 25 if args.quick else 50,
         generations   = args.generations or (40 if args.quick else 100),
         workers       = args.workers,
+        task_workers  = args.task_workers,
         verbose       = True,
         baseline_only = args.baseline_only,
     )
