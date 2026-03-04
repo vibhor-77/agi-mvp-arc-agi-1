@@ -397,6 +397,20 @@ def evaluate_tasks(
                         print("    Actual output from AST:")
                         if isinstance(actual, list) and len(actual) > 0 and isinstance(actual[0], list):
                             for row in actual: print(f"      {row}")
+                            
+                            # Verbose Pixel-Level Explainability (Diff Map)
+                            print("    [DIFF MAP] (Expected vs Actual):")
+                            if len(expected) == len(actual) and len(expected[0]) == len(actual[0]):
+                                for r in range(len(expected)):
+                                    diff_row = []
+                                    for c in range(len(expected[0])):
+                                        if expected[r][c] == actual[r][c]:
+                                            diff_row.append(".") # Match
+                                        else:
+                                            diff_row.append("X") # Mismatch
+                                    print(f"      {diff_row}")
+                            else:
+                                print(f"      [Dimension Mismatch] Expected: {len(expected)}x{len(expected[0])}, Actual: {len(actual)}x{len(actual[0] if actual else 0)}")
                         else:
                             print(f"      {actual}")
                     except Exception as e:

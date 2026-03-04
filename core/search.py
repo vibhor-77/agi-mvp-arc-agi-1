@@ -299,9 +299,21 @@ class BeamSearch:
 
         # ── Main loop ────────────────────────────────────────────────────
         for gen in range(cfg.generations):
+            # Identify best-performing candidates per task example 
+            # (Allows for Disjoint Crossover / "Pooling" of complementary solutions)
+            best_lexicase_parents = {}
+            if len(scored) > 0 and scored[0][3] is not None:
+                n_cases = len(scored[0][3])
+                for c in range(n_cases):
+                    # Find the tree with the lowest error on this specific case
+                    best_for_c = min(scored, key=lambda x: x[3][c])
+                    best_lexicase_parents[c] = best_for_c[1]
+
             # Generate offspring
             pool = list(beam)
-            for parent in beam:
+            for i, parent_item in enumerate(scored):
+                parent_score, parent, fp, lex = parent_item
+                
                 for _ in range(cfg.offspring):
                     if rng.random() < cfg.mutation_rate or len(beam) < 2:
                         child = mutate(
@@ -310,7 +322,19 @@ class BeamSearch:
                             self.op_arities, self.transition_matrix
                         )
                     else:
-                        other = rng.choice(beam)
+                        other = None
+                        # Disjoint Crossover (Berman's Pooling Technique)
+                        # Find the case where the current parent performs the *worst*, 
+                        # and explicitly breed it with the tree that performs the *best* on that gap!
+                        if lex is not None and best_lexicase_parents:
+                            worst_case_idx = max(range(len(lex)), key=lambda c: lex[c])
+                            if lex[worst_case_idx] > 0.0:  # If we actually have an error to fix
+                                other = best_lexicase_parents[worst_case_idx]
+                        
+                        # Fallback to standard random crossover if pooling didn't yield a distinct mate
+                        if other is None or other is parent:
+                            other = rng.choice(beam)
+                            
                         child = crossover(parent, other, rng)
                     pool.append(child)
 
@@ -318,12 +342,12 @@ class BeamSearch:
             scored = self._evaluate_all(pool)
 
             # Deduplicate by semantic hash or string form, keep top beam_size
-            new_beam = _dedupe_pool(scored, cfg.beam_size)
+            scored = _dedupe_pool(scored, cfg.beam_size)
 
-            beam = [t for _, t, _, _ in new_beam]
-            gen_best_score = new_beam[0][0]
-            if gen_best_score < 0: gen_best_score = self.fitness_fn(new_beam[0][1])
-            gen_best_tree = new_beam[0][1]
+            beam = [t for _, t, _, _ in scored]
+            gen_best_score = scored[0][0]
+            if gen_best_score < 0: gen_best_score = self.fitness_fn(scored[0][1])
+            gen_best_tree = scored[0][1]
 
             # Track history
             elapsed = time.time() - t0
