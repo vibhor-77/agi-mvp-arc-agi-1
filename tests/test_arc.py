@@ -423,6 +423,10 @@ class TestGridAccuracy(unittest.TestCase):
     def test_empty_grid(self):
         self.assertEqual(grid_cell_accuracy([], []), 0.0)
 
+    def test_float_input_returns_zero(self):
+        self.assertEqual(grid_cell_accuracy([[1, 2]], 1.5), 0.0)
+        self.assertEqual(grid_cell_accuracy(1.5, [[1, 2]]), 0.0)
+
 
 # ---------------------------------------------------------------------------
 # ARCDomain — fitness and solving
