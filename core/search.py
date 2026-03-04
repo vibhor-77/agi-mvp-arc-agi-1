@@ -235,22 +235,28 @@ class BeamSearch:
         def _dedupe_pool(pool: list[tuple[float, Node, tuple | None, list[float] | None]], limit: int) -> list[tuple[float, Node, tuple | None, list[float] | None]]:
             
             seen_exprs: set[str] = set()
-            seen_fingerprints: set[tuple] = set()
+            # Map fingerprint -> count of admitted ASTs sharing it. Soft-hashing allows up to 3.
+            seen_fingerprints: dict[tuple, int] = {}
             new_beam: list[tuple[float, Node, tuple | None, list[float] | None]] = []
             
-            # Pareto Selection via Lexicase array if available
-            # If any AST completely uniquely solves an edge case (score = 0 for that case), 
-            # we want to prioritize it to prevent the global average score from burying it.
-            # For MVP, we will simply boost the global score of individuals that get *any* case perfect.
-            for i in range(len(pool)):
-                if pool[i][3]: # lexicase array
-                    # How many cases are perfectly solved (error ~ 0)?
-                    perfect_cases = sum(1 for e in pool[i][3] if e < 0.01)
-                    if perfect_cases > 0:
-                        # Artificially boost the global score to float it to the top of the sort
-                        # We subtract from the score because lower is better.
-                        boost = perfect_cases * 100.0 
-                        pool[i] = (pool[i][0] - boost, pool[i][1], pool[i][2], pool[i][3])
+            # Pareto (Lexicase) Selection
+            # Find the minimum error natively achieved across every individual case.
+            if len(pool) > 0 and pool[0][3] is not None:
+                n_cases = len(pool[0][3])
+                best_per_case = [float('inf')] * n_cases
+                for item in pool:
+                    for c_idx, err in enumerate(item[3]):
+                        if err < best_per_case[c_idx]:
+                            best_per_case[c_idx] = err
+                
+                # If an individual uniquely matches the BEST known score for a specific case, 
+                # we artificially boost its global score so it survives the generation cull (Pareto Front).
+                for i in range(len(pool)):
+                    lex = pool[i][3]
+                    is_pareto_optimal = any(lex[c] <= best_per_case[c] + 1e-5 for c in range(n_cases))
+                    if is_pareto_optimal:
+                        # Give it a massive boost to float to the top
+                        pool[i] = (pool[i][0] - 1000.0, pool[i][1], pool[i][2], pool[i][3])
                         
             # Sort by score ascending, then by tree size ascending (Occam's razor)
             pool.sort(key=lambda x: (x[0], x[1].size()))
@@ -263,11 +269,14 @@ class BeamSearch:
                 if key in seen_exprs:
                     continue
                     
-                # Check 2: Semantic hashing (Anti-Aliasing)
+                # Check 2: Soft Semantic Hashing (Anti-Aliasing)
+                # Allow a few structurally distinct ASTs to share the same dummy output
+                # so we don't prune valuable "near-miss" stepping stones.
                 if fp is not None:
-                    if fp in seen_fingerprints:
+                    count = seen_fingerprints.get(fp, 0)
+                    if count >= 3:  # Max 3 aliases allowed
                         continue
-                    seen_fingerprints.add(fp)
+                    seen_fingerprints[fp] = count + 1
                 
                 seen_exprs.add(key)
                 new_beam.append(item)

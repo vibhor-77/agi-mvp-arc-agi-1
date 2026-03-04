@@ -72,11 +72,17 @@ def _safe_grid_op(fn: Callable) -> Callable:
     """
     def _wrapped(*args, **kwargs):
         try:
-            return fn(*args, **kwargs)
+            res = fn(*args, **kwargs)
+            if isinstance(res, list) and len(res) > 30:
+                raise ValueError("Grid rows exceed ARC 30x30 limit")
+            if isinstance(res, list) and res and isinstance(res[0], list) and len(res[0]) > 30:
+                raise ValueError("Grid cols exceed ARC 30x30 limit")
+            return res
         except Exception:
             return _clone(args[0]) if args else []
     _wrapped.__name__ = fn.__name__
     return _wrapped
+
 
 
 # ---------------------------------------------------------------------------
@@ -1057,6 +1063,77 @@ def g_render_object(g1: Grid, g2: Grid) -> Grid:
     return out
 
 
+# ── Compression & Gravity ──────────────────────────────────────────────────────
+
+@_safe_grid_op
+def g_remove_empty_rows(g: Grid) -> Grid:
+    """Removes any row that is completely filled with 0s (Gravity Compression)."""
+    return _clone([r for r in g if any(c != 0 for c in r)])
+
+@_safe_grid_op
+def g_remove_empty_cols(g: Grid) -> Grid:
+    """Removes any column that is completely filled with 0s (Gravity Compression)."""
+    if not g or not g[0]: return _clone(g)
+    cols = [c for c in range(len(g[0])) if any(g[r][c] != 0 for r in range(len(g)))]
+    if not cols: return [[]]
+    return [[r[c] for c in cols] for r in g]
+
+# ── Halving ────────────────────────────────────────────────────────────────────
+
+@_safe_grid_op
+def ghalf_top(g: Grid) -> Grid:
+    """Returns the top half of the grid."""
+    return _clone(g[:max(1, len(g)//2)])
+
+@_safe_grid_op
+def ghalf_bottom(g: Grid) -> Grid:
+    """Returns the bottom half of the grid."""
+    return _clone(g[len(g)//2:])
+
+@_safe_grid_op
+def ghalf_left(g: Grid) -> Grid:
+    """Returns the left half of the grid."""
+    if not g or not g[0]: return _clone(g)
+    mid = max(1, len(g[0])//2)
+    return [[c for c in r[:mid]] for r in g]
+
+@_safe_grid_op
+def ghalf_right(g: Grid) -> Grid:
+    """Returns the right half of the grid."""
+    if not g or not g[0]: return _clone(g)
+    mid = len(g[0])//2
+    return [[c for c in r[mid:]] for r in g]
+
+# ── Scaling & Inflation ────────────────────────────────────────────────────────
+
+
+@_safe_grid_op
+def g_scale_2x(g: Grid) -> Grid:
+    """Scale the grid by a factor of 2."""
+    return [[g[r//2][c//2] for c in range(len(g[0])*2)] for r in range(len(g)*2)]
+
+
+@_safe_grid_op
+def g_scale_3x(g: Grid) -> Grid:
+    """Scale the grid by a factor of 3."""
+    return [[g[r//3][c//3] for c in range(len(g[0])*3)] for r in range(len(g)*3)]
+
+
+@_safe_grid_op
+def g_fractal_inflate(g: Grid) -> Grid:
+    """Fractal expansion: replace each non-zero pixel with a copy of the entire grid."""
+    R, C = len(g), len(g[0])
+    out = [[0] * (C * C) for _ in range(R * R)]
+    for r in range(R):
+        for c in range(C):
+            if g[r][c] != 0:
+                for ir in range(R):
+                    for ic in range(C):
+                        out[r * R + ir][c * C + ic] = g[ir][ic]
+    return out
+
+
+
 _NEW_ARC_PRIMITIVES: dict[str, tuple[object, str]] = {
     # More color swaps
     "gswap_04":         (gswap_04,         "Swap colors 0 and 4"),
@@ -1098,6 +1175,18 @@ _NEW_ARC_PRIMITIVES: dict[str, tuple[object, str]] = {
     # Border/interior split
     "gborder_only":     (gborder_only,     "Keep only border cells"),
     "ginterior_only":   (ginterior_only,   "Keep only interior cells"),
+    # Compression & Gravity
+    "g_remove_empty_rows": (g_remove_empty_rows, "Removes all empty rows"),
+    "g_remove_empty_cols": (g_remove_empty_cols, "Removes all empty columns"),
+    # Halving
+    "ghalf_top":        (ghalf_top,        "Extract top half of grid"),
+    "ghalf_bottom":     (ghalf_bottom,     "Extract bottom half of grid"),
+    "ghalf_left":       (ghalf_left,       "Extract left half of grid"),
+    "ghalf_right":      (ghalf_right,      "Extract right half of grid"),
+    # Scaling & Inflation
+    "g_fractal_inflate": (g_fractal_inflate, "Fractal expansion: tile grid into its own non-zero pixels"),
+    "g_scale_2x":       (g_scale_2x,       "Scale up the grid 2x"),
+    "g_scale_3x":       (g_scale_3x,       "Scale up the grid 3x"),
     # Objects
     "g_filter_color":   (g_filter_color,   "Extracts mask of a single color"),
     "g_extract_objects": (g_extract_objects, "Extracts largest grid object to bounding box"),
