@@ -38,6 +38,7 @@ def run_wake_sleep(tasks: list[ARCTask], epochs: int, cfg: BenchmarkConfig) -> N
             cfg=cfg, 
             label=f"Epoch {epoch} ({len(active_ops)} ops)",
             transition_matrix=lib.transition_matrix,
+            learned_ops=lib.learned_ops,
         )
         
         # Sleep: Collect successful trees
@@ -68,11 +69,18 @@ if __name__ == "__main__":
     parser.add_argument("--epochs", type=int, default=5, help="Number of Wake/Sleep cycles")
     parser.add_argument("--tasks", type=int, default=400, help="Number of tasks to train on")
     parser.add_argument("--workers", type=int, default=1, help="Parallel processing across tasks (default 1 to keep feedback loop clean)")
-    parser.add_argument("--task-workers", type=int, default=os.cpu_count() or 1, help="Parallel processing within a single task's search")
+    parser.add_argument("--task-workers", type=int, default=8, help="Parallel processing within a single task's search")
     parser.add_argument("--beam-size", type=int, default=10, help="Size of the Beam Search queue")
     parser.add_argument("--offspring", type=int, default=20, help="Number of mutations per generation")
     parser.add_argument("--generations", type=int, default=100, help="Number of deep search iterations per task")
     args = parser.parse_args()
+
+    print("\n" + "="*65)
+    print("  WAKE-SLEEP EXECUTOR PARAMETERS")
+    print("="*65)
+    for arg, value in vars(args).items():
+        print(f"  {arg.replace('_', '-'):<15} : {value}")
+    print("="*65)
 
     try:
         tasks = load_tasks_from_dir(args.data)[:args.tasks]

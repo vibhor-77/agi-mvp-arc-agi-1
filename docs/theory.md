@@ -97,34 +97,26 @@ Future: automated library learning via frequent-subtree mining.
 
 ## ARC-AGI Performance Analysis
 
-### Why 76% and not 100%?
+### Performance Bottlenecks and Primitive Expansion
 
-The remaining 24% of benchmark tasks require operations not yet in the primitive vocabulary:
+While the baseline primitive vocabulary excels at core transformations, solving real ARC-AGI-1 tasks natively requires the Wake-Sleep cycle (`train_wake_sleep.py`) to discover and promote operations the core vocabulary lacks:
 
 1. **Parametric recoloring** (map color X → Y based on spatial context)
-   - Requires the system to infer a mapping from the examples, not just a fixed swap
+   - Requires generating generic variables mapping unknown source/target colors.
 2. **Object segmentation** (find connected components, count distinct objects)
-   - Requires a graph traversal primitive, not in current DSL
+   - Addressed initially by `g_extract_objects`, though diagonal connectivity is still lacking.
 3. **Conditional logic** (if object size > threshold then ...)
-   - Requires a predicate + branch primitive
+   - Requires the AST to dynamically compose ternary `if-else` blocks for context execution.
 4. **Relative spatial relationships** (above, adjacent, inside)
-   - Requires a primitive that reasons about object positions
+   - Requires primitives that iterate over bounding boxes and reason mathematically.
 
-### Realistic extrapolation to ARC-AGI-1 public eval
+### Extrapolating to the Real ARC-AGI-1 Public Eval
 
-The 400-task ARC-AGI-1 eval has the same category distribution as our benchmark.
-Expected performance with the current 89-op DSL:
+Our baseline architectural run achieved ~3-5% solve success when fully zero-shot on the real training set using only the atomic operations. However, through aggressive **Library Learning**, we systematically bypass the single-primitive limitation, dynamically adding macro-primitives that encode multi-step domain knowledge into simple `Node` objects.
 
-- Geometric tasks: ~90–100% (our DSL has all geometric ops)
-- Color tasks: ~50–70% (parametric recoloring is the main gap)
-- Object tasks: ~40–60% (segmentation is missing)
-- Pattern tasks: ~40–60% (stripe parameters vary)
-- Counting tasks: ~60–80% (counting without object boundaries)
-- Compositional: ~30–50% (compounds of gaps compound)
+By fusing **Semantic Hashing**, **Lexicase Selection**, and a deep search budget (`beam=10`, `generations=100`), the objective is to push the solver natively past the 20-30% mark, demonstrating true out-of-sample composition before engaging any LLM agents.
 
-**Overall estimate: 20–35% on the real ARC-AGI-1 eval.**
-
-This places us in the range of purpose-built symbolic systems:
+This goal isolates pure algorithmic machine learning against other structural engines in the field:
 - Vector Symbolic Algebra: 10.8% train, 3% eval (2023)
 - DreamCoder-style systems: 15–25%
 - LLM-guided DSL + test-time training: 40–55% (2024 ARC Prize winners)

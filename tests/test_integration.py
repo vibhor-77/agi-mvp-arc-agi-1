@@ -433,7 +433,7 @@ class TestSavePath(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 class TestRunAllFunctions(unittest.TestCase):
-    """Smoke-test the three entry-point functions from scripts/run_all.py."""
+    """Smoke-test the two entry-point functions from scripts/run_all.py."""
 
     def test_run_symbolic_regression_quick(self):
         """run_symbolic_regression(quick=True) must complete without error."""

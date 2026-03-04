@@ -137,7 +137,7 @@ It's no coincidence that it's the natural target for this framework.
 
 | System | ARC-AGI-1 % | Approach |
 |--------|-------------|---------|
-| This system (projected) | 20–35% | MDL beam search, 89 ops |
+| This system (Early Pipeline) | 3-5% Zero-Shot Baseline | MDL beam search pre-Library Expansion |
 | Vector Symbolic Algebra | 3% eval | Purpose-built ARC DSL |
 | DreamCoder-style DSL | 15–25% | Library learning |
 | SOAR (LLM + evolution) | ~52% | Self-improving LLM loop |

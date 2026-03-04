@@ -32,8 +32,7 @@ genuine generalisation.
 | 2025 | ARC Prize 2025. NVARC wins with LLM + test-time training | ~55% |
 | 2025 | SOAR: self-improving evolutionary program synthesis | ~52% |
 | 2025 | ARC-AGI-2 released (harder version) | ~24% best |
-| 2026 | This project (projected) | 20–35% |
-
+| 2026 | This project (Symbolic Regression + Library Learning | Wake-Sleep scaling |
 ---
 
 ## Approaches that work
@@ -102,8 +101,7 @@ Key differences:
 Current best score: ~24% (NVARC, 2025). Pure symbolic approaches achieve
 single-digit percentages.
 
-Our 89-op DSL would likely score 5–15% on ARC-AGI-2. The gap reveals exactly
-which primitives are missing.
+Our starting 89-op DSL solves a foundational baseline. However, by deploying Wake-Sleep **Library Learning**, the engine dynamically expands its vocabulary to cover missing concepts. The gap reveals exactly which foundational primitives must be provided (e.g., connected-component segmentation) before the LL engine can compound them into higher-order contextual logic.
 
 ---
 

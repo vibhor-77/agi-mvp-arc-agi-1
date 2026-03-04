@@ -83,23 +83,6 @@ def run_cartpole(quick: bool = False) -> None:
     print(f"  Time:       {elapsed:.1f}s")
 
 
-def run_arc(quick: bool = False) -> None:
-    """Run the ARC-AGI-1 benchmark (baseline vs expanded DSL)."""
-    from domains.arc.runner import run_benchmark, BenchmarkConfig
-    from domains.arc.benchmark import build_benchmark
-
-    tasks = build_benchmark()
-    cfg = BenchmarkConfig(
-        beam_size   = 10 if quick else 20,
-        offspring   = 25 if quick else 50,
-        generations = 40 if quick else 100,
-        verbose     = False,
-        baseline_only = False,
-    )
-    baseline, expanded = run_benchmark(tasks, cfg, save_path="results.json")
-    print(baseline.summary())
-    print(expanded.summary())
-
 
 if __name__ == "__main__":
     quick = "--quick" in sys.argv
@@ -108,7 +91,6 @@ if __name__ == "__main__":
 
     run_symbolic_regression(quick)
     run_cartpole(quick)
-    run_arc(quick)
 
     print("\n" + "=" * 60)
     print("  ALL DONE")

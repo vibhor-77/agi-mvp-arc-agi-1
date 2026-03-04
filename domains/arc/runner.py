@@ -273,9 +273,15 @@ def _run_task_process(
     cfg: BenchmarkConfig, 
     op_subset: list[str], 
     inner_workers: int,
-    transition_matrix: dict[str, dict[str, float]] | None
+    transition_matrix: dict[str, dict[str, float]] | None,
+    learned_ops: dict[str, dict] | None = None
 ) -> tuple[int, TaskResult]:
     """Execute the core logic for a single task inside an isolated multiprocessing worker."""
+    if learned_ops:
+        from core.library import PrimitiveLibrary
+        lib = PrimitiveLibrary()
+        lib.learned_ops = learned_ops
+        lib.register_all(domain="arc")
     if cfg.verbose:
         print(f"  → [{idx+1:3d}] STARTING  {task.name}", flush=True)
 
@@ -323,6 +329,7 @@ def evaluate_tasks(
     cfg: BenchmarkConfig,
     label: str,
     transition_matrix: dict[str, dict[str, float]] | None = None,
+    learned_ops: dict[str, dict] | None = None,
 ) -> BenchmarkReport:
     """
     Run beam search on every task in *tasks* using *op_subset* as primitives.
@@ -348,14 +355,17 @@ def evaluate_tasks(
 
     n_total = len(tasks)
     lock = threading.Lock()
-    counters: dict[str, int] = {"solved": 0, "near": 0, "done": 0, "active": 0}
+    counters: dict[str, int] = {"solved": 0, "near": 0, "done": 0}
     ordered_results: list[tuple[int, TaskResult]] = []
 
     def _scoreboard() -> str:
         done  = counters["done"]
         sol   = counters["solved"]
-        act   = counters["active"]
+        
+        # In a ProcessPool, active threads are bounded by task_workers
+        act   = min(cfg.task_workers, n_total - done)
         pend  = n_total - done - act
+        
         pct   = 100.0 * sol / done if done else 0.0
         unsol = done - sol
         return (
@@ -369,7 +379,6 @@ def evaluate_tasks(
     def _handle_result(idx: int, tr: TaskResult, task: ARCTask) -> None:
         if cfg.verbose:
             status = "✓" if tr.solved else ("~" if tr.near_solved else "✗")
-            counters["active"] -= 1
             counters["done"]   += 1
             if tr.solved:
                 counters["solved"] += 1
@@ -418,25 +427,22 @@ def evaluate_tasks(
                     print(f"    {'-'*40}")
             print(_scoreboard(), flush=True)
         else:
-            counters["active"] -= 1
             counters["done"]   += 1
             if tr.solved:
                 counters["solved"] += 1
 
     # ---- dispatch tasks -------------------------------------------------------
     if cfg.task_workers > 1:
-        counters["active"] = n_total
         with ProcessPoolExecutor(max_workers=cfg.task_workers) as exe:
-            futures = {exe.submit(_run_task_process, i, t, cfg, op_subset, inner_workers, transition_matrix): i for i, t in enumerate(tasks)}
+            futures = {exe.submit(_run_task_process, i, t, cfg, op_subset, inner_workers, transition_matrix, learned_ops): i for i, t in enumerate(tasks)}
             for fut in as_completed(futures):
                 idx, tr = fut.result()
                 _handle_result(idx, tr, tasks[idx])
                 ordered_results.append((idx, tr))
     else:
         for i, task in enumerate(tasks):
-            counters["active"] += 1
             print(_scoreboard(), flush=True)
-            idx, tr = _run_task_process(i, task, cfg, op_subset, inner_workers, transition_matrix)
+            idx, tr = _run_task_process(i, task, cfg, op_subset, inner_workers, transition_matrix, learned_ops)
             _handle_result(idx, tr, task)
             ordered_results.append((idx, tr))
 

@@ -167,7 +167,7 @@ class ZorkDomain(Domain):
    with `registry.register(..., domain="<name>")`
 3. **Subclass `Domain`**, implement the three abstract methods
 4. **Write tests** in `tests/test_<name>.py`
-5. **Add to `scripts/run_all.py`** if you want it in the full benchmark
+5. **Add an evaluation script** akin to `evaluate_agi.py` to run the test set autonomously.
 
 ---
 
