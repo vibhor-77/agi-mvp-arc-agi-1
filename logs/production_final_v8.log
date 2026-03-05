@@ -1,0 +1,117 @@
+
+=================================================================
+  WAKE-SLEEP EXECUTOR PARAMETERS
+=================================================================
+  data            : arc_data/data/training
+  epochs          : 5
+  tasks           : 400
+  workers         : 1
+  task-workers    : 8
+  beam-size       : 10
+  offspring       : 20
+  generations     : 25
+  model           : models/arc-agi-1_20260305-132809.json
+  seed            : None
+  report          : reports/train_20260305-132809.md
+  task-ids        : None
+  timeout         : 300.0
+  max-evals       : 1000000
+=================================================================
+
+🚀 Starting Wake-Sleep Training over 400 tasks for 5 epochs
+
+=================================================================
+  EPOCH 1/5  —  WAKE PHASE  [168 ops available]
+=================================================================
+  → [  1] STARTING  4522001f
+  → [  4] STARTING  e9afcf9a
+  → [  5] STARTING  8d5021e8
+  → [  6] STARTING  49d1d64f
+  → [  2] STARTING  6150a2bd
+  → [  3] STARTING  9172f3a0
+  → [  7] STARTING  46442a0e
+  → [  8] STARTING  5582e5ca
+  ✗ [  4/400] DONE      e9afcf9a                     evals=  5.3k train=0.62 test=0.62 (1.4s) → x
+  → [  9] STARTING  62c24649
+  → [ 10] STARTING  7fe24cdd
+  → [ 11] STARTING  8be77c9e
+  → [ 12] STARTING  ac0a08a4
+  → [ 13] STARTING  c3e719e8
+  → [ 14] STARTING  c9e6f938
+  → [ 15] STARTING  cce03e0d
+  → [ 16] STARTING  d037b0a7
+  → [ 17] STARTING  d13f3404
+  → [ 18] STARTING  c59eb873
+  → [ 19] STARTING  3af2c5a8
+  → [ 20] STARTING  a416b8f3
+  → [ 21] STARTING  d511f180
+  → [ 22] STARTING  c8f0f002
+  → [ 23] STARTING  feca6190
+  → [ 24] STARTING  0d3d703e
+  → [ 25] STARTING  25d8a9c8
+  → [ 26] STARTING  25ff71a9
+  → [ 27] STARTING  3c9b0459
+  → [ 28] STARTING  67e8384a
+  → [ 29] STARTING  6d0aefbc
+  → [ 30] STARTING  6fa7a44f
+  → [ 31] STARTING  74dd1130
+  → [ 32] STARTING  91413438
+  → [ 33] STARTING  9565186b
+  → [ 34] STARTING  a85d4709
+  → [ 35] STARTING  d631b094
+  → [ 36] STARTING  ed36ccf7
+  → [ 37] STARTING  f5b8619d
+  → [ 38] STARTING  9dfd6313
+  → [ 39] STARTING  017c7c7b
+  → [ 40] STARTING  b1948b0a
+  → [ 41] STARTING  9af7a82c
+  → [ 42] STARTING  bbc9ae5d
+  → [ 43] STARTING  4c4377d9
+  → [ 44] STARTING  a79310a0
+  → [ 45] STARTING  d23f8c26
+  → [ 46] STARTING  f76d97a5
+  → [ 47] STARTING  10fcaaa3
+  → [ 48] STARTING  7b7f7511
+  → [ 49] STARTING  bdad9b1f
+  → [ 50] STARTING  0520fde7
+  → [ 51] STARTING  aedd82e4
+  → [ 52] STARTING  007bbfb7
+  → [ 53] STARTING  6e02f1e3
+  → [ 54] STARTING  b91ae062
+  → [ 55] STARTING  b190f7f5
+  → [ 56] STARTING  496994bd
+  → [ 57] STARTING  a9f96cdd
+  → [ 58] STARTING  f25ffba3
+  → [ 59] STARTING  3618c87e
+  → [ 60] STARTING  469497ad
+  → [ 61] STARTING  539a4f51
+  → [ 62] STARTING  88a62173
+  → [ 63] STARTING  bd4472b8
+  → [ 64] STARTING  1e0a9b12
+  → [ 65] STARTING  6f8cd79b
+  → [ 66] STARTING  db3e9e38
+  → [ 67] STARTING  ea786f4a
+  → [ 68] STARTING  44f52bb0
+  → [ 69] STARTING  746b3537
+  → [ 70] STARTING  2dee498d
+  → [ 71] STARTING  3aa6fb7a
+  → [ 72] STARTING  aabf363d
+  → [ 73] STARTING  67385a82
+  → [ 74] STARTING  a3df8b1e
+  → [ 75] STARTING  e179c5f4
+  → [ 76] STARTING  f9012d9b
+  → [ 77] STARTING  3ac3eb23
+  → [ 78] STARTING  68b16354
+  → [ 79] STARTING  8e5a5113
+  → [ 80] STARTING  29c11459
+  → [ 81] STARTING  d90796e8
+  → [ 82] STARTING  67a3c6ac
+  → [ 83] STARTING  27a28665
+  → [ 84] STARTING  963e52fc
+  → [ 85] STARTING  beb8660c
+  → [ 86] STARTING  93b581b8
+  → [ 87] STARTING  a5f85a15
+  → [ 88] STARTING  dc1df850
+  → [ 89] STARTING  eb281b96
+  → [ 90] STARTING  dae9d2b5
+  → [ 91] STARTING  fafffa47

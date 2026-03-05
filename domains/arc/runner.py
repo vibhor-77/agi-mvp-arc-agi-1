@@ -533,6 +533,8 @@ def evaluate_tasks(
         speedup     = task_total_t / elapsed if elapsed > 0 else 0.0
         utilization = 100 * (speedup / cfg.task_workers) if cfg.task_workers > 0 else 0.0
         
+        pct = 100 * sol / n_total if n_total > 0 else 0.0
+        
         prefix = f" [{epoch_str}]" if epoch_str else ""
         return (
             f"  ┌ scoreboard{prefix} ─\n"
@@ -541,9 +543,9 @@ def evaluate_tasks(
             f"  │ ✗ unsolved={unsol} (avg {u_avg_t:.1f}s, {u_avg_e/1000:.1f}k evals)\n"
             f"  │ → active={act}  ⏳ pending={pend}  done={done}/{n_total}  "
             f"success={pct:.1f}%\n"
-            f"  │ TIME:  elapsed={elapsed:.1f}s (Throughput: 1 task every {avg_throughput:.2f}s | Task Latency Avg: {avg_work_t:.1f}s)\n"
+            f"  │ TIME:  elapsed={elapsed:.1f}s (Throughput: 1 task every {avg_throughput:.2f}s | Latency Avg: {avg_work_t:.1f}s)\n"
             f"  │ WORK:  speedup={speedup:.2f}x ({utilization:.1f}% core util)  STRAGGLER MAX: {max_run_t:.1f}s\n"
-            f"  │ EVALS: total={total_evals/1000:.1f}k (Throughput: {evals_p_s/1000:.1f}k/s | Task Work Avg: {avg_work_e/1000:.1f}k)"
+            f"  │ EVALS: total={total_evals/1000:.1f}k (Throughput: {evals_p_s/1000:.1f}k/s | Per-Task Avg: {avg_work_e/1000:.1f}k)"
         )
 
     last_report_t = 0.0
@@ -569,9 +571,11 @@ def evaluate_tasks(
             counters["near_time"] += tr.elapsed_s
             counters["near_evals"] += tr.n_evals
 
+        # Append to ordered_results immediately so report covers it
+        ordered_results.append((idx, tr))
+
         if cfg.verbose:
             status = "✓" if tr.solved else ("~" if tr.near_solved else "✗")
-            
             print(
                 f"  {status} [{idx+1:3d}/{n_total}] DONE      "
                 f"{task.name[:28]:28s} "
@@ -580,33 +584,29 @@ def evaluate_tasks(
                 f"({tr.elapsed_s:.1f}s) → {tr.found_expr[:50]}",
                 flush=True,
             )
-            # failure analysis omitted for brevity in live log to avoid I/O blocking
             print(_scoreboard(), flush=True)
 
         if report_callback:
-            # ONLY update report every 5 tasks or every 10 seconds to avoid blocking the parent
+            # ONLY update heavy markdown report every 5 tasks or every 10 seconds to avoid blocking the main thread
             now = time.time()
-            if (int(counters["done"]) % 5 == 0) or (now - last_report_t > 10):
-                report.results = [r for _, r in sorted(ordered_results + [(idx, tr)], key=lambda x: x[0])]
+            if (int(counters["done"]) % 5 == 0) or (now - last_report_t > 10) or (int(counters["done"]) == n_total):
+                report.results = [r for _, r in sorted(ordered_results, key=lambda x: x[0])]
                 report.total_elapsed_s = now - t0
                 report_callback(report)
                 last_report_t = now
-
-        # Report callbacks are now throttled above to prevent parent process lag
     if cfg.task_workers > 1:
         exe = ProcessPoolExecutor(max_workers=cfg.task_workers, initializer=_ignore_sigint_initializer)
         try:
             from concurrent.futures import wait, FIRST_COMPLETED
             futures = {}
             for i, task in enumerate(tasks):
-                # Bounded submission: wait if we have too many active futures
+                # Throttle submission: wait if we have too many active futures (max_workers * 2)
                 if len(futures) >= cfg.task_workers * 2:
                     done_set, _ = wait(futures, return_when=FIRST_COMPLETED)
                     for f in done_set:
                         idx = futures.pop(f)
                         idx_again, tr = f.result()
                         _handle_result(idx, tr, tasks[idx])
-                        ordered_results.append((idx, tr))
 
                 if cfg.verbose:
                     print(f"  → [{i+1:3d}] STARTING  {task.name}", flush=True)
@@ -615,12 +615,11 @@ def evaluate_tasks(
                 futures[f] = i
                 start_times[i] = time.time()
                 
-            # Final drain
+            # Final drain of remaining tasks
             for fut in as_completed(futures):
                 idx = futures[fut]
                 idx_again, tr = fut.result()
                 _handle_result(idx, tr, tasks[idx])
-                ordered_results.append((idx, tr))
         except KeyboardInterrupt:
             print("\n[!] KeyboardInterrupt received. Forcefully terminating workers...", flush=True)
             for p in exe._processes.values():

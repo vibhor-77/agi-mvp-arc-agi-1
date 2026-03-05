@@ -1,0 +1,426 @@
+
+=================================================================
+  WAKE-SLEEP EXECUTOR PARAMETERS
+=================================================================
+  data            : arc_data/data/training
+  epochs          : 5
+  tasks           : 400
+  workers         : 1
+  task-workers    : 8
+  beam-size       : 10
+  offspring       : 20
+  generations     : 25
+  model           : models/arc-agi-1_20260305-133716.json
+  seed            : None
+  report          : reports/train_20260305-133716.md
+  task-ids        : None
+  timeout         : 300.0
+  max-evals       : 1000000
+=================================================================
+
+🚀 Starting Wake-Sleep Training over 400 tasks for 5 epochs
+
+=================================================================
+  EPOCH 1/5  —  WAKE PHASE  [168 ops available]
+=================================================================
+  → [  1] STARTING  4522001f
+  → [  2] STARTING  6150a2bd
+  → [  3] STARTING  9172f3a0
+  → [  4] STARTING  e9afcf9a
+  → [  5] STARTING  8d5021e8
+  → [  6] STARTING  49d1d64f
+  → [  7] STARTING  46442a0e
+  → [  8] STARTING  5582e5ca
+  → [  9] STARTING  62c24649
+  → [ 10] STARTING  7fe24cdd
+  → [ 11] STARTING  8be77c9e
+  → [ 12] STARTING  ac0a08a4
+  → [ 13] STARTING  c3e719e8
+  → [ 14] STARTING  c9e6f938
+  → [ 15] STARTING  cce03e0d
+  → [ 16] STARTING  d037b0a7
+  → [ 17] STARTING  d13f3404
+  → [ 18] STARTING  c59eb873
+  → [ 19] STARTING  3af2c5a8
+  → [ 20] STARTING  a416b8f3
+  → [ 21] STARTING  d511f180
+  → [ 22] STARTING  c8f0f002
+  → [ 23] STARTING  feca6190
+  → [ 24] STARTING  0d3d703e
+  → [ 25] STARTING  25d8a9c8
+  → [ 26] STARTING  25ff71a9
+  → [ 27] STARTING  3c9b0459
+  → [ 28] STARTING  67e8384a
+  → [ 29] STARTING  6d0aefbc
+  → [ 30] STARTING  6fa7a44f
+  → [ 31] STARTING  74dd1130
+  → [ 32] STARTING  91413438
+  → [ 33] STARTING  9565186b
+  → [ 34] STARTING  a85d4709
+  → [ 35] STARTING  d631b094
+  → [ 36] STARTING  ed36ccf7
+  → [ 37] STARTING  f5b8619d
+  → [ 38] STARTING  9dfd6313
+  → [ 39] STARTING  017c7c7b
+  → [ 40] STARTING  b1948b0a
+  → [ 41] STARTING  9af7a82c
+  → [ 42] STARTING  bbc9ae5d
+  → [ 43] STARTING  4c4377d9
+  → [ 44] STARTING  a79310a0
+  → [ 45] STARTING  d23f8c26
+  → [ 46] STARTING  f76d97a5
+  → [ 47] STARTING  10fcaaa3
+  → [ 48] STARTING  7b7f7511
+  → [ 49] STARTING  bdad9b1f
+  → [ 50] STARTING  0520fde7
+  → [ 51] STARTING  aedd82e4
+  → [ 52] STARTING  007bbfb7
+  → [ 53] STARTING  6e02f1e3
+  → [ 54] STARTING  b91ae062
+  → [ 55] STARTING  b190f7f5
+  → [ 56] STARTING  496994bd
+  → [ 57] STARTING  a9f96cdd
+  → [ 58] STARTING  f25ffba3
+  → [ 59] STARTING  3618c87e
+  → [ 60] STARTING  469497ad
+  → [ 61] STARTING  539a4f51
+  → [ 62] STARTING  88a62173
+  → [ 63] STARTING  bd4472b8
+  → [ 64] STARTING  1e0a9b12
+  → [ 65] STARTING  6f8cd79b
+  → [ 66] STARTING  db3e9e38
+  → [ 67] STARTING  ea786f4a
+  → [ 68] STARTING  44f52bb0
+  → [ 69] STARTING  746b3537
+  → [ 70] STARTING  2dee498d
+  → [ 71] STARTING  3aa6fb7a
+  → [ 72] STARTING  aabf363d
+  → [ 73] STARTING  67385a82
+  → [ 74] STARTING  a3df8b1e
+  → [ 75] STARTING  e179c5f4
+  → [ 76] STARTING  f9012d9b
+  → [ 77] STARTING  3ac3eb23
+  → [ 78] STARTING  68b16354
+  → [ 79] STARTING  8e5a5113
+  → [ 80] STARTING  29c11459
+  → [ 81] STARTING  d90796e8
+  → [ 82] STARTING  67a3c6ac
+  → [ 83] STARTING  27a28665
+  → [ 84] STARTING  963e52fc
+  → [ 85] STARTING  beb8660c
+  → [ 86] STARTING  93b581b8
+  → [ 87] STARTING  a5f85a15
+  → [ 88] STARTING  dc1df850
+  → [ 89] STARTING  eb281b96
+  → [ 90] STARTING  dae9d2b5
+  → [ 91] STARTING  fafffa47
+  → [ 92] STARTING  834ec97d
+  → [ 93] STARTING  67a423a3
+  → [ 94] STARTING  662c240a
+  → [ 95] STARTING  b8cdaf2b
+  → [ 96] STARTING  54d82841
+  → [ 97] STARTING  99fa7670
+  → [ 98] STARTING  a740d043
+  → [ 99] STARTING  7447852a
+  → [100] STARTING  234bbc79
+  → [101] STARTING  bda2d7a6
+  → [102] STARTING  94f9d214
+  → [103] STARTING  05269061
+  → [104] STARTING  08ed6ac7
+  → [105] STARTING  23581191
+  → [106] STARTING  4258a5f9
+  → [107] STARTING  5614dbcf
+  → [108] STARTING  60b61512
+  → [109] STARTING  a61f2674
+  → [110] STARTING  b60334d2
+  → [111] STARTING  ce22a75a
+  → [112] STARTING  6430c8c4
+  → [113] STARTING  99b1bc43
+  → [114] STARTING  a87f7484
+  → [115] STARTING  ce4f8723
+  → [116] STARTING  d406998b
+  → [117] STARTING  794b24be
+  → [118] STARTING  f2829549
+  → [119] STARTING  760b3cac
+  → [120] STARTING  77fdfe62
+  → [121] STARTING  aba27056
+  → [122] STARTING  d10ecb37
+  → [123] STARTING  a65b410d
+  → [124] STARTING  54d9e175
+  → [125] STARTING  025d127b
+  → [126] STARTING  1bfc4729
+  → [127] STARTING  2013d3e2
+  → [128] STARTING  321b1fc6
+  → [129] STARTING  53b68214
+  → [130] STARTING  694f12f3
+  → [131] STARTING  6c434453
+  → [132] STARTING  6e19193c
+  → [133] STARTING  8d510a79
+  → [134] STARTING  a48eeaf7
+  → [135] STARTING  b6afb2da
+  → [136] STARTING  bb43febb
+  → [137] STARTING  d364b489
+  → [138] STARTING  d4f3cd78
+  → [139] STARTING  d9f24cd1
+  → [140] STARTING  e76a88a6
+  → [141] STARTING  e9614598
+  → [142] STARTING  28bf18c6
+  → [143] STARTING  cbded52d
+  → [144] STARTING  1b2d62fb
+  → [145] STARTING  2dc579da
+  → [146] STARTING  bc1d5164
+  → [147] STARTING  ba26e723
+  → [148] STARTING  1caeab9d
+  → [149] STARTING  d4469b4b
+  → [150] STARTING  ce9e57f2
+  → [151] STARTING  88a10436
+  → [152] STARTING  caa06a1f
+  → [153] STARTING  a699fb00
+  → [154] STARTING  d8c310e9
+  → [155] STARTING  5168d44c
+  → [156] STARTING  56dc2b01
+  → [157] STARTING  995c5fa3
+  → [158] STARTING  0ca9ddb6
+  → [159] STARTING  1fad071e
+  → [160] STARTING  7c008303
+  → [161] STARTING  8f2ea7aa
+  → [162] STARTING  f25fbde4
+  → [163] STARTING  150deff5
+  → [164] STARTING  47c1f68c
+  → [165] STARTING  239be575
+  → [166] STARTING  97999447
+  → [167] STARTING  6d75e8bb
+  → [168] STARTING  3428a4f5
+  → [169] STARTING  e3497940
+  → [170] STARTING  178fcbfb
+  → [171] STARTING  a5313dff
+  → [172] STARTING  0962bcdd
+  → [173] STARTING  c9f8e694
+  → [174] STARTING  be94b721
+  → [175] STARTING  3bd67248
+  → [176] STARTING  6a1e5592
+  → [177] STARTING  11852cab
+  → [178] STARTING  1b60fb0c
+  → [179] STARTING  1f642eb9
+  → [180] STARTING  1f876c06
+  → [181] STARTING  2204b7a8
+  → [182] STARTING  22168020
+  → [183] STARTING  22233c11
+  → [184] STARTING  2281f1f4
+  → [185] STARTING  228f6490
+  → [186] STARTING  22eb0ac0
+  → [187] STARTING  31aa019c
+  → [188] STARTING  3906de3d
+  → [189] STARTING  3befdf3e
+  → [190] STARTING  3eda0437
+  → [191] STARTING  444801d8
+  → [192] STARTING  445eab21
+  → [193] STARTING  46f33fce
+  → [194] STARTING  48d8fb45
+  → [195] STARTING  5c0a986e
+  → [196] STARTING  63613498
+  → [197] STARTING  681b3aeb
+  → [198] STARTING  6e82a1ae
+  → [199] STARTING  72ca375d
+  → [200] STARTING  7ddcd7ec
+  → [201] STARTING  8403a5d5
+  → [202] STARTING  941d9a10
+  → [203] STARTING  952a094c
+  → [204] STARTING  a78176bb
+  → [205] STARTING  af902bf9
+  → [206] STARTING  b230c067
+  → [207] STARTING  cdecee7f
+  → [208] STARTING  cf98881b
+  → [209] STARTING  d2abd087
+  → [210] STARTING  d43fd935
+  → [211] STARTING  d6ad076f
+  → [212] STARTING  d89b689b
+  → [213] STARTING  ddf7fa4f
+  → [214] STARTING  ded97339
+  → [215] STARTING  e40b9e2f
+  → [216] STARTING  e5062a87
+  → [217] STARTING  e50d258f
+  → [218] STARTING  e8593010
+  → [219] STARTING  ef135b50
+  → [220] STARTING  f8c80d96
+  → [221] STARTING  fcc82909
+  → [222] STARTING  a1570a43
+  → [223] STARTING  82819916
+  → [224] STARTING  3f7978a0
+  → [225] STARTING  05f2a901
+  → [226] STARTING  a61ba2ce
+  → [227] STARTING  d06dbe63
+  → [228] STARTING  56ff96f3
+  → [229] STARTING  e21d9049
+  → [230] STARTING  1f0c79e5
+  → [231] STARTING  5bd6f4ac
+  → [232] STARTING  ae4f1146
+  → [233] STARTING  ec883f72
+  → [234] STARTING  75b8110e
+  → [235] STARTING  d4a91cb9
+  → [236] STARTING  ff28f65a
+  → [237] STARTING  ba97ae07
+  → [238] STARTING  d9fac9be
+  → [239] STARTING  363442ee
+  → [240] STARTING  85c4e7cd
+  → [241] STARTING  137eaa0f
+  → [242] STARTING  29623171
+  → [243] STARTING  e98196ab
+  → [244] STARTING  dc433765
+  → [245] STARTING  7e0986d6
+  → [246] STARTING  c8cbb738
+  → [247] STARTING  4be741c5
+  → [248] STARTING  2bee17df
+  → [249] STARTING  b0c4d837
+  → [250] STARTING  3bdb4ada
+  → [251] STARTING  8eb1be9a
+  → [252] STARTING  1cf80156
+  → [253] STARTING  b548a754
+  → [254] STARTING  d0f5fe59
+  → [255] STARTING  2bcee788
+  → [256] STARTING  a8c38be5
+  → [257] STARTING  e48d4e1a
+  → [258] STARTING  ea32f347
+  → [259] STARTING  95990924
+  → [260] STARTING  d5d6de2d
+  → [261] STARTING  dbc1a6ce
+  → [262] STARTING  4612dd53
+  → [263] STARTING  508bd3b6
+  → [264] STARTING  c0f76784
+  → [265] STARTING  f8ff0b80
+  → [266] STARTING  b782dc8a
+  → [267] STARTING  41e4d17e
+  → [268] STARTING  543a7ed5
+  → [269] STARTING  b94a9452
+  → [270] STARTING  d687bc17
+  → [271] STARTING  90f3ed37
+  → [272] STARTING  b7249182
+  → [273] STARTING  d22278a0
+  → [274] STARTING  25d487eb
+  → [275] STARTING  4347f46a
+  → [276] STARTING  913fb3ed
+  → [277] STARTING  50cb2852
+  → [278] STARTING  f15e1fac
+  → [279] STARTING  09629e4f
+  → [280] STARTING  6773b310
+  → [281] STARTING  6d0160f0
+  → [282] STARTING  623ea044
+  → [283] STARTING  272f95fa
+  → [284] STARTING  b27ca6d3
+  → [285] STARTING  3345333e
+  → [286] STARTING  447fd412
+  → [287] STARTING  36d67576
+  → [288] STARTING  5117e062
+  → [289] STARTING  7f4411dc
+  → [290] STARTING  a68b268e
+  → [291] STARTING  c444b776
+  → [292] STARTING  810b9b61
+  → [293] STARTING  8e1813be
+  → [294] STARTING  4c5c2cf0
+  → [295] STARTING  3de23699
+  → [296] STARTING  673ef223
+  → [297] STARTING  a2fd1cf0
+  → [298] STARTING  e8dc4411
+  → [299] STARTING  928ad970
+  → [300] STARTING  44d8ac46
+  → [301] STARTING  39a8645d
+  → [302] STARTING  4093f84a
+  → [303] STARTING  7468f01a
+  → [304] STARTING  b2862040
+  → [305] STARTING  ecdecbb3
+  → [306] STARTING  e26a3af2
+  → [307] STARTING  28e73c20
+  → [308] STARTING  fcb5c309
+  → [309] STARTING  d07ae81c
+  → [310] STARTING  a3325580
+  → [311] STARTING  253bf280
+  → [312] STARTING  9edfc990
+  → [313] STARTING  c1d99e64
+  → [314] STARTING  2c608aff
+  → [315] STARTING  5521c0d9
+  → [316] STARTING  6855a6e4
+  → [317] STARTING  ae3edfdc
+  → [318] STARTING  f8a8fe49
+  → [319] STARTING  e509e548
+  → [320] STARTING  0e206a2e
+  → [321] STARTING  3e980e27
+  → [322] STARTING  846bdb03
+  → [323] STARTING  f8b3ba0a
+  → [324] STARTING  9aec4887
+  → [325] STARTING  e73095fd
+  → [326] STARTING  72322fa7
+  → [327] STARTING  b9b7f026
+  → [328] STARTING  2dd70a9a
+  → [329] STARTING  00d62c1b
+  → [330] STARTING  36fdfd69
+  → [331] STARTING  6cdd2623
+  → [332] STARTING  98cf29f8
+  → [333] STARTING  42a50994
+  → [334] STARTING  91714a58
+  → [335] STARTING  9ecd008a
+  → [336] STARTING  c3f564a4
+  → [337] STARTING  dc0a314f
+  → [338] STARTING  40853293
+  → [339] STARTING  f1cefba8
+  → [340] STARTING  1a07d186
+  → [341] STARTING  6455b5f5
+  → [342] STARTING  0a938d79
+  → [343] STARTING  5daaa586
+  → [344] STARTING  9f236235
+  → [345] STARTING  97a05b5b
+  → [346] STARTING  80af3007
+  → [347] STARTING  1e32b0e9
+  → [348] STARTING  32597951
+  → [349] STARTING  4938f0c2
+  → [350] STARTING  4290ef0e
+  → [351] STARTING  855e0971
+  → [352] STARTING  8a004b2b
+  → [353] STARTING  e6721834
+  → [354] STARTING  868de0fa
+  → [355] STARTING  a8d7556c
+  → [356] STARTING  f35d900a
+  → [357] STARTING  1c786137
+  → [358] STARTING  b8825c91
+  → [359] STARTING  de1cd16c
+  → [360] STARTING  57aa92db
+  → [361] STARTING  1190e5a7
+  → [362] STARTING  9d9215db
+  → [363] STARTING  0b148d64
+  → [364] STARTING  23b5c85d
+  → [365] STARTING  db93a21d
+  → [366] STARTING  780d0b14
+  → [367] STARTING  6cf79266
+  → [368] STARTING  6d58a25d
+  → [369] STARTING  8efcae92
+  → [370] STARTING  ce602527
+  → [371] STARTING  6aa20dc0
+  → [372] STARTING  8731374e
+  → [373] STARTING  6b9890af
+  → [374] STARTING  29ec7d0e
+  → [375] STARTING  b527c5c6
+  → [376] STARTING  045e512c
+  → [377] STARTING  0dfd9992
+  → [378] STARTING  73251a56
+  → [379] STARTING  890034e9
+  → [380] STARTING  90c28cc7
+  → [381] STARTING  50846271
+  → [382] STARTING  06df4c85
+  → [383] STARTING  b775ac94
+  → [384] STARTING  5ad4f10b
+  → [385] STARTING  7b6016b9
+  → [386] STARTING  5c2c9af4
+  → [387] STARTING  776ffc46
+  → [388] STARTING  eb5a1d5d
+  → [389] STARTING  6ecd11f4
+  → [390] STARTING  ff805c23
+  → [391] STARTING  83302e8f
+  → [392] STARTING  1f85a75f
+  → [393] STARTING  39e1d7f9
+  → [394] STARTING  c909285e
+  → [395] STARTING  7df24a62
+  → [396] STARTING  484b58aa
+  → [397] STARTING  264363fd
+  → [398] STARTING  a64e4611
+  → [399] STARTING  7837ac64
+  → [400] STARTING  3631a71a
+  ✗ [  4/400] DONE      e9afcf9a                     evals=  5.3k train=0.62 test=0.62 (1.6s) → x

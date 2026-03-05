@@ -1,0 +1,42 @@
+
+=================================================================
+  WAKE-SLEEP EXECUTOR PARAMETERS
+=================================================================
+  data            : arc_data/data/training
+  epochs          : 5
+  tasks           : 400
+  workers         : 1
+  task-workers    : 8
+  beam-size       : 10
+  offspring       : 20
+  generations     : 25
+  model           : models/arc-agi-1_20260305-133745.json
+  seed            : None
+  report          : reports/train_20260305-133745.md
+  task-ids        : None
+  timeout         : 300.0
+  max-evals       : 1000000
+=================================================================
+
+🚀 Starting Wake-Sleep Training over 400 tasks for 5 epochs
+
+=================================================================
+  EPOCH 1/5  —  WAKE PHASE  [168 ops available]
+=================================================================
+  → [  1] STARTING  4522001f
+  → [  2] STARTING  6150a2bd
+  → [  3] STARTING  9172f3a0
+  → [  4] STARTING  e9afcf9a
+  → [  5] STARTING  8d5021e8
+  → [  6] STARTING  49d1d64f
+  → [  7] STARTING  46442a0e
+  → [  8] STARTING  5582e5ca
+  → [  9] STARTING  62c24649
+  → [ 10] STARTING  7fe24cdd
+  → [ 11] STARTING  8be77c9e
+  → [ 12] STARTING  ac0a08a4
+  → [ 13] STARTING  c3e719e8
+  → [ 14] STARTING  c9e6f938
+  → [ 15] STARTING  cce03e0d
+  → [ 16] STARTING  d037b0a7
+  ✗ [  4/400] DONE      e9afcf9a                     evals=  5.3k train=0.62 test=0.62 (2.1s) → x
