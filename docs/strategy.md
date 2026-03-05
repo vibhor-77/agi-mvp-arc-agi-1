@@ -39,7 +39,3 @@ Previously we thought `PrimitiveLibrary.load()` was a stub, but the dynamic `Nod
 ### 2. Generative Curriculum Learning (✅ COMPLETED)
 Rather than randomly feeding chaotic 30x30 ARC noise to the solver during the Wake phase, the Wake-Sleep `tasks` are now intrinsically sorted by grid pixel complexity dimension. The engine isolates and learns core abstractions on 3x3 simple geometry first, completely cleaning the Generative Prior Markov Transition Matrix from poisoning.
 
-### 3. Programmatic LLM Sub-Agents
-While this MVP intentionally avoids leaning entirely on LLMs, integrating an LLM capable of generating Python natively could push this architecture to the absolute limit.
-Instead of relying on a hardcoded Domain DSL (e.g. `gswap_01`, `grot90`), a "dreaming" LLM sub-agent could be prompted during the Sleep phase to write *new* raw Python primitives dynamically based on generalized puzzle logic.
-If an LLM writes `def g_fill_bounds(grid):...` and it compiles successfully, the AGI engine could instantly absorb it into the `PrimitiveRegistry` as a base variable, bypassing the manual DSL engineering bottleneck!
