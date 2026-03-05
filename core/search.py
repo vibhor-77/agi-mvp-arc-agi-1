@@ -129,16 +129,15 @@ class SearchResult:
 # ---------------------------------------------------------------------------
 
 _worker_fitness_fn: Callable | None = None
+_worker_fingerprint_fn: Callable | None = None
+_worker_lexicase_fn: Callable | None = None
 
 
-def _worker_init(fitness_fn: Callable) -> None:
-    global _worker_fitness_fn
-    _worker_fitness_fn = fitness_fn
-
-
-def _worker_eval(tree: Node) -> tuple[float, Node]:
-    assert _worker_fitness_fn is not None
-    return _worker_fitness_fn(tree), tree
+def _worker_eval(tree: Node) -> tuple[float, Node, tuple | None, list[float] | None]:
+    score = _worker_fitness_fn(tree) if _worker_fitness_fn else float('inf')
+    fp = _worker_fingerprint_fn(tree) if _worker_fingerprint_fn else None
+    lex = _worker_lexicase_fn(tree) if _worker_lexicase_fn else None
+    return (score, tree, fp, lex)
 
 
 # ---------------------------------------------------------------------------
@@ -413,11 +412,21 @@ class BeamSearch:
         cfg = self.config
         
         # We process sequentially if no multiproc to avoid closure issues
-        results = []
-        for t in pool:
-            score = self.fitness_fn(t)
-            fp = self.fingerprint_fn(t) if self.fingerprint_fn else None
-            lex = self.lexicase_fn(t) if self.lexicase_fn else None
-            results.append((score, t, fp, lex))
+        if cfg.workers <= 1:
+            results = []
+            for t in pool:
+                score = self.fitness_fn(t)
+                fp = self.fingerprint_fn(t) if self.fingerprint_fn else None
+                lex = self.lexicase_fn(t) if self.lexicase_fn else None
+                results.append((score, t, fp, lex))
+            return results
+            
+        global _worker_fitness_fn, _worker_fingerprint_fn, _worker_lexicase_fn
+        _worker_fitness_fn = self.fitness_fn
+        _worker_fingerprint_fn = self.fingerprint_fn
+        _worker_lexicase_fn = self.lexicase_fn
+        
+        with mp.get_context('fork').Pool(cfg.workers) as p:
+            results = p.map(_worker_eval, pool)
             
         return results
