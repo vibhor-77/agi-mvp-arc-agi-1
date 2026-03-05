@@ -596,18 +596,13 @@ def evaluate_tasks(
     if cfg.task_workers > 1:
         exe = ProcessPoolExecutor(max_workers=cfg.task_workers, initializer=_ignore_sigint_initializer)
         try:
-            # To avoid the look of "too many starting", we submit in a way that respects concurrency
+            from concurrent.futures import wait, FIRST_COMPLETED
             futures = {}
             for i, task in enumerate(tasks):
-                # Bounded submission: wait if we have too many pending tasks
-                while len(futures) >= cfg.task_workers * 2:
-                    # Clean up completed futures
-                    done_futs = [f for f in futures if f.done()]
-                    if not done_futs:
-                        # Block on any one finishing
-                        # Using wait(FIRST_COMPLETED) or as_completed logic implicitly
-                        break
-                    for f in done_futs:
+                # Bounded submission: wait if we have too many active futures
+                if len(futures) >= cfg.task_workers * 2:
+                    done_set, _ = wait(futures, return_when=FIRST_COMPLETED)
+                    for f in done_set:
                         idx = futures.pop(f)
                         idx_again, tr = f.result()
                         _handle_result(idx, tr, tasks[idx])
