@@ -8,6 +8,8 @@ An exploratory general-purpose Artificial General Intelligence (AGI) solver fram
 
 This project fuses the paradigms of **Symbolic Regression (SR)** and **Library Learning (LL)** to conquer the complex multi-domain reasoning benchmark: ARC-AGI.
 
+**AGI V2 STATUS**: The engine is currently running with the **Expressivity Expansion v2** (168 primitives), including Turing-Complete logical branching (`g_if`, `g_while`) and advanced spatial set logic (`g_xor`, `g_flood_fill`).
+
 ---
 
 ## 📖 Documentation Directory
@@ -50,6 +52,6 @@ To keep the repository clean and easy to read, the documentation is divided into
 
 ## ✅ Verification & Compliance
 As of March 2026, the AGI Sandbox executes completely deterministically (no fuzzy LLM logic). The codebase guarantees execution safety and mathematical validity through:
-- **100% Integration Test Pass Rate (186/186 tests)**
-- **86% Total Line/Branch Coverage** spanning the Symbolic Tree Compilers, Multiprocessing Execution loops, and Lexicase fitness functions.
+- **100% Integration Test Pass Rate (211/211 tests)**
+- **88.2% Total Line/Branch Coverage** spanning the Symbolic Tree Compilers, Multiprocessing Execution loops, and Lexicase fitness functions.
 - Fully regressed against `Float TypeError` mappings, Object Array `Dimension Mismatch` loopholes, and Zombie Multiprocessing threads.

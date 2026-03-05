@@ -53,9 +53,10 @@ ARC-AGI-2 uses the same JSON format but is significantly harder (contextual reas
 ### 7. Core Object & Graph Reasoning
 ARC requires understanding "objects" (contiguous blocks of pixels) that move independently. Our grid-level primitives (`grot90`) manipulate the universally whole image. We need map-reduce style logic that partitions a grid into an Object Graph, translates an inner bounding box, and reconstructs the canvas.
 
----
-
-## Research directions (3+ months)
+--- [ ] **Search Hyperparameter Tuning** (IN PROGRESS)
+    - [x] Sweep combinations of Beam Size, Offspring, and Generations.
+    - [x] Define "Return on Compute" (ROC) metric to find the efficiency sweet spot.
+    - [ ] Apply winner to the 400-task full training run.
 
 ### 8. Measure Compression Ratio as an Intelligence Metric
 After each library learning epoch, if `compression_ratio = total_nodes_in_solutions / n_solved_tasks` decreases monotonically over rounds, that is empirical rigorous evidence of the system "getting smarter" — encoding the same solutions in fewer symbols.

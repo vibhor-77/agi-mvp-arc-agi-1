@@ -27,6 +27,9 @@ It repeats the Symbolic Regression search, combining the newly invented primitiv
 Currently, strictly using the baseline geometry and color DSL (89 operations), the AGI solver natively cracks **~10%** of the true ARC-AGI dataset tasks with just a single primitive operation and basic sequencing. 
 *The computational ceiling is not the Search Engine, but the expressiveness of the starting DSL.*
 
+4. **Search Optimization (Search Metrics & Efficiency)**: Beyond brute force, we measure **Return on Compute (ROC)**. We tune the balance between search breadth (Beam/Offspring) and depth (Generations). By identifying the "Sweet Spot," we maximize the number of abstractions discovered per CPU-hour, effectively accelerating the Wake-Sleep rate-of-improvement.
+
+## Immediate Tactical Pillars
 To improve accuracy on the real ARC-AGI benchmark, we proved that breaking out of linear transformation pipelines requires **Turing-Equivalent Conditionals**. By building a Zork text-adventure Domain mapped to the exact same `BeamSearch` evolutionary engine, we observed the engine spontaneously generate logical `if/then/else` branching (e.g. `z_if(z_is_locked(x), z_act_unlock(x), z_act_north(x))`). 
 
 Porting this architecture back into ARC (`g_if(gkeep_hollow(x), gmap_fill(x), grot90(x))`) instantly unlocked non-linear algorithmic topologies. The `train_wake_sleep.py` pipeline must run exclusively on the training datasets with these conditional branches to invent the specific higher-level macro-primitives required to boost the baseline to >50%.

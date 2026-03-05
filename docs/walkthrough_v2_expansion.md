@@ -42,6 +42,14 @@ lib.extract_from_tasks(successful_trees, min_size=2, min_tasks=min_tasks)
 > [!IMPORTANT]
 > The `min_size=3` threshold was preventing the system from learning the most common useful patterns — 2-node compositions like `grot90(ginv(x))`. This single change should dramatically increase the library size after the Sleep phase.
 
+### 4. Systematic Hyperparameter Optimization (Ongoing)
+We have transitioned from ad-hoc tuning to a systematic grid-search approach. We are currently measuring the **Return on Compute (ROC)** across:
+- **Beam Width**: [5, 10, 20]
+- **Offspring**: [10, 20, 40]
+- **Generations**: [25, 50, 100]
+
+Findings will be documented in `docs/hyperparameter_optimization_results.md` and used to set the optimal production defaults for the final 400-task training run.
+
 ### 3. Files Modified
 - [primitives.py](file:///Users/vibhorjain/github/agi-mvp-arc-agi-1/domains/arc/primitives.py) — 18 new primitives + registrations
 - [train_wake_sleep.py](file:///Users/vibhorjain/github/agi-mvp-arc-agi-1/train_wake_sleep.py) — Adaptive library learning thresholds
