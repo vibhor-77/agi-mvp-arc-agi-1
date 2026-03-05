@@ -490,49 +490,78 @@ def evaluate_tasks(
 
     n_total = len(tasks)
     lock = threading.Lock()
-    counters: dict[str, int] = {"solved": 0, "near": 0, "done": 0}
+    counters: dict[str, float] = {
+        "solved": 0, "near": 0, "done": 0,
+        "solved_time": 0.0, "near_time": 0.0, "unsolved_time": 0.0,
+        "total_evals": 0, "solved_evals": 0, "near_evals": 0, "unsolved_evals": 0
+    }
     ordered_results: list[tuple[int, TaskResult]] = []
     start_times: dict[int, float] = {}
 
     def _scoreboard() -> str:
-        done  = counters["done"]
-        sol   = counters["solved"]
+        done  = int(counters["done"])
+        sol   = int(counters["solved"])
+        near  = int(counters["near"])
+        unsol = done - sol
         
         # In a ProcessPool, active threads are bounded by task_workers
         act   = min(cfg.task_workers, n_total - done)
         pend  = n_total - done - act
         
         pct   = 100.0 * sol / done if done else 0.0
-        unsol = done - sol
         
         elapsed = time.time() - t0
         avg     = elapsed / done if done > 0 else 0.0
         
+        s_avg_t = counters["solved_time"] / sol if sol else 0.0
+        n_avg_t = counters["near_time"] / near if near else 0.0
+        u_avg_t = counters["unsolved_time"] / unsol if unsol else 0.0
+        
+        total_evals = int(counters["total_evals"])
+        s_avg_e     = counters["solved_evals"] / sol if sol else 0.0
+        n_avg_e     = counters["near_evals"] / near if near else 0.0
+        u_avg_e     = counters["unsolved_evals"] / unsol if unsol else 0.0
+        avg_e       = total_evals / done if done else 0.0
+        evals_p_s   = total_evals / elapsed if elapsed > 0 else 0.0
+
         running = [time.time() - t for t in start_times.values()]
         max_run = max(running) if running else 0.0
         
         prefix = f" [{epoch_str}]" if epoch_str else ""
         return (
-            f"  ┌ scoreboard{prefix} ─ "
-            f"✓ solved={sol}  ✗ unsolved={unsol}  "
-            f"→ active={act}  ⏳ pending={pend}  "
-            f"done={done}/{n_total}  "
-            f"success={pct:.1f}%  "
-            f"time={elapsed:.1f}s (avg={avg:.1f}s/completed)  "
+            f"  ┌ scoreboard{prefix} ─\n"
+            f"  │ ✓ solved={sol} (avg {s_avg_t:.1f}s, {s_avg_e/1000:.1f}k evals)  "
+            f"⚠️ near={near} (avg {n_avg_t:.1f}s, {n_avg_e/1000:.1f}k evals)  \n"
+            f"  │ ✗ unsolved={unsol} (avg {u_avg_t:.1f}s, {u_avg_e/1000:.1f}k evals)\n"
+            f"  │ → active={act}  ⏳ pending={pend}  done={done}/{n_total}  "
+            f"success={pct:.1f}%\n"
+            f"  │ time={elapsed:.1f}s (avg={avg:.1f}s)  "
+            f"evals={total_evals/1000:.1f}k (avg={avg_e/1000:.1f}k, throughput={evals_p_s/1000:.1f}k/s)  "
             f"straggler_max={max_run:.1f}s"
         )
 
     def _handle_result(idx: int, tr: TaskResult, task: ARCTask) -> None:
-        if cfg.verbose:
-            if idx in start_times:
-                del start_times[idx]
+        if idx in start_times:
+            del start_times[idx]
+        
+        counters["done"] += 1
+        counters["total_evals"] += tr.n_evals
+        
+        if tr.solved:
+            counters["solved"] += 1
+            counters["solved_time"] += tr.elapsed_s
+            counters["solved_evals"] += tr.n_evals
+        else:
+            counters["unsolved_time"] += tr.elapsed_s
+            counters["unsolved_evals"] += tr.n_evals
             
+        if tr.near_solved and not tr.solved:
+            counters["near"] += 1
+            counters["near_time"] += tr.elapsed_s
+            counters["near_evals"] += tr.n_evals
+
+        if cfg.verbose:
             status = "✓" if tr.solved else ("~" if tr.near_solved else "✗")
-            counters["done"]   += 1
-            if tr.solved:
-                counters["solved"] += 1
-            if tr.near_solved and not tr.solved:
-                counters["near"] += 1
             
             print(
                 f"  {status} [{idx+1:3d}/{n_total}] DONE      "
@@ -578,11 +607,8 @@ def evaluate_tasks(
                     print(f"    {'-'*40}")
             print(_scoreboard(), flush=True)
         else:
-            if idx in start_times:
-                del start_times[idx]
-            counters["done"]   += 1
-            if tr.solved:
-                counters["solved"] += 1
+            # We already handled metadata updates at the start of _handle_result
+            pass
 
         if report_callback:
             # Temporarily build the list of ordered results including this current TaskResult
