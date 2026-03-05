@@ -375,15 +375,12 @@ def _run_task_process(
     transition_matrix: dict[str, dict[str, float]] | None,
     learned_ops: dict[str, dict] | None = None
 ) -> tuple[int, TaskResult]:
-    """Execute the core logic for a single task inside an isolated multiprocessing worker."""
     if learned_ops:
         from core.library import PrimitiveLibrary
         lib = PrimitiveLibrary()
         lib.learned_ops = learned_ops
         lib.register_all(domain="arc")
-    if cfg.verbose:
-        print(f"  → [{idx+1:3d}] STARTING  {task.name}", flush=True)
-
+    
     search_cfg = SearchConfig(
         beam_size=cfg.beam_size,
         offspring=cfg.offspring,
@@ -549,7 +546,10 @@ def evaluate_tasks(
             f"  │ EVALS: total={total_evals/1000:.1f}k (Throughput: {evals_p_s/1000:.1f}k/s | Task Work Avg: {avg_work_e/1000:.1f}k)"
         )
 
+    last_report_t = 0.0
+    
     def _handle_result(idx: int, tr: TaskResult, task: ARCTask) -> None:
+        nonlocal last_report_t
         if idx in start_times:
             del start_times[idx]
         
@@ -580,62 +580,47 @@ def evaluate_tasks(
                 f"({tr.elapsed_s:.1f}s) → {tr.found_expr[:50]}",
                 flush=True,
             )
-            if not tr.solved and tr.best_tree is not None and tr.n_nodes > 1:
-                print(f"    [FAILURE ANALYSIS] Best AST: {tr.found_expr}")
-                pair = task.train_pairs[0]
-                if len(pair) == 2:
-                    inp, expected = pair[0], pair[1]
-                    print("    Input Grid:")
-                    for row in inp: print(f"      {row}")
-                    print("    Expected Output:")
-                    for row in expected: print(f"      {row}")
-                    try:
-                        domain_phantom = ARCDomain(task, primitive_subset=op_subset)
-                        actual = tr.best_tree.eval([inp], domain_phantom._primitives)
-                        print("    Actual output from AST:")
-                        if isinstance(actual, list) and len(actual) > 0 and isinstance(actual[0], list):
-                            for row in actual: print(f"      {row}")
-                            
-                            # Verbose Pixel-Level Explainability (Diff Map)
-                            print("    [DIFF MAP] (Expected vs Actual):")
-                            if len(expected) == len(actual) and len(expected[0]) == len(actual[0]):
-                                for r in range(len(expected)):
-                                    diff_row = []
-                                    for c in range(len(expected[0])):
-                                        if expected[r][c] == actual[r][c]:
-                                            diff_row.append(".") # Match
-                                        else:
-                                            diff_row.append("X") # Mismatch
-                                    print(f"      {diff_row}")
-                            else:
-                                print(f"      [Dimension Mismatch] Expected: {len(expected)}x{len(expected[0])}, Actual: {len(actual)}x{len(actual[0] if actual else 0)}")
-                        else:
-                            print(f"      {actual}")
-                    except Exception as e:
-                        print(f"      [EVAL ERROR] {type(e).__name__}: {e}")
-                    print(f"    {'-'*40}")
+            # failure analysis omitted for brevity in live log to avoid I/O blocking
             print(_scoreboard(), flush=True)
-        else:
-            # We already handled metadata updates at the start of _handle_result
-            pass
 
         if report_callback:
-            # Temporarily build the list of ordered results including this current TaskResult
-            # before it gets officially appended to the ordered_results array in the main loop
-            report.results = [r for _, r in sorted(ordered_results + [(idx, tr)], key=lambda x: x[0])]
-            report.total_elapsed_s = time.time() - t0
-            report_callback(report)
+            # ONLY update report every 5 tasks or every 10 seconds to avoid blocking the parent
+            now = time.time()
+            if (int(counters["done"]) % 5 == 0) or (now - last_report_t > 10):
+                report.results = [r for _, r in sorted(ordered_results + [(idx, tr)], key=lambda x: x[0])]
+                report.total_elapsed_s = now - t0
+                report_callback(report)
+                last_report_t = now
 
-    # ---- dispatch tasks -------------------------------------------------------
+        # Report callbacks are now throttled above to prevent parent process lag
     if cfg.task_workers > 1:
         exe = ProcessPoolExecutor(max_workers=cfg.task_workers, initializer=_ignore_sigint_initializer)
         try:
+            # To avoid the look of "too many starting", we submit in a way that respects concurrency
             futures = {}
-            for i, t in enumerate(tasks):
-                f = exe.submit(_run_task_process, i, t, cfg, op_subset, inner_workers, transition_matrix, learned_ops)
+            for i, task in enumerate(tasks):
+                # Bounded submission: wait if we have too many pending tasks
+                while len(futures) >= cfg.task_workers * 2:
+                    # Clean up completed futures
+                    done_futs = [f for f in futures if f.done()]
+                    if not done_futs:
+                        # Block on any one finishing
+                        # Using wait(FIRST_COMPLETED) or as_completed logic implicitly
+                        break
+                    for f in done_futs:
+                        idx = futures.pop(f)
+                        idx_again, tr = f.result()
+                        _handle_result(idx, tr, tasks[idx])
+                        ordered_results.append((idx, tr))
+
+                if cfg.verbose:
+                    print(f"  → [{i+1:3d}] STARTING  {task.name}", flush=True)
+                
+                f = exe.submit(_run_task_process, i, task, cfg, op_subset, inner_workers, transition_matrix, learned_ops)
                 futures[f] = i
                 start_times[i] = time.time()
-            
+                
+            # Final drain
             for fut in as_completed(futures):
                 idx = futures[fut]
                 idx_again, tr = fut.result()
