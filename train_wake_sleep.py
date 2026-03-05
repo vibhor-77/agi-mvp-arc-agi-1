@@ -92,10 +92,19 @@ def run_wake_sleep(tasks: list[ARCTask], epochs: int, cfg: BenchmarkConfig, mode
                 
         print(f"\n  [Sleep Phase] Extracting abstractions from {len(successful_trees)} solved tasks...")
         
-        # For testing purposes, let's artificially set min_tasks=1 if we only have a few tasks solved,
-        # otherwise we might not learn anything in small local tests.
-        min_tasks = 2 if len(successful_trees) > 2 else 1
-        lib.extract_from_tasks(successful_trees, min_size=3, min_tasks=min_tasks)
+        # Adaptive library learning thresholds:
+        # - min_size=2: Capture 2-node compositions like grot90(ginv(x)) which are the
+        #   most common useful patterns. Previously min_size=3 was too strict.
+        # - min_tasks: Scale with number of solved tasks. When few tasks are solved (<10),
+        #   be generous (min_tasks=1) to maximize learning. At scale, require at least 2
+        #   tasks to share a sub-tree before promoting it.
+        if len(successful_trees) < 10:
+            min_tasks = 1
+        elif len(successful_trees) < 30:
+            min_tasks = 2
+        else:
+            min_tasks = 3
+        lib.extract_from_tasks(successful_trees, min_size=2, min_tasks=min_tasks)
         
         print(f"  [Sleep Phase] Current Library Size: {len(lib.learned_ops)} abstractions")
         

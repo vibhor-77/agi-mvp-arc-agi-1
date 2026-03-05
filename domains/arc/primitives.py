@@ -1667,6 +1667,292 @@ def g_replace_1_with_3(g: Grid) -> Grid:
     """Transforms all 1s into 3s."""
     return [[3 if c == 1 else c for c in row] for row in g]
 
+# ── Flood Fill ──────────────────────────────────────────────────────────────────
+
+@_safe_grid_op
+def g_flood_fill(g: Grid) -> Grid:
+    """
+    Fill all enclosed zero-regions (holes) with the surrounding non-zero color.
+    A zero-region is 'enclosed' if it does not touch the grid border.
+    Critical for 'fill the hole' ARC tasks.
+    """
+    R, C = len(g), len(g[0])
+    if R == 0 or C == 0:
+        return _clone(g)
+    
+    # 1) Find all zero-regions connected to the border (these are NOT holes)
+    border_connected = set()
+    queue = []
+    for r in range(R):
+        for c in range(C):
+            if g[r][c] == 0 and (r == 0 or r == R-1 or c == 0 or c == C-1):
+                if (r, c) not in border_connected:
+                    border_connected.add((r, c))
+                    queue.append((r, c))
+    
+    while queue:
+        cr, cc = queue.pop(0)
+        for dr, dc in [(-1,0),(1,0),(0,-1),(0,1)]:
+            nr, nc = cr+dr, cc+dc
+            if 0 <= nr < R and 0 <= nc < C and g[nr][nc] == 0 and (nr, nc) not in border_connected:
+                border_connected.add((nr, nc))
+                queue.append((nr, nc))
+    
+    # 2) Any zero cell NOT border-connected is a hole → fill with neighboring color
+    out = _clone(g)
+    for r in range(R):
+        for c in range(C):
+            if out[r][c] == 0 and (r, c) not in border_connected:
+                # Find nearest non-zero neighbor color
+                fill_color = 1
+                for dr, dc in [(-1,0),(1,0),(0,-1),(0,1),(-1,-1),(-1,1),(1,-1),(1,1)]:
+                    nr, nc = r+dr, c+dc
+                    if 0 <= nr < R and 0 <= nc < C and g[nr][nc] != 0:
+                        fill_color = g[nr][nc]
+                        break
+                out[r][c] = fill_color
+    return out
+
+
+# ── Any-Color Connected Component Extraction ────────────────────────────────
+
+@_safe_grid_op
+def g_extract_objects_any(g: Grid) -> Grid:
+    """
+    Extract the largest connected component treating ALL non-zero pixels as connected
+    (not restricted to same-color). Returns the bounding box of the largest blob.
+    Unlocks multi-colored object isolation.
+    """
+    R, C = len(g), len(g[0])
+    visited = set()
+    objects = []
+    
+    for r in range(R):
+        for c in range(C):
+            if g[r][c] != 0 and (r, c) not in visited:
+                obj_cells = []
+                queue = [(r, c)]
+                visited.add((r, c))
+                while queue:
+                    cr, cc = queue.pop(0)
+                    obj_cells.append((cr, cc))
+                    for dr, dc in [(-1,0),(1,0),(0,-1),(0,1)]:
+                        nr, nc = cr+dr, cc+dc
+                        if 0 <= nr < R and 0 <= nc < C and g[nr][nc] != 0 and (nr, nc) not in visited:
+                            visited.add((nr, nc))
+                            queue.append((nr, nc))
+                objects.append(obj_cells)
+    
+    if not objects:
+        return _clone(g)
+    
+    largest = max(objects, key=len)
+    min_r = min(r for r, c in largest)
+    max_r = max(r for r, c in largest)
+    min_c = min(c for r, c in largest)
+    max_c = max(c for r, c in largest)
+    
+    box_R = max_r - min_r + 1
+    box_C = max_c - min_c + 1
+    out = [[0] * box_C for _ in range(box_R)]
+    for r, c in largest:
+        out[r - min_r][c - min_c] = g[r][c]
+    return out
+
+
+# ── Parametric Recoloring ──────────────────────────────────────────────────────
+
+@_safe_grid_op
+def g_fg_to_most_common(g: Grid) -> Grid:
+    """Map ALL non-zero cells to the single most-frequent non-zero color."""
+    freq = {}
+    for row in g:
+        for c in row:
+            if c != 0:
+                freq[c] = freq.get(c, 0) + 1
+    if not freq:
+        return _clone(g)
+    most_common = max(freq, key=freq.get)
+    return [[most_common if c != 0 else 0 for c in row] for row in g]
+
+@_safe_grid_op
+def g_fg_to_least_common(g: Grid) -> Grid:
+    """Map ALL non-zero cells to the single least-frequent non-zero color."""
+    freq = {}
+    for row in g:
+        for c in row:
+            if c != 0:
+                freq[c] = freq.get(c, 0) + 1
+    if not freq:
+        return _clone(g)
+    least_common = min(freq, key=freq.get)
+    return [[least_common if c != 0 else 0 for c in row] for row in g]
+
+@_safe_grid_op
+def g_unique_color_per_obj(g: Grid) -> Grid:
+    """Assign sequential colors (1, 2, 3, ...) to each distinct connected object."""
+    R, C = len(g), len(g[0])
+    visited = set()
+    out = [[0] * C for _ in range(R)]
+    color_idx = 0
+    
+    for r in range(R):
+        for c in range(C):
+            if g[r][c] != 0 and (r, c) not in visited:
+                color_idx += 1
+                assign_color = color_idx % 10 if color_idx % 10 != 0 else 1
+                queue = [(r, c)]
+                visited.add((r, c))
+                while queue:
+                    cr, cc = queue.pop(0)
+                    out[cr][cc] = assign_color
+                    for dr, dc in [(-1,0),(1,0),(0,-1),(0,1)]:
+                        nr, nc = cr+dr, cc+dc
+                        if 0 <= nr < R and 0 <= nc < C and g[nr][nc] != 0 and (nr, nc) not in visited:
+                            visited.add((nr, nc))
+                            queue.append((nr, nc))
+    return out
+
+
+# ── Object Count Predicates (for g_if branching) ───────────────────────────────
+
+def _count_objects(g: Grid) -> int:
+    """Count disjoint 4-connected non-zero components."""
+    R, C = len(g), len(g[0]) if g else 0
+    visited = set()
+    count = 0
+    for r in range(R):
+        for c in range(C):
+            if g[r][c] != 0 and (r, c) not in visited:
+                count += 1
+                queue = [(r, c)]
+                visited.add((r, c))
+                while queue:
+                    cr, cc = queue.pop(0)
+                    for dr, dc in [(-1,0),(1,0),(0,-1),(0,1)]:
+                        nr, nc = cr+dr, cc+dc
+                        if 0 <= nr < R and 0 <= nc < C and g[nr][nc] != 0 and (nr, nc) not in visited:
+                            visited.add((nr, nc))
+                            queue.append((nr, nc))
+    return count
+
+@_safe_grid_op
+def g_has_1_object(g: Grid) -> Grid:
+    """Returns a copy of g if exactly 1 connected object exists, else a zeroed grid (for g_if predicates)."""
+    if _count_objects(g) == 1:
+        return _clone(g)
+    return [[0] * len(g[0]) for _ in range(len(g))]
+
+@_safe_grid_op
+def g_has_2_objects(g: Grid) -> Grid:
+    """Returns a copy of g if exactly 2 connected objects exist, else a zeroed grid."""
+    if _count_objects(g) == 2:
+        return _clone(g)
+    return [[0] * len(g[0]) for _ in range(len(g))]
+
+@_safe_grid_op
+def g_has_gt2_objects(g: Grid) -> Grid:
+    """Returns a copy of g if more than 2 connected objects exist, else a zeroed grid."""
+    if _count_objects(g) > 2:
+        return _clone(g)
+    return [[0] * len(g[0]) for _ in range(len(g))]
+
+
+# ── Grid XOR / Difference ──────────────────────────────────────────────────────
+
+@_safe_grid_op
+def g_xor(g1: Grid, g2: Grid) -> Grid:
+    """Symmetric difference: non-zero in output where exactly one input is non-zero."""
+    R1, C1 = len(g1), len(g1[0])
+    R2, C2 = len(g2), len(g2[0])
+    R, C = max(R1, R2), max(C1, C2)
+    out = [[0] * C for _ in range(R)]
+    for r in range(R):
+        for c in range(C):
+            v1 = g1[r][c] if r < R1 and c < C1 else 0
+            v2 = g2[r][c] if r < R2 and c < C2 else 0
+            if v1 != 0 and v2 == 0:
+                out[r][c] = v1
+            elif v1 == 0 and v2 != 0:
+                out[r][c] = v2
+    return out
+
+@_safe_grid_op
+def g_diff(g1: Grid, g2: Grid) -> Grid:
+    """Set difference: keep g1 pixels only where g2 is zero. Useful for subtraction."""
+    R1, C1 = len(g1), len(g1[0])
+    R2, C2 = len(g2), len(g2[0])
+    R, C = min(R1, R2), min(C1, C2)
+    out = _clone(g1)
+    for r in range(R):
+        for c in range(C):
+            if r < R2 and c < C2 and g2[r][c] != 0:
+                out[r][c] = 0
+    return out
+
+
+# ── Downscaling ───────────────────────────────────────────────────────────────
+
+@_safe_grid_op
+def g_downscale_2x(g: Grid) -> Grid:
+    """Majority-vote downscale: each 2x2 block → 1 pixel (uses most common non-zero color, or 0)."""
+    R, C = len(g), len(g[0])
+    oR, oC = R // 2, C // 2
+    if oR == 0 or oC == 0:
+        return _clone(g)
+    out = [[0] * oC for _ in range(oR)]
+    for r in range(oR):
+        for c in range(oC):
+            freq = {}
+            for dr in range(2):
+                for dc in range(2):
+                    sr, sc = r*2+dr, c*2+dc
+                    if sr < R and sc < C and g[sr][sc] != 0:
+                        v = g[sr][sc]
+                        freq[v] = freq.get(v, 0) + 1
+            out[r][c] = max(freq, key=freq.get) if freq else 0
+    return out
+
+@_safe_grid_op
+def g_downscale_3x(g: Grid) -> Grid:
+    """Majority-vote downscale: each 3x3 block → 1 pixel."""
+    R, C = len(g), len(g[0])
+    oR, oC = R // 3, C // 3
+    if oR == 0 or oC == 0:
+        return _clone(g)
+    out = [[0] * oC for _ in range(oR)]
+    for r in range(oR):
+        for c in range(oC):
+            freq = {}
+            for dr in range(3):
+                for dc in range(3):
+                    sr, sc = r*3+dr, c*3+dc
+                    if sr < R and sc < C and g[sr][sc] != 0:
+                        v = g[sr][sc]
+                        freq[v] = freq.get(v, 0) + 1
+            out[r][c] = max(freq, key=freq.get) if freq else 0
+    return out
+
+
+# ── Extended Color Replacements ────────────────────────────────────────────────
+
+def _make_replace(src: int, dst: int):
+    """Factory for targeted color replacement primitives."""
+    @_safe_grid_op
+    def _repl(g: Grid) -> Grid:
+        return [[dst if c == src else c for c in row] for row in g]
+    _repl.__name__ = f"g_replace_{src}_with_{dst}"
+    return _repl
+
+g_replace_2_with_3 = _make_replace(2, 3)
+g_replace_3_with_1 = _make_replace(3, 1)
+g_replace_3_with_2 = _make_replace(3, 2)
+g_replace_0_with_1 = _make_replace(0, 1)
+g_replace_0_with_2 = _make_replace(0, 2)
+g_replace_nonzero_with_1 = lambda g: [[1 if c != 0 else 0 for c in row] for row in g]
+g_replace_nonzero_with_1.__name__ = "g_replace_nonzero_with_1"
+
+
 # ── Logical Branching ────────────────────────────────────────────────────────
 def g_if(cond: Grid, true_branch: Grid, false_branch: Grid) -> Grid:
     """
@@ -1798,15 +2084,50 @@ _NEW_ARC_PRIMITIVES: dict[str, tuple[object, str]] = {
     # Computer Vision / Object Detection
     "gmap_largest_cc":     (gmap_largest_cc, "Keep only the largest 8-connected topological component"),
     "gmap_bounding_boxes": (gmap_bounding_boxes, "Wrap a solid bounding box around each independent shape component"),
+    
+    # ── NEW: Flood Fill ──
+    "g_flood_fill":     (g_flood_fill, "Fill enclosed zero-regions (holes) with surrounding color"),
+    
+    # ── NEW: Any-Color Object Extraction ──
+    "g_extract_objects_any": (g_extract_objects_any, "Extract largest connected component (any non-zero as connected)"),
+    
+    # ── NEW: Parametric Recoloring ──
+    "g_fg_to_most_common":   (g_fg_to_most_common,   "Map all non-zero cells to the most frequent non-zero color"),
+    "g_fg_to_least_common":  (g_fg_to_least_common,  "Map all non-zero cells to the least frequent non-zero color"),
+    "g_unique_color_per_obj": (g_unique_color_per_obj, "Assign sequential colors (1,2,3,...) to each distinct object"),
+    
+    # ── NEW: Object Count Predicates (for g_if branching) ──
+    "g_has_1_object":   (g_has_1_object,   "Returns g if exactly 1 object, else zeros (predicate)"),
+    "g_has_2_objects":   (g_has_2_objects,   "Returns g if exactly 2 objects, else zeros (predicate)"),
+    "g_has_gt2_objects": (g_has_gt2_objects, "Returns g if >2 objects, else zeros (predicate)"),
+    
+    # ── NEW: Grid XOR / Difference ──
+    "g_xor":  (g_xor,  "Symmetric difference: non-zero where exactly one input is non-zero"),
+    "g_diff": (g_diff, "Set difference: keep g1 pixels where g2 is zero"),
+    
+    # ── NEW: Downscaling ──
+    "g_downscale_2x": (g_downscale_2x, "Majority-vote downscale: 2x2 blocks → 1 pixel"),
+    "g_downscale_3x": (g_downscale_3x, "Majority-vote downscale: 3x3 blocks → 1 pixel"),
+    
+    # ── NEW: Extended Color Replacements ──
+    "g_replace_2_with_3":      (g_replace_2_with_3,      "Transforms color 2 to 3"),
+    "g_replace_3_with_1":      (g_replace_3_with_1,      "Transforms color 3 to 1"),
+    "g_replace_3_with_2":      (g_replace_3_with_2,      "Transforms color 3 to 2"),
+    "g_replace_0_with_1":      (g_replace_0_with_1,      "Transforms color 0 (bg) to 1"),
+    "g_replace_0_with_2":      (g_replace_0_with_2,      "Transforms color 0 (bg) to 2"),
+    "g_replace_nonzero_with_1": (g_replace_nonzero_with_1, "Reduces all non-zero to binary mask of 1s"),
 }
+
+_BINARY_NEW_OPS = {"g_overlay", "g_render_object", "g_filter_color", "g_xor", "g_diff"}
 
 for _name, (_fn, _desc) in _NEW_ARC_PRIMITIVES.items():
     if _name == "g_if":
         _arity = 3
     elif _name == "g_while":
         _arity = 2
-    elif _name in ("g_overlay", "g_render_object", "g_filter_color"):
+    elif _name in _BINARY_NEW_OPS:
         _arity = 2
     else:
         _arity = 1
     registry.register(_name, _fn, domain="arc", description=_desc, arity=_arity)  # type: ignore[arg-type]
+
