@@ -172,6 +172,7 @@ class TaskResult:
     near_solved: bool     # test_acc >= 0.80
     n_nodes: int
     elapsed_s: float
+    n_evals: int = 0
     introspection: str = ""
     best_tree: Optional[Node] = None
     trace: list | None = None
@@ -188,6 +189,7 @@ class TaskResult:
             "near_solved": self.near_solved,
             "n_nodes": self.n_nodes,
             "elapsed_s": round(self.elapsed_s, 2),
+            "n_evals": self.n_evals,
             "introspection": self.introspection,
         }
 
@@ -429,6 +431,7 @@ def _run_task_process(
         near_solved=near,
         n_nodes=tree.size() if tree else 0,
         elapsed_s=elapsed,
+        n_evals=result.n_evals,
         introspection=introspection_msg,
         best_tree=tree,
         trace=trace if 'trace' in locals() else None,

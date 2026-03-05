@@ -122,6 +122,7 @@ class SearchResult:
     history: list[dict] = field(default_factory=list)
     elapsed_s: float = 0.0
     converged: bool = False
+    n_evals: int = 0
 
 
 # ---------------------------------------------------------------------------
@@ -234,6 +235,7 @@ class BeamSearch:
             for _ in range(cfg.beam_size * 5)
         ]
         scored = self._evaluate_all(init_pool)
+        n_evals_total = len(init_pool)
         
         # ── Global Novelty Search Set ────────────────────────────────────
         global_seen_fuzzes: set[str] = set()
@@ -376,6 +378,7 @@ class BeamSearch:
 
             # Evaluate
             scored = self._evaluate_all(pool)
+            n_evals_total += len(pool)
 
             # Decay temperature
             current_temp = current_temp * cfg.cooling_rate
@@ -418,6 +421,7 @@ class BeamSearch:
                     history=history,
                     elapsed_s=time.time() - t0,
                     converged=True,
+                    n_evals=n_evals_total,
                 )
 
         return SearchResult(
@@ -426,6 +430,7 @@ class BeamSearch:
             history=history,
             elapsed_s=time.time() - t0,
             converged=False,
+            n_evals=n_evals_total,
         )
 
     # ------------------------------------------------------------------ #
