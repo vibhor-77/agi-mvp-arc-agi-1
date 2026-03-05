@@ -320,51 +320,65 @@ class BenchmarkReport:
             lines.append(f"| {r.task_name} | {status} | {r.n_evals/1000:5.1f}k | {r.elapsed_s:.1f}s | {r.train_acc:.2f} | {r.test_acc:.2f} | `{expr}` |")
             
         lines.append(f"\n## Introspection Analysis (Failures by Category)")
-        
         failed_by_cat = {}
         for r in self.results:
             if not r.solved:
-                if r.category not in failed_by_cat:
-                    failed_by_cat[r.category] = []
+                if r.category not in failed_by_cat: failed_by_cat[r.category] = []
                 failed_by_cat[r.category].append(r)
                 
-        if not failed_by_cat:
-            lines.append("No failures! All tasks solved.")
+        if not failed_by_cat: lines.append("No failures! All tasks solved.")
         
         for cat, fails in sorted(failed_by_cat.items()):
             lines.append(f"\n### {cat} ({len(fails)} failures)")
             for r in fails[:15]: 
-                lines.append(f"- **{r.task_name}**:")
-                lines.append(f"  - **Introspection**: {r.introspection}")
+                lines.append(f"- **{r.task_name}**: {r.introspection}")
                 if r.best_tree:
                     ast_str = r.found_expr if len(r.found_expr) < 120 else r.found_expr[:117] + "..."
-                    lines.append(f"  - **Best AST**: `{ast_str}`")
-                    lines.append(f"  - **Diagnostics**: {r.n_evals/1000:.1f}k evals | {r.elapsed_s:.1f}s search time")
-                    lines.append(f"  - **Train Acc**: {r.train_acc:.2f} | **Test Acc**: {r.test_acc:.2f}")
+                    lines.append(f"  - **Best AST**: `{ast_str}` | {r.n_evals/1000:.1f}k evals | {r.elapsed_s:.1f}s")
                 
-                # If we have a trace, visualize it!
                 if r.trace:
                     lines.append("\n  <div style='overflow-x: auto; white-space: nowrap;'>")
                     for step_name, step_grid in r.trace:
                         lines.append("    <div style='display: inline-block; text-align: center; margin-right: 15px;'>")
-                        lines.append(f"      <div style='font-family: monospace; font-size: 12px; margin-bottom: 5px; max-width: 150px; overflow: hidden; text-overflow: ellipsis;'>{step_name}</div>")
+                        lines.append(f"      <div style='font-family: monospace; font-size: 10px;'>{step_name}</div>")
                         lines.append(f"      {self.grid_to_html_table(step_grid)}")
                         lines.append("    </div>")
-                        if step_name != r.trace[-1][0]: # Arrow between steps
-                            lines.append("    <div style='display: inline-block; vertical-align: top; margin-top: 20px; font-weight: bold;'>&#8594;</div>")
+                        if step_name != r.trace[-1][0]: lines.append("    <div style='display: inline-block; vertical-align: top; margin-top: 20px;'>&#8594;</div>")
                     lines.append("  </div>\n")
-            if len(fails) > 15:
-                lines.append(f"- *...and {len(fails) - 15} more {cat} tasks.*")
-                
+            if len(fails) > 15: lines.append(f"- *...and {len(fails) - 15} more {cat} tasks.*")
         return "\n".join(lines)
+
+    def save(self, md_path: str):
+        """Persist the report to both Markdown and HTML formats."""
+        content = self.generate_markdown_report()
+        os.makedirs(os.path.dirname(md_path), exist_ok=True) if os.path.dirname(md_path) else None
+        with open(md_path, "w", encoding="utf-8") as f: f.write(content)
+        
+        html_template = """<!DOCTYPE html><html><head><meta charset="utf-8"><title>AGI Report</title>
+        <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown.min.css">
+        <style>body { box-sizing: border-box; min-width: 200px; max-width: 980px; margin: 0 auto; padding: 45px; }</style>
+        </head><body class="markdown-body"><div id="content"></div>
+        <script type="text/markdown" id="md-content">CONTENT_PLACEHOLDER</script>
+        <script>document.getElementById('content').innerHTML = marked.parse(document.getElementById('md-content').textContent);</script>
+        </body></html>"""
+        with open(md_path.replace(".md", ".html"), "w", encoding="utf-8") as f:
+            f.write(html_template.replace("CONTENT_PLACEHOLDER", content))
 
 
 # ---------------------------------------------------------------------------
 # Core evaluation function
 # ---------------------------------------------------------------------------
 
-def _suppress_on_result(result: Any) -> None:
-    pass
+_worker_shared_evals = None
+_worker_idx = None
+
+def _ignore_sigint_initializer(evals_arr: Any = None):
+    global _worker_shared_evals
+    import signal
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
+    if evals_arr is not None:
+        _worker_shared_evals = evals_arr
 
 def _run_task_process(
     idx: int, 
@@ -373,14 +387,22 @@ def _run_task_process(
     op_subset: list[str], 
     inner_workers: int,
     transition_matrix: dict[str, dict[str, float]] | None,
-    learned_ops: dict[str, dict] | None = None
+    learned_ops: dict[str, dict] | None = None,
+    worker_idx: int = 0
 ) -> tuple[int, TaskResult]:
+    global _worker_idx
+    _worker_idx = worker_idx
+    
     if learned_ops:
         from core.library import PrimitiveLibrary
         lib = PrimitiveLibrary()
         lib.learned_ops = learned_ops
         lib.register_all(domain="arc")
     
+    def on_step(n_evals, elapsed):
+        if _worker_shared_evals is not None and _worker_idx is not None:
+            _worker_shared_evals[_worker_idx] = n_evals
+
     search_cfg = SearchConfig(
         beam_size=cfg.beam_size,
         offspring=cfg.offspring,
@@ -395,9 +417,9 @@ def _run_task_process(
 
     task_t0 = time.time()
     domain = ARCDomain(task, lam=cfg.lam, primitive_subset=op_subset)
-    domain.on_result = _suppress_on_result  # type: ignore[method-assign]
+    domain.on_result = lambda x: None  # type: ignore[method-assign]
     
-    result = domain.solve(config=search_cfg, transition_matrix=transition_matrix)
+    result = domain.solve(config=search_cfg, transition_matrix=transition_matrix, on_step=on_step)
 
     tree      = result.best_tree
     train_acc = domain.train_accuracy(tree)
@@ -453,6 +475,73 @@ def _run_task_process(
     )
     return idx, tr
 
+class LiveScoreboard:
+    """Encapsulates the status reporting logic for evaluate_tasks."""
+    def __init__(self, n_total: int, t0: float, task_workers: int, epoch_str: str = ""):
+        self.n_total = n_total
+        self.t0 = t0
+        self.task_workers = task_workers
+        self.epoch_str = epoch_str
+        self.counters = {
+            "solved": 0, "near": 0, "done": 0,
+            "solved_time": 0.0, "near_time": 0.0, "unsolved_time": 0.0,
+            "total_evals": 0, "solved_evals": 0, "near_evals": 0, "unsolved_evals": 0
+        }
+        self.start_times: dict[int, float] = {}
+        self.shared_evals: Any = None
+
+    def update(self, tr: TaskResult):
+        self.counters["done"] += 1
+        self.counters["total_evals"] += tr.n_evals
+        if tr.solved:
+            self.counters["solved"] += 1
+            self.counters["solved_time"] += tr.elapsed_s
+            self.counters["solved_evals"] += tr.n_evals
+        else:
+            self.counters["unsolved_time"] += tr.elapsed_s
+            self.counters["unsolved_evals"] += tr.n_evals
+            if tr.near_solved:
+                self.counters["near"] += 1
+                self.counters["near_time"] += tr.elapsed_s
+                self.counters["near_evals"] += tr.n_evals
+
+    def render(self) -> str:
+        c = self.counters
+        done, sol, near = int(c["done"]), int(c["solved"]), int(c["near"])
+        unsol = done - sol
+        act = min(self.task_workers, self.n_total - done)
+        pend = self.n_total - done - act
+        elapsed = time.time() - self.t0
+        
+        # Latency metrics
+        task_total_t = c["solved_time"] + c["near_time"] + c["unsolved_time"]
+        avg_work_t = task_total_t / done if done > 0 else 0.0
+        
+        # Eval metrics
+        total_evals = int(c["total_evals"])
+        avg_work_e = total_evals / done if done > 0 else 0.0
+        evals_p_s = total_evals / elapsed if elapsed > 0 else 0.0
+        
+        # Efficiency metrics
+        speedup = task_total_t / elapsed if elapsed > 0 else 0.0
+        utilization = 100 * (speedup / self.task_workers) if self.task_workers > 0 else 0.0
+        pct = 100 * sol / self.n_total if self.n_total > 0 else 0.0
+
+        # Stragglers
+        running = [time.time() - t for t in self.start_times.values()]
+        max_run_t = max(running) if running else 0.0
+        max_run_e = max(self.shared_evals) if self.shared_evals else 0
+
+        prefix = f" [{self.epoch_str}]" if self.epoch_str else ""
+        return (
+            f"  ┌ scoreboard{prefix} ─\n"
+            f"  │ ✓ solved={sol} ({100*sol/max(done,1):.1f}%)  ⚠️ near={near}  ✗ unsolved={unsol}\n"
+            f"  │ → active={act}  ⏳ pending={pend}  done={done}/{self.n_total}  success={pct:.1f}%\n"
+            f"  │ TIME:  elapsed={elapsed:.1f}s (Throughput: {elapsed/max(done,1):.2f}s/task | Latency Avg: {avg_work_t:.1f}s)\n"
+            f"  │ WORK:  speedup={speedup:.2f}x ({utilization:.1f}% core) | STRAGGLER: {max_run_t:.1f}s, {max_run_e/1000:.1f}k evals\n"
+            f"  │ EVALS: total={total_evals/1000:.1f}k ({evals_p_s/1000:.2f}k/s | Per-Task Avg: {avg_work_e/1000:.1f}k)"
+        )
+
 def evaluate_tasks(
     tasks: list[ARCTask],
     op_subset: list[str],
@@ -463,195 +552,75 @@ def evaluate_tasks(
     epoch_str: str = "",
     report_callback=None,
 ) -> BenchmarkReport:
-    """
-    Run beam search on every task in *tasks* using *op_subset* as primitives.
-
-    When ``cfg.task_workers > 1`` tasks run concurrently via
-    ``ProcessPoolExecutor``; the inner beam search's ``workers`` is forced to 1
-    to avoid nested ``multiprocessing.Pool`` issues on macOS.
-
-    With ``cfg.verbose=True`` each task prints a "→ STARTING" line when it
-    begins and a "✓/~/✗ DONE" line when it finishes, followed by a live
-    scoreboard showing:
-
-        ✓ solved  ✗ unsolved  → active  ⏳ pending  done/total  success%
-
-    Returns a populated BenchmarkReport.
-    """
     report = BenchmarkReport(label=label, n_ops=len(op_subset))
     t0 = time.time()
-
-    # Nested multiprocessing pools are unreliable on macOS; force inner=1
-    # when tasks themselves run in parallel.
     inner_workers = 1 if cfg.task_workers > 1 else cfg.workers
 
-    n_total = len(tasks)
-    lock = threading.Lock()
-    counters: dict[str, float] = {
-        "solved": 0, "near": 0, "done": 0,
-        "solved_time": 0.0, "near_time": 0.0, "unsolved_time": 0.0,
-        "total_evals": 0, "solved_evals": 0, "near_evals": 0, "unsolved_evals": 0
-    }
+    scoreboard = LiveScoreboard(len(tasks), t0, cfg.task_workers, epoch_str)
     ordered_results: list[tuple[int, TaskResult]] = []
-    
-    # Tracking metrics
-    start_times: dict[int, float] = {}
-
-    def _scoreboard() -> str:
-        done  = int(counters["done"])
-        sol   = int(counters["solved"])
-        near  = int(counters["near"])
-        unsol = done - sol
-        
-        # In a ProcessPool, active threads are bounded by task_workers
-        act   = min(cfg.task_workers, n_total - done)
-        pend  = n_total - done - act
-        
-        elapsed = time.time() - t0
-        avg_throughput = elapsed / done if done > 0 else 0.0
-        
-        # Internal per-task average (sum of work done per task)
-        task_total_t = counters["solved_time"] + counters["near_time"] + counters["unsolved_time"]
-        avg_work_t   = task_total_t / done if done > 0 else 0.0
-        
-        s_avg_t = counters["solved_time"] / sol if sol else 0.0
-        n_avg_t = counters["near_time"] / near if near else 0.0
-        u_avg_t = counters["unsolved_time"] / unsol if unsol else 0.0
-        
-        total_evals = int(counters["total_evals"])
-        s_avg_e     = counters["solved_evals"] / sol if sol else 0.0
-        n_avg_e     = counters["near_evals"] / near if near else 0.0
-        u_avg_e     = counters["unsolved_evals"] / unsol if unsol else 0.0
-        avg_work_e  = total_evals / done if done else 0.0
-        evals_p_s   = total_evals / elapsed if elapsed > 0 else 0.0
-
-        # Straggler metrics
-        running = [time.time() - t for t in start_times.values()]
-        max_run_t = max(running) if running else 0.0
-        
-        # Efficiency metrics
-        speedup     = task_total_t / elapsed if elapsed > 0 else 0.0
-        utilization = 100 * (speedup / cfg.task_workers) if cfg.task_workers > 0 else 0.0
-        
-        pct = 100 * sol / n_total if n_total > 0 else 0.0
-        
-        prefix = f" [{epoch_str}]" if epoch_str else ""
-        return (
-            f"  ┌ scoreboard{prefix} ─\n"
-            f"  │ ✓ solved={sol} (avg {s_avg_t:.1f}s, {s_avg_e/1000:.1f}k evals)  "
-            f"⚠️ near={near} (avg {n_avg_t:.1f}s, {n_avg_e/1000:.1f}k evals)  \n"
-            f"  │ ✗ unsolved={unsol} (avg {u_avg_t:.1f}s, {u_avg_e/1000:.1f}k evals)\n"
-            f"  │ → active={act}  ⏳ pending={pend}  done={done}/{n_total}  "
-            f"success={pct:.1f}%\n"
-            f"  │ TIME:  elapsed={elapsed:.1f}s (Throughput: 1 task every {avg_throughput:.2f}s | Latency Avg: {avg_work_t:.1f}s)\n"
-            f"  │ WORK:  speedup={speedup:.2f}x ({utilization:.1f}% core util)  STRAGGLER MAX: {max_run_t:.1f}s\n"
-            f"  │ EVALS: total={total_evals/1000:.1f}k (Throughput: {evals_p_s/1000:.1f}k/s | Per-Task Avg: {avg_work_e/1000:.1f}k)"
-        )
-
     last_report_t = 0.0
-    
-    def _handle_result(idx: int, tr: TaskResult, task: ARCTask) -> None:
+
+    import multiprocessing as mp
+    shared_evals = mp.RawArray('i', cfg.task_workers)
+    scoreboard.shared_evals = shared_evals
+
+    def _on_done(idx, tr, task):
         nonlocal last_report_t
-        if idx in start_times:
-            del start_times[idx]
-        
-        counters["done"] += 1
-        counters["total_evals"] += tr.n_evals
-        
-        if tr.solved:
-            counters["solved"] += 1
-            counters["solved_time"] += tr.elapsed_s
-            counters["solved_evals"] += tr.n_evals
-        else:
-            counters["unsolved_time"] += tr.elapsed_s
-            counters["unsolved_evals"] += tr.n_evals
-            
-        if tr.near_solved and not tr.solved:
-            counters["near"] += 1
-            counters["near_time"] += tr.elapsed_s
-            counters["near_evals"] += tr.n_evals
-
-        # Append to ordered_results immediately so report covers it
+        if idx in scoreboard.start_times: del scoreboard.start_times[idx]
+        scoreboard.update(tr)
         ordered_results.append((idx, tr))
-
         if cfg.verbose:
             status = "✓" if tr.solved else ("~" if tr.near_solved else "✗")
-            print(
-                f"  {status} [{idx+1:3d}/{n_total}] DONE      "
-                f"{task.name[:28]:28s} "
-                f"evals={tr.n_evals/1000:5.1f}k "
-                f"train={tr.train_acc:.2f} test={tr.test_acc:.2f} "
-                f"({tr.elapsed_s:.1f}s) → {tr.found_expr[:50]}",
-                flush=True,
-            )
-            print(_scoreboard(), flush=True)
+            print(f"  {status} [{idx+1:3d}/{len(tasks)}] DONE {task.name[:28]:28s} {tr.n_evals/1000:5.1f}k evals ({tr.elapsed_s:.1f}s)")
+            print(scoreboard.render(), flush=True)
 
         if report_callback:
-            # ONLY update heavy markdown report every 5 tasks or every 10 seconds to avoid blocking the main thread
             now = time.time()
-            if (int(counters["done"]) % 5 == 0) or (now - last_report_t > 10) or (int(counters["done"]) == n_total):
+            if (scoreboard.counters["done"] % 5 == 0) or (now - last_report_t > 15) or (scoreboard.counters["done"] == len(tasks)):
                 report.results = [r for _, r in sorted(ordered_results, key=lambda x: x[0])]
                 report.total_elapsed_s = now - t0
                 report_callback(report)
                 last_report_t = now
-    if cfg.task_workers > 1:
-        exe = ProcessPoolExecutor(max_workers=cfg.task_workers, initializer=_ignore_sigint_initializer)
-        try:
-            from concurrent.futures import wait, FIRST_COMPLETED
-            futures = {}
-            for i, task in enumerate(tasks):
-                # Throttle submission: wait if we have too many active futures (max_workers * 2)
-                if len(futures) >= cfg.task_workers * 2:
-                    done_set, _ = wait(futures, return_when=FIRST_COMPLETED)
-                    for f in done_set:
-                        idx = futures.pop(f)
-                        idx_again, tr = f.result()
-                        _handle_result(idx, tr, tasks[idx])
 
-                if cfg.verbose:
-                    print(f"  → [{i+1:3d}] STARTING  {task.name}", flush=True)
-                
-                f = exe.submit(_run_task_process, i, task, cfg, op_subset, inner_workers, transition_matrix, learned_ops)
-                futures[f] = i
-                start_times[i] = time.time()
-                
-            # Final drain of remaining tasks
-            for fut in as_completed(futures):
-                idx = futures[fut]
-                idx_again, tr = fut.result()
-                _handle_result(idx, tr, tasks[idx])
+    if cfg.task_workers > 1:
+        from concurrent.futures import wait, FIRST_COMPLETED
+        exe = ProcessPoolExecutor(max_workers=cfg.task_workers, initializer=_ignore_sigint_initializer, initargs=(shared_evals,))
+        try:
+            futures, active_worker_indices, free_worker_indices = {}, {}, list(range(cfg.task_workers))
+            for i, task in enumerate(tasks):
+                while len(futures) >= cfg.task_workers:
+                    d_set, _ = wait(futures, return_when=FIRST_COMPLETED)
+                    for f in d_set:
+                        idx, w_idx = futures.pop(f), active_worker_indices.pop(f)
+                        free_worker_indices.append(w_idx)
+                        shared_evals[w_idx] = 0
+                        _, tr = f.result()
+                        _on_done(idx, tr, tasks[idx])
+                w_idx = free_worker_indices.pop()
+                if cfg.verbose: print(f"  → [{i+1:3d}] STARTING  {task.name}", flush=True)
+                f = exe.submit(_run_task_process, i, task, cfg, op_subset, inner_workers, transition_matrix, learned_ops, w_idx)
+                futures[f], active_worker_indices[f] = i, w_idx
+                scoreboard.start_times[i] = time.time()
+            for f in as_completed(futures):
+                idx, (_, tr) = futures[f], f.result()
+                _on_done(idx, tr, tasks[idx])
         except KeyboardInterrupt:
-            print("\n[!] KeyboardInterrupt received. Forcefully terminating workers...", flush=True)
-            for p in exe._processes.values():
-                try:
-                    p.kill()
-                except Exception:
-                    pass
+            for p in exe._processes.values(): p.kill()
             exe.shutdown(wait=False, cancel_futures=True)
-            import os
             os._exit(130)
         finally:
             exe.shutdown(wait=True)
     else:
-        try:
-            for i, task in enumerate(tasks):
-                start_times[i] = time.time()
-                print(_scoreboard(), flush=True)
-                idx, tr = _run_task_process(i, task, cfg, op_subset, inner_workers, transition_matrix, learned_ops)
-                _handle_result(idx, tr, task)
-                ordered_results.append((idx, tr))
-        except KeyboardInterrupt:
-            print("\n[!] KeyboardInterrupt received. Aborting evaluation...", flush=True)
-            import sys
-            sys.exit(130)
+        for i, task in enumerate(tasks):
+            scoreboard.start_times[i] = time.time()
+            print(scoreboard.render(), flush=True)
+            _, tr = _run_task_process(i, task, cfg, op_subset, inner_workers, transition_matrix, learned_ops)
+            _on_done(i, tr, task)
 
-    # Re-sort to original task order (parallel runs may finish out-of-order)
     ordered_results.sort(key=lambda x: x[0])
     report.results = [tr for _, tr in ordered_results]
-
     report.total_elapsed_s = time.time() - t0
-    if cfg.verbose:
-        print(report.summary())
+    if cfg.verbose: print(report.summary())
     return report
 
 

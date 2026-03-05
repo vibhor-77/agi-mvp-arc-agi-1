@@ -1,59 +1,69 @@
 # Universal ARC-AGI Solver 🧠🧩
 
-An exploratory general-purpose Artificial General Intelligence (AGI) solver framework structured around the *Four Pillars of True General Learning*:
-1. **Feedback Loops**: Recursive wake-sleep iteration.
-2. **Abstraction & Composability**: DSL expansion via sub-tree extraction.
-3. **Exploration**: Multi-objective beam search via Lexicase selection.
-4. **Approximability**: MDL-based MDL complexity priors.
+An exploratory general-purpose Artificial General Intelligence (AGI) solver framework based on the **Four Pillars of True General Learning**:
 
-This project fuses **Symbolic Regression (SR)** and **Library Learning (LL)** to conquer the ARC-AGI benchmark through pure-symbolic discovery.
+1.  **Feedback Loops**: Recursive wake-sleep iteration (Wake = Solving, Sleep = Learning).
+2.  **Abstraction & Composability**: Deep DSL expansion through sub-tree extraction.
+3.  **Exploration**: Multi-objective beam search with Lexicase selection.
+4.  **Approximability**: MDL-based complexity priors.
 
 ---
 
-## ⚡ Fast-Track: Reproduction
+## ⚡ Quickstart
 
-To launch a full production training pass using the scientifically verified **"Sweet Spot"** (the most efficient hyperparameter balance identified via ROC_math):
+To launch a full training pass on the ARC-AGI dataset:
 
 ```bash
-# Optimized Configuration: Beam 10 | Offspring 20 | Gen 25
-python3 train_wake_sleep.py --task-workers 8 --epochs 5
+# 1. Start Training (Wake-Sleep)
+python agi.py train --epochs 5 --task-workers 8
+
+# 2. Run Evaluation on separate set
+python agi.py eval --model models/latest_model.json
+
+# 3. Or run the full pipeline in one go
+python agi.py pipeline --train-tasks 100 --eval-tasks 100
 ```
 
-📊 **[See "Sweet Spot" Optimization Results](docs/hyperparameter_optimization_results.md)**  
-🔬 **[How we Tune: The ROC_math Guide](docs/hyperparameter_tuning_guide.md)**
+---
+
+## 🏗️ Architecture
+
+The system is split into three core specialized layers:
+
+### 1. The Core Engine (`core/`)
+*   **Tree Compiler (`tree.py`)**: A purely symbolic N-ary AST representation for programmatic logic. Supports serialization, functional evaluation, and semantic fingerprinting.
+*   **Search Engine (`search.py`)**: Implements a high-throughput Beam Search guided by $ROC_{math}$ (Return-on-Compute). Uses Lexicase selection to maintain diverse "stepping stone" hypotheses.
+*   **Library Learner (`library.py`)**: The "Sleep" phase. It scans successful solutions, extracts frequent sub-structures, and promotes them to first-class DSL primitives.
+
+### 2. ARC Domain Layer (`domains/arc/`)
+*   **ARC Domain (`domain.py`)**: Implements the logic for checking 2D spatial grid solutions, calculating MDL complexity, and ranking candidates.
+*   **Benchmark Runner (`runner.py`)**: A parallelized, high-performance executor with live "Scoreboard" reporting and HTML introspection.
+*   **Primitives (`primitives.py`)**: The initial "Seed" DSL (geometric transforms, color ops, etc.).
+
+### 3. Unified Interface (`agi.py`)
+A single, professional CLI for orchestrating training and evaluation runs.
 
 ---
 
-## 📖 Documentation Hub
+## 📊 Scoreboard & Introspection
 
-The documentation is organized by functional role. Use this map to navigate the repository:
+During execution, the solver displays a live scoreboard:
+```text
+  ┌ scoreboard [Epoch 1/5] ─
+  │ ✓ solved=26 (16.1%)  ⚠️ near=67  ✗ unsolved=135
+  │ → active=8  ⏳ pending=231  done=163/400  success=16.1%
+  │ TIME:  elapsed=122.3s (Throughput: 0.75s/task | Latency Avg: 5.8s)
+  │ WORK:  speedup=7.77x (97.1% core) | STRAGGLER: 122.3s, 5.3k evals
+  │ EVALS: total=863.9k (7.1k/s | Per-Task Avg: 5.3k)
+```
 
-### 🔬 1. Research & Performance
-*   **[Sweet Spot Results](docs/hyperparameter_optimization_results.md)**: Finalized search parameters for ARC-AGI.
-*   **[Hyperparameter Tuning Guide](docs/hyperparameter_tuning_guide.md)**: Instructions for running sweeps and calculating Return-on-Compute.
-*   **[ARC-AGI Landscape](docs/arc_agi_landscape.md)**: Competitive analysis of solver architectures.
-
-### 🏠 2. Core Engine Manuals
-*   **[Quickstart & Execution Guide](docs/execution_guide.md)**: Detailed install and run instructions.
-*   **[Architecture & Philosophy](docs/architecture.md)**: Deep dive into the N-ary AST engine and search logic.
-*   **[Model & Report Guide](docs/model_guide.md)**: How to interpret learned library JSONs and HTML Introspection reports.
-
-### 🧠 3. Theory & Vision
-*   **[The Theory of Universal Solving](docs/theory.md)**: Mathematical foundations.
-*   **[Vision for AGI](docs/vision.md)**: Aspirational long-term roadmap.
-*   **[Execution Strategy](docs/strategy.md)**: Tactical plan for scaling the prototype.
-
-### 🛠️ 4. Developer & Maintenance
-*   **[Adding Primitives](docs/adding_primitives.md)**: Expanding the DSL with new Python functions.
-*   **[Adding Domains](docs/adding_domains.md)**: Moving beyond ARC (e.g. into game environments).
-*   **[Session Log](docs/session_log.md)**: Historical record of major architectural shifts and bugs.
-*   **[Prompt Engineering Log](docs/prompts.md)**: Meta-prompts used to evolve the agentic codebase.
-*   **[Next Steps](docs/next_steps.md)**: Live TODO board.
+Detailed HTML reports are generated in `reports/`, allowing you to visually inspect failure modes and the evolution of the solver's logic.
 
 ---
 
-## ✅ Verification & Compliance
-As of March 2026, the AGI Sandbox executes completely deterministically. 
-- **100% Integration Test Pass Rate (211/211 tests)**
-- **88.2% Total Line/Branch Coverage** across the Tree Compiler and Search Engine.
-- **Hardware Agnostic**: Benchmarked via noise-free Program Evaluation metrics ($ROC_{math}$).
+## ✅ Principles of AGI Verification
+
+1.  **Determinism**: Every run is deterministic given a fixed seed.
+2.  **Noise Mitigation**: Metrics are normalized by total program evaluations ($ROC_{math}$) to avoid hardware bias.
+3.  **No LLM Dependency**: Pure symbolic discovery. No external APIs or pre-trained models.
+4.  **Full Coverage**: 100% integration test pass rate on the core tree compiler.
