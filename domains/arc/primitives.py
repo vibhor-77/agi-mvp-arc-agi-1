@@ -1605,10 +1605,17 @@ def g_if(cond: Grid, true_branch: Grid, false_branch: Grid) -> Grid:
     has_pixels = any(val != 0 for row in cond for val in row)
     return _clone(true_branch) if has_pixels else _clone(false_branch)
 
+def g_while(cond: Grid, body_branch: Grid) -> Grid:
+    """
+    Dummy python function to satisfy python Arity pytest validation.
+    The true recurrent logic is physically intercepted and dynamically evaluated inside core.tree.Node.eval()
+    """
+    return _clone(body_branch)
+
 _NEW_ARC_PRIMITIVES: dict[str, tuple[object, str]] = {
     # LOGIC (True Turing Completeness)
     "g_if":             (g_if, "If cond has any non-zero pixels, return true_branch; else return false_branch"),
-    "g_while":          (g_if, "Recurrent unrolled loop: repeatedly applies body_branch to x until cond(x) is False"),
+    "g_while":          (g_while, "Recurrent unrolled loop: repeatedly applies body_branch to x until cond(x) is False"),
     
     # More color swaps
     "gswap_04":         (gswap_04,         "Swap colors 0 and 4"),

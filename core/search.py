@@ -235,6 +235,9 @@ class BeamSearch:
         ]
         scored = self._evaluate_all(init_pool)
         
+        # ── Global Novelty Search Set ────────────────────────────────────
+        global_seen_fuzzes: set[str] = set()
+        
         # Helper to deduplicate a scored pool
         def _dedupe_pool(pool: list[tuple[float, Node, tuple | None, list[float] | None, str | None]], limit: int, temperature: float = 0.0) -> list[tuple[float, Node, tuple | None, list[float] | None, str | None]]:
             
@@ -263,6 +266,16 @@ class BeamSearch:
                         # Give it a massive boost to float to the top
                         pool[i] = (pool[i][0] - 1000.0, pool[i][1], pool[i][2], pool[i][3], pool[i][4])
                         
+            # ── NOVELTY SEARCH REWARD ──
+            # If an AST discovers a completely novel mathematical state that we haven't
+            # reached yet globally, we artificially boost it to float over optimizations.
+            for i in range(len(pool)):
+                fuzz = pool[i][4]
+                if fuzz is not None and fuzz not in global_seen_fuzzes:
+                    global_seen_fuzzes.add(fuzz)
+                    # Reward novelty
+                    pool[i] = (pool[i][0] - 50.0, pool[i][1], pool[i][2], pool[i][3], pool[i][4])
+
             # Sort by score ascending, then by tree size ascending (Occam's razor)
             # Simulated Annealing: Inject noise bounded by temperature to promote diversity early on
             def sort_key(x):
