@@ -540,6 +540,10 @@ def evaluate_tasks(
         max_run_t = max(running) if running else 0.0
         max_run_e = max([v[0] for v in active_evals.values()]) if active_evals else 0
         
+        # Efficiency metrics
+        speedup     = task_total_t / elapsed if elapsed > 0 else 0.0
+        utilization = 100 * (speedup / cfg.task_workers) if cfg.task_workers > 0 else 0.0
+        
         prefix = f" [{epoch_str}]" if epoch_str else ""
         return (
             f"  ┌ scoreboard{prefix} ─\n"
@@ -548,8 +552,9 @@ def evaluate_tasks(
             f"  │ ✗ unsolved={unsol} (avg {u_avg_t:.1f}s, {u_avg_e/1000:.1f}k evals)\n"
             f"  │ → active={act}  ⏳ pending={pend}  done={done}/{n_total}  "
             f"success={pct:.1f}%\n"
-            f"  │ TIME:  elapsed={elapsed:.1f}s (Throughput Avg {avg_throughput:.1f}s/task, Task Work Avg {avg_work_t:.1f}s/task)\n"
-            f"  │ EVALS: total={total_evals/1000:.1f}k (Throughput {evals_p_s/1000:.1f}k/s, Task Work Avg {avg_work_e/1000:.1f}k/task)\n"
+            f"  │ TIME:  elapsed={elapsed:.1f}s (Throughput: 1 task every {avg_throughput:.2f}s | Task Work Avg: {avg_work_t:.1f}s)\n"
+            f"  │ WORK:  speedup={speedup:.2f}x ({utilization:.1f}% util on {cfg.task_workers} cores)\n"
+            f"  │ EVALS: total={total_evals/1000:.1f}k (Throughput: {evals_p_s/1000:.1f}k/s | Task Work Avg: {avg_work_e/1000:.1f}k)\n"
             f"  │ STRAGGLER MAX: {max_run_t:.1f}s ({max_run_e/1000:.1f}k evals)"
         )
 
