@@ -1483,6 +1483,79 @@ def g_align_left(g: Grid) -> Grid:
             out[r][c - min_c] = g[r][c]
     return out
 
+# ── Computer Vision Geometry Primitives ────────────────────────────────────────────
+
+@_safe_grid_op
+def gmap_largest_cc(g: Grid) -> Grid:
+    """Keep only the largest 8-connected component in the geometry."""
+    R, C = len(g), len(g[0])
+    visited = set()
+    components = []
+    
+    for r in range(R):
+        for c in range(C):
+            if g[r][c] != 0 and (r, c) not in visited:
+                comp = []
+                q = [(r, c)]
+                color = g[r][c]
+                visited.add((r, c))
+                head = 0
+                while head < len(q):
+                    cr, cc = q[head]
+                    head += 1
+                    comp.append((cr, cc, color))
+                    for dr, dc in [(1,0), (-1,0), (0,1), (0,-1), (1,1), (-1,-1), (1,-1), (-1,1)]:
+                        nr, nc = cr+dr, cc+dc
+                        if 0 <= nr < R and 0 <= nc < C and g[nr][nc] == color and (nr, nc) not in visited:
+                            visited.add((nr, nc))
+                            q.append((nr, nc))
+                components.append((len(comp), comp))
+                
+    if not components:
+        return _clone(g)
+        
+    components.sort(key=lambda x: x[0], reverse=True)
+    largest = components[0][1]
+    
+    out = [[0]*C for _ in range(R)]
+    for r, c, color in largest:
+        out[r][c] = color
+    return out
+
+@_safe_grid_op
+def gmap_bounding_boxes(g: Grid) -> Grid:
+    """Wrap a solid color bounding block around each disjoint 8-connected component."""
+    R, C = len(g), len(g[0])
+    visited = set()
+    out = _clone(g)
+    
+    for r in range(R):
+        for c in range(C):
+            if g[r][c] != 0 and (r, c) not in visited:
+                color = g[r][c]
+                q = [(r, c)]
+                visited.add((r, c))
+                min_r, max_r = r, r
+                min_c, max_c = c, c
+                
+                head = 0
+                while head < len(q):
+                    cr, cc = q[head]
+                    head += 1
+                    for dr, dc in [(1,0), (-1,0), (0,1), (0,-1), (1,1), (-1,-1), (1,-1), (-1,1)]:
+                        nr, nc = cr+dr, cc+dc
+                        if 0 <= nr < R and 0 <= nc < C and g[nr][nc] == color and (nr, nc) not in visited:
+                            visited.add((nr, nc))
+                            q.append((nr, nc))
+                            min_r, max_r = min(min_r, nr), max(max_r, nr)
+                            min_c, max_c = min(min_c, nc), max(max_c, nc)
+                            
+                for rr in range(min_r, max_r + 1):
+                    for cc in range(min_c, max_c + 1):
+                        out[rr][cc] = color
+                        
+    return out
+
 @_safe_grid_op
 def g_align_right(g: Grid) -> Grid:
     """Shift all non-zero pixels right as a rigid body until hitting the right wall."""
@@ -1721,6 +1794,10 @@ _NEW_ARC_PRIMITIVES: dict[str, tuple[object, str]] = {
     "gkeep_color9":     (gkeep_color9, "Keep only objects containing color 9"),
     # COMPOSITORS
     "g_overlay":        (g_overlay, "Overlay grid 1's non-zero pixels onto grid 2"),
+    
+    # Computer Vision / Object Detection
+    "gmap_largest_cc":     (gmap_largest_cc, "Keep only the largest 8-connected topological component"),
+    "gmap_bounding_boxes": (gmap_bounding_boxes, "Wrap a solid bounding box around each independent shape component"),
 }
 
 for _name, (_fn, _desc) in _NEW_ARC_PRIMITIVES.items():
