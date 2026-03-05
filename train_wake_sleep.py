@@ -146,6 +146,8 @@ if __name__ == "__main__":
     parser.add_argument("--seed", type=int, default=None, help="Deterministic random seed for the search engine")
     parser.add_argument("--report", type=str, default=f"reports/train_{timestamp}.md", help="Markdown file to accumulate Introspection diagnostics")
     parser.add_argument("--task-ids", type=str, default=None, help="Comma-separated list of task IDs to evaluate explicitly (e.g. 007bbfb7,025d127b)")
+    parser.add_argument("--timeout", type=float, default=300.0, help="Wall-clock timeout per task (seconds)")
+    parser.add_argument("--max-evals", type=int, default=1000000, help="Max evaluations budget per task")
     args = parser.parse_args()
 
     os.makedirs(os.path.dirname(args.model), exist_ok=True)
@@ -196,7 +198,9 @@ if __name__ == "__main__":
         task_workers=args.task_workers, 
         workers=args.workers, 
         baseline_only=True,
-        seed=args.seed
+        seed=args.seed,
+        timeout_s=args.timeout,
+        max_evals=args.max_evals,
     )
     
     run_wake_sleep(tasks, args.epochs, cfg, args.model, args.report)

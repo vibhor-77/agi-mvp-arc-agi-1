@@ -1,0 +1,9 @@
+{
+  "library": {
+    "lib_op_1": {
+      "expr": "g_if(x, gmap_fill(x), grot90(x))",
+      "arity": 1
+    }
+  },
+  "transitions": {}
+}

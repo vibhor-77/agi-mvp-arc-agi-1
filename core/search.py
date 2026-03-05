@@ -78,6 +78,11 @@ class SearchConfig:
         How often to print progress when verbose=True.
     seed : int | None
         Random seed for reproducibility.
+    max_evals : int | None
+        Maximum cumulative evaluations allowed before forcing termination. This is the primary 
+        deterministic pruning mechanism for stragglers.
+    timeout_s : float | None
+        Wall-clock time limit for the search in seconds (optional safety).
     """
     beam_size: int = 10
     offspring: int = 20
@@ -93,6 +98,8 @@ class SearchConfig:
     seed: int | None = None
     initial_temp: float = 0.5
     cooling_rate: float = 0.95
+    max_evals: int | None = None
+    timeout_s: float | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -423,6 +430,16 @@ class BeamSearch:
                     converged=True,
                     n_evals=n_evals_total,
                 )
+            # ── DETERMINISTIC PRUNING (Evaluations Budget) ──
+            if cfg.max_evals is not None and n_evals_total >= cfg.max_evals:
+                if cfg.verbose:
+                    print(f"  [!] Evaluation budget reached ({n_evals_total}/{cfg.max_evals}). Terminating.")
+                break
+            
+            if cfg.timeout_s is not None and elapsed >= cfg.timeout_s:
+                if cfg.verbose:
+                    print(f"  [!] Time limit reached ({elapsed:.1f}s/{cfg.timeout_s}s). Terminating straggler.")
+                break
 
         return SearchResult(
             best_tree=best_tree,

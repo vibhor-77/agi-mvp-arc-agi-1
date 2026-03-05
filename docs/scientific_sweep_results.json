@@ -1,0 +1,92 @@
+[
+  {
+    "params": {
+      "beam": 5,
+      "offspring": 10,
+      "generations": 25
+    },
+    "metrics": {
+      "n_solved": 1,
+      "solve_rate": 0.05,
+      "mean_acc": 0.8283814483711149,
+      "time_s": 39.65198302268982,
+      "n_evals_total": 28000,
+      "roc_math": 1.785650512481697
+    }
+  },
+  {
+    "params": {
+      "beam": 5,
+      "offspring": 10,
+      "generations": 50
+    },
+    "metrics": {
+      "n_solved": 1,
+      "solve_rate": 0.05,
+      "mean_acc": 0.8230573742970408,
+      "time_s": 77.53313302993774,
+      "n_evals_total": 55500,
+      "roc_math": 0.9008846687447073
+    }
+  },
+  {
+    "params": {
+      "beam": 5,
+      "offspring": 20,
+      "generations": 25
+    },
+    "metrics": {
+      "n_solved": 1,
+      "solve_rate": 0.05,
+      "mean_acc": 0.8319953939493463,
+      "time_s": 79.31802296638489,
+      "n_evals_total": 53000,
+      "roc_math": 0.9433784268221355
+    }
+  },
+  {
+    "params": {
+      "beam": 5,
+      "offspring": 10,
+      "generations": 100
+    },
+    "metrics": {
+      "n_solved": 2,
+      "solve_rate": 0.1,
+      "mean_acc": 0.8122037272826796,
+      "time_s": 214.75828218460083,
+      "n_evals_total": 110500,
+      "roc_math": 0.9049691857992236
+    }
+  },
+  {
+    "params": {
+      "beam": 10,
+      "offspring": 20,
+      "generations": 25
+    },
+    "metrics": {
+      "n_solved": 3,
+      "solve_rate": 0.15,
+      "mean_acc": 0.8927734551738361,
+      "time_s": 208.01949906349182,
+      "n_evals_total": 106000,
+      "roc_math": 1.415080989801983
+    }
+  },
+  {
+    "params": {
+      "beam": 10,
+      "offspring": 10,
+      "generations": 25
+    },
+    "metrics": {
+      "n_solved": 2,
+      "solve_rate": 0.1,
+      "mean_acc": 0.8881901218405026,
+      "time_s": 480.6658890247345,
+      "n_evals_total": 56000,
+      "roc_math": 1.7856823985285977
+    }
+  }
+]

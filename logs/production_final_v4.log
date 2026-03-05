@@ -1,0 +1,3857 @@
+
+=================================================================
+  WAKE-SLEEP EXECUTOR PARAMETERS
+=================================================================
+  data            : arc_data/data/training
+  epochs          : 5
+  tasks           : 400
+  workers         : 1
+  task-workers    : 8
+  beam-size       : 10
+  offspring       : 20
+  generations     : 25
+  model           : models/arc-agi-1_20260305-130009.json
+  seed            : None
+  report          : reports/train_20260305-130009.md
+  task-ids        : None
+  timeout         : 300.0
+  max-evals       : 800000
+=================================================================
+
+🚀 Starting Wake-Sleep Training over 400 tasks for 5 epochs
+
+=================================================================
+  EPOCH 1/5  —  WAKE PHASE  [168 ops available]
+=================================================================
+  → [  1] STARTING  4522001f
+  → [  2] STARTING  6150a2bd
+  → [  3] STARTING  9172f3a0
+  → [  4] STARTING  e9afcf9a
+  → [  5] STARTING  8d5021e8
+  → [  6] STARTING  49d1d64f
+  → [  7] STARTING  46442a0e
+  → [  8] STARTING  5582e5ca
+  → [  9] STARTING  62c24649
+  ✗ [  4/400] DONE      e9afcf9a                     evals=  5.3k train=0.62 test=0.62 (0.6s) → x
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=0  ✗ unsolved=1  → active=8  ⏳ pending=391  done=1/400  success=0.0%  time=0.7s (avg=0.7s/completed)  straggler_max=0.7s
+  → [ 10] STARTING  7fe24cdd
+  ✗ [  2/400] DONE      6150a2bd                     evals=  5.3k train=0.83 test=0.67 (0.9s) → ggravity_down(gsort_rows_asc(grefl_v(x)))
+    [FAILURE ANALYSIS] Best AST: ggravity_down(gsort_rows_asc(grefl_v(x)))
+    Input Grid:
+      [3, 3, 8]
+      [3, 7, 0]
+      [5, 0, 0]
+    Expected Output:
+      [0, 0, 5]
+      [0, 7, 3]
+      [8, 3, 3]
+    Actual output from AST:
+      [0, 0, 5]
+      [0, 3, 7]
+      [3, 3, 8]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.']
+      ['.', 'X', 'X']
+      ['X', '.', 'X']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=0  ✗ unsolved=2  → active=8  ⏳ pending=390  done=2/400  success=0.0%  time=0.9s (avg=0.5s/completed)  straggler_max=0.9s
+  → [ 11] STARTING  8be77c9e
+  ✓ [  9/400] DONE      62c24649                     evals=  5.3k train=1.00 test=1.00 (2.9s) → gmirror_h(grot180(grefl_h(gmirror_v(g_repeat_2x2(x
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=1  ✗ unsolved=2  → active=8  ⏳ pending=389  done=3/400  success=33.3%  time=3.6s (avg=1.2s/completed)  straggler_max=3.6s
+  → [ 12] STARTING  ac0a08a4
+  ✗ [  1/400] DONE      4522001f                     evals=  5.3k train=0.72 test=0.72 (3.6s) → g_fractal_inflate(x)
+    [FAILURE ANALYSIS] Best AST: g_fractal_inflate(x)
+    Input Grid:
+      [3, 3, 0]
+      [3, 2, 0]
+      [0, 0, 0]
+    Expected Output:
+      [3, 3, 3, 3, 0, 0, 0, 0, 0]
+      [3, 3, 3, 3, 0, 0, 0, 0, 0]
+      [3, 3, 3, 3, 0, 0, 0, 0, 0]
+      [3, 3, 3, 3, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 3, 3, 3, 3, 0]
+      [0, 0, 0, 0, 3, 3, 3, 3, 0]
+      [0, 0, 0, 0, 3, 3, 3, 3, 0]
+      [0, 0, 0, 0, 3, 3, 3, 3, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    Actual output from AST:
+      [3, 3, 0, 3, 3, 0, 0, 0, 0]
+      [3, 2, 0, 3, 2, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [3, 3, 0, 3, 3, 0, 0, 0, 0]
+      [3, 2, 0, 3, 2, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', 'X', '.', 'X', '.', '.', '.', '.']
+      ['.', 'X', 'X', '.', 'X', '.', '.', '.', '.']
+      ['X', 'X', 'X', 'X', '.', '.', '.', '.', '.']
+      ['.', '.', 'X', '.', 'X', '.', '.', '.', '.']
+      ['X', 'X', '.', 'X', 'X', 'X', 'X', 'X', '.']
+      ['.', '.', '.', '.', 'X', 'X', 'X', 'X', '.']
+      ['.', '.', '.', '.', 'X', 'X', 'X', 'X', '.']
+      ['.', '.', '.', '.', 'X', 'X', 'X', 'X', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=1  ✗ unsolved=3  → active=8  ⏳ pending=388  done=4/400  success=25.0%  time=3.7s (avg=0.9s/completed)  straggler_max=3.7s
+  → [ 13] STARTING  c3e719e8
+  ~ [ 10/400] DONE      7fe24cdd                     evals=  5.3k train=0.83 test=0.83 (3.4s) → gmirror_v(g_fractal_inflate(gmirror_h(g_repeat_2x2
+    [FAILURE ANALYSIS] Best AST: gmirror_v(g_fractal_inflate(gmirror_h(g_repeat_2x2(x))))
+    Input Grid:
+      [8, 5, 0]
+      [8, 5, 3]
+      [0, 3, 2]
+    Expected Output:
+      [8, 5, 0, 0, 8, 8]
+      [8, 5, 3, 3, 5, 5]
+      [0, 3, 2, 2, 3, 0]
+      [0, 3, 2, 2, 3, 0]
+      [5, 5, 3, 3, 5, 8]
+      [8, 8, 0, 0, 5, 8]
+    Actual output from AST:
+      [8, 5, 0, 0, 5, 8]
+      [8, 5, 3, 3, 5, 8]
+      [0, 3, 2, 2, 3, 0]
+      [0, 3, 2, 2, 3, 0]
+      [8, 5, 3, 3, 5, 8]
+      [8, 5, 0, 0, 5, 8]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.', '.', 'X', '.']
+      ['.', '.', '.', '.', '.', 'X']
+      ['.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.']
+      ['X', '.', '.', '.', '.', '.']
+      ['.', 'X', '.', '.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=1  ✗ unsolved=4  → active=8  ⏳ pending=387  done=5/400  success=20.0%  time=4.3s (avg=0.9s/completed)  straggler_max=4.3s
+  → [ 14] STARTING  c9e6f938
+  ✗ [  7/400] DONE      46442a0e                     evals=  5.3k train=0.67 test=0.42 (4.7s) → gmap_bounding_boxes(gframe6(g_scale_2x(x)))
+    [FAILURE ANALYSIS] Best AST: gmap_bounding_boxes(gframe6(g_scale_2x(x)))
+    Input Grid:
+      [8, 6]
+      [6, 8]
+    Expected Output:
+      [8, 6, 6, 8]
+      [6, 8, 8, 6]
+      [6, 8, 8, 6]
+      [8, 6, 6, 8]
+    Actual output from AST:
+      [6, 6, 6, 6]
+      [6, 8, 8, 6]
+      [6, 8, 8, 6]
+      [6, 6, 6, 6]
+    [DIFF MAP] (Expected vs Actual):
+      ['X', '.', '.', 'X']
+      ['.', '.', '.', '.']
+      ['.', '.', '.', '.']
+      ['X', '.', '.', 'X']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=1  ✗ unsolved=5  → active=8  ⏳ pending=386  done=6/400  success=16.7%  time=4.8s (avg=0.8s/completed)  straggler_max=4.8s
+  → [ 15] STARTING  cce03e0d
+  ✓ [ 11/400] DONE      8be77c9e                     evals=  5.3k train=1.00 test=1.00 (1.9s) → g_replace_nonzero_with_1(gvstack(x, grefl_v(x)))
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=2  ✗ unsolved=5  → active=8  ⏳ pending=385  done=7/400  success=28.6%  time=5.5s (avg=0.8s/completed)  straggler_max=5.5s
+  → [ 16] STARTING  d037b0a7
+  ✓ [ 14/400] DONE      c9e6f938                     evals=  5.3k train=1.00 test=1.00 (1.4s) → gmirror_h(g_repeat_h(x))
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=3  ✗ unsolved=5  → active=8  ⏳ pending=384  done=8/400  success=37.5%  time=6.1s (avg=0.8s/completed)  straggler_max=6.1s
+  → [ 17] STARTING  d13f3404
+  ✗ [ 12/400] DONE      ac0a08a4                     evals=  5.3k train=0.42 test=0.19 (3.5s) → g_scale_3x(x)
+    [FAILURE ANALYSIS] Best AST: g_scale_3x(x)
+    Input Grid:
+      [2, 0, 0]
+      [0, 0, 7]
+      [0, 0, 0]
+    Expected Output:
+      [2, 2, 0, 0, 0, 0]
+      [2, 2, 0, 0, 0, 0]
+      [0, 0, 0, 0, 7, 7]
+      [0, 0, 0, 0, 7, 7]
+      [0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0]
+    Actual output from AST:
+      [2, 2, 2, 0, 0, 0, 0, 0, 0]
+      [2, 2, 2, 0, 0, 0, 0, 0, 0]
+      [2, 2, 2, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 7, 7, 7]
+      [0, 0, 0, 0, 0, 0, 7, 7, 7]
+      [0, 0, 0, 0, 0, 0, 7, 7, 7]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      [Dimension Mismatch] Expected: 6x6, Actual: 9x9
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=3  ✗ unsolved=6  → active=8  ⏳ pending=383  done=9/400  success=33.3%  time=7.3s (avg=0.8s/completed)  straggler_max=7.3s
+  → [ 18] STARTING  c59eb873
+  ~ [  3/400] DONE      9172f3a0                     evals=  5.3k train=1.00 test=0.83 (7.5s) → g_replace_1_with_2(g_scale_3x(x))
+    [FAILURE ANALYSIS] Best AST: g_replace_1_with_2(g_scale_3x(x))
+    Input Grid:
+      [3, 3, 0]
+      [7, 4, 0]
+      [0, 0, 4]
+    Expected Output:
+      [3, 3, 3, 3, 3, 3, 0, 0, 0]
+      [3, 3, 3, 3, 3, 3, 0, 0, 0]
+      [3, 3, 3, 3, 3, 3, 0, 0, 0]
+      [7, 7, 7, 4, 4, 4, 0, 0, 0]
+      [7, 7, 7, 4, 4, 4, 0, 0, 0]
+      [7, 7, 7, 4, 4, 4, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 4, 4, 4]
+      [0, 0, 0, 0, 0, 0, 4, 4, 4]
+      [0, 0, 0, 0, 0, 0, 4, 4, 4]
+    Actual output from AST:
+      [3, 3, 3, 3, 3, 3, 0, 0, 0]
+      [3, 3, 3, 3, 3, 3, 0, 0, 0]
+      [3, 3, 3, 3, 3, 3, 0, 0, 0]
+      [7, 7, 7, 4, 4, 4, 0, 0, 0]
+      [7, 7, 7, 4, 4, 4, 0, 0, 0]
+      [7, 7, 7, 4, 4, 4, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 4, 4, 4]
+      [0, 0, 0, 0, 0, 0, 4, 4, 4]
+      [0, 0, 0, 0, 0, 0, 4, 4, 4]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=3  ✗ unsolved=7  → active=8  ⏳ pending=382  done=10/400  success=30.0%  time=7.6s (avg=0.8s/completed)  straggler_max=7.6s
+  → [ 19] STARTING  3af2c5a8
+  ~ [ 16/400] DONE      d037b0a7                     evals=  5.3k train=0.94 test=0.83 (1.6s) → gdilate(g_shift_down(x))
+    [FAILURE ANALYSIS] Best AST: gdilate(g_shift_down(x))
+    Input Grid:
+      [0, 0, 6]
+      [0, 4, 0]
+      [3, 0, 0]
+    Expected Output:
+      [0, 0, 6]
+      [0, 4, 6]
+      [3, 4, 6]
+    Actual output from AST:
+      [0, 0, 6]
+      [0, 4, 6]
+      [4, 4, 6]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.']
+      ['.', '.', '.']
+      ['X', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=3  ✗ unsolved=8  → active=8  ⏳ pending=381  done=11/400  success=27.3%  time=7.8s (avg=0.7s/completed)  straggler_max=7.8s
+  → [ 20] STARTING  a416b8f3
+  ~ [ 13/400] DONE      c3e719e8                     evals=  5.3k train=0.73 test=0.81 (5.2s) → g_fractal_inflate(gmap_largest_cc(x))
+    [FAILURE ANALYSIS] Best AST: g_fractal_inflate(gmap_largest_cc(x))
+    Input Grid:
+      [3, 8, 7]
+      [9, 3, 8]
+      [7, 9, 3]
+    Expected Output:
+      [3, 8, 7, 0, 0, 0, 0, 0, 0]
+      [9, 3, 8, 0, 0, 0, 0, 0, 0]
+      [7, 9, 3, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 3, 8, 7, 0, 0, 0]
+      [0, 0, 0, 9, 3, 8, 0, 0, 0]
+      [0, 0, 0, 7, 9, 3, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 3, 8, 7]
+      [0, 0, 0, 0, 0, 0, 9, 3, 8]
+      [0, 0, 0, 0, 0, 0, 7, 9, 3]
+    Actual output from AST:
+      [3, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 3, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 3, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 3, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 3, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 3, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 3, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 3, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 3]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', 'X', 'X', '.', '.', '.', '.', '.', '.']
+      ['X', '.', 'X', '.', '.', '.', '.', '.', '.']
+      ['X', 'X', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', 'X', 'X', '.', '.', '.']
+      ['.', '.', '.', 'X', '.', 'X', '.', '.', '.']
+      ['.', '.', '.', 'X', 'X', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', 'X', 'X']
+      ['.', '.', '.', '.', '.', '.', 'X', '.', 'X']
+      ['.', '.', '.', '.', '.', '.', 'X', 'X', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=3  ✗ unsolved=9  → active=8  ⏳ pending=380  done=12/400  success=25.0%  time=9.5s (avg=0.8s/completed)  straggler_max=9.5s
+  → [ 21] STARTING  d511f180
+  ✗ [ 19/400] DONE      3af2c5a8                     evals=  5.3k train=1.00 test=0.75 (2.5s) → gmirror_v(g_replace_1_with_2(g_replace_2_with_1(gs
+    [FAILURE ANALYSIS] Best AST: gmirror_v(g_replace_1_with_2(g_replace_2_with_1(gswap_14(gmirror_h(g_repeat_2x2(x))))))
+    Input Grid:
+      [0, 0, 8, 0]
+      [0, 8, 0, 8]
+      [0, 0, 8, 0]
+    Expected Output:
+      [0, 0, 8, 0, 0, 8, 0, 0]
+      [0, 8, 0, 8, 8, 0, 8, 0]
+      [0, 0, 8, 0, 0, 8, 0, 0]
+      [0, 0, 8, 0, 0, 8, 0, 0]
+      [0, 8, 0, 8, 8, 0, 8, 0]
+      [0, 0, 8, 0, 0, 8, 0, 0]
+    Actual output from AST:
+      [0, 0, 8, 0, 0, 8, 0, 0]
+      [0, 8, 0, 8, 8, 0, 8, 0]
+      [0, 0, 8, 0, 0, 8, 0, 0]
+      [0, 0, 8, 0, 0, 8, 0, 0]
+      [0, 8, 0, 8, 8, 0, 8, 0]
+      [0, 0, 8, 0, 0, 8, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=3  ✗ unsolved=10  → active=8  ⏳ pending=379  done=13/400  success=23.1%  time=10.2s (avg=0.8s/completed)  straggler_max=10.2s
+  → [ 22] STARTING  c8f0f002
+  ~ [ 15/400] DONE      cce03e0d                     evals=  5.3k train=0.94 test=0.89 (6.4s) → g_fractal_inflate(gkeep_color2(x))
+    [FAILURE ANALYSIS] Best AST: g_fractal_inflate(gkeep_color2(x))
+    Input Grid:
+      [1, 0, 0]
+      [2, 1, 0]
+      [0, 0, 1]
+    Expected Output:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [1, 0, 0, 0, 0, 0, 0, 0, 0]
+      [2, 1, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 1, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    Actual output from AST:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [2, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['X', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', 'X', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', 'X', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=3  ✗ unsolved=11  → active=8  ⏳ pending=378  done=14/400  success=21.4%  time=11.9s (avg=0.8s/completed)  straggler_max=11.9s
+  → [ 23] STARTING  feca6190
+  ✗ [ 21/400] DONE      d511f180                     evals=  5.3k train=0.83 test=0.77 (2.3s) → gswap_05(g_replace_0_with_1(goverlay(gmajority(gsw
+    [FAILURE ANALYSIS] Best AST: gswap_05(g_replace_0_with_1(goverlay(gmajority(gswap_24(gframe8(x))), gswap_05(g_replace_0_with_2(x)))))
+    Input Grid:
+      [2, 7, 8, 8, 8]
+      [5, 5, 6, 5, 4]
+      [8, 5, 5, 5, 2]
+      [8, 8, 4, 3, 6]
+      [6, 5, 1, 9, 3]
+    Expected Output:
+      [2, 7, 5, 5, 5]
+      [8, 8, 6, 8, 4]
+      [5, 8, 8, 8, 2]
+      [5, 5, 4, 3, 6]
+      [6, 8, 1, 9, 3]
+    Actual output from AST:
+      [2, 7, 8, 8, 8]
+      [8, 8, 6, 8, 4]
+      [8, 0, 0, 0, 2]
+      [8, 8, 4, 3, 6]
+      [6, 8, 1, 9, 3]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', 'X', 'X', 'X']
+      ['.', '.', '.', '.', '.']
+      ['X', 'X', 'X', 'X', '.']
+      ['X', 'X', '.', '.', '.']
+      ['.', '.', '.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=3  ✗ unsolved=12  → active=8  ⏳ pending=377  done=15/400  success=20.0%  time=12.5s (avg=0.8s/completed)  straggler_max=12.5s
+  → [ 24] STARTING  0d3d703e
+  ✓ [ 20/400] DONE      a416b8f3                     evals=  5.3k train=1.00 test=1.00 (3.0s) → g_overlay(x, ghstack(x, x))
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=4  ✗ unsolved=12  → active=8  ⏳ pending=376  done=16/400  success=25.0%  time=12.6s (avg=0.8s/completed)  straggler_max=12.5s
+  → [ 25] STARTING  25d8a9c8
+  ✗ [ 22/400] DONE      c8f0f002                     evals=  5.3k train=0.71 test=0.60 (1.1s) → x
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=4  ✗ unsolved=13  → active=8  ⏳ pending=375  done=17/400  success=23.5%  time=13.0s (avg=0.8s/completed)  straggler_max=13.0s
+  → [ 26] STARTING  25ff71a9
+  ✓ [ 24/400] DONE      0d3d703e                     evals=  5.3k train=0.62 test=1.00 (1.3s) → g_replace_2_with_3(gadd1_mod10(gswap_14(x)))
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=5  ✗ unsolved=13  → active=8  ⏳ pending=374  done=18/400  success=27.8%  time=13.8s (avg=0.8s/completed)  straggler_max=13.8s
+  → [ 27] STARTING  3c9b0459
+  ✗ [ 25/400] DONE      25d8a9c8                     evals=  5.3k train=0.69 test=0.50 (1.6s) → gkeep_color6(x)
+    [FAILURE ANALYSIS] Best AST: gkeep_color6(x)
+    Input Grid:
+      [4, 4, 4]
+      [2, 3, 2]
+      [2, 3, 3]
+    Expected Output:
+      [5, 5, 5]
+      [0, 0, 0]
+      [0, 0, 0]
+    Actual output from AST:
+      [0, 0, 0]
+      [0, 0, 0]
+      [0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['X', 'X', 'X']
+      ['.', '.', '.']
+      ['.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=5  ✗ unsolved=14  → active=8  ⏳ pending=373  done=19/400  success=26.3%  time=14.6s (avg=0.8s/completed)  straggler_max=14.6s
+  → [ 28] STARTING  67e8384a
+  ✓ [ 26/400] DONE      25ff71a9                     evals=  5.3k train=1.00 test=1.00 (1.4s) → g_shift_down(x)
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=6  ✗ unsolved=14  → active=8  ⏳ pending=372  done=20/400  success=30.0%  time=15.2s (avg=0.8s/completed)  straggler_max=15.2s
+  → [ 29] STARTING  6d0aefbc
+  ✓ [  8/400] DONE      5582e5ca                     evals=  5.3k train=1.00 test=1.00 (15.5s) → gtile2x2(gkeep_rows2(g_fg_to_most_common(x)))
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=7  ✗ unsolved=14  → active=8  ⏳ pending=371  done=21/400  success=33.3%  time=15.6s (avg=0.7s/completed)  straggler_max=15.6s
+  → [ 30] STARTING  6fa7a44f
+  ✓ [ 27/400] DONE      3c9b0459                     evals=  5.3k train=1.00 test=1.00 (1.2s) → gfill_bg(grot180(x))
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=8  ✗ unsolved=14  → active=8  ⏳ pending=370  done=22/400  success=36.4%  time=15.8s (avg=0.7s/completed)  straggler_max=15.8s
+  → [ 31] STARTING  74dd1130
+  ✗ [ 23/400] DONE      feca6190                     evals=  5.3k train=0.43 test=0.06 (3.7s) → gvstack(gsort_cols_asc(g_align_up(gkeep_color6(g_r
+    [FAILURE ANALYSIS] Best AST: gvstack(gsort_cols_asc(g_align_up(gkeep_color6(g_repeat_v(gvstack(x, x))))), x)
+    Input Grid:
+      [1, 0, 7, 0, 0]
+    Expected Output:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+      [0, 0, 0, 0, 0, 0, 0, 0, 1, 0]
+      [0, 0, 0, 0, 0, 0, 0, 1, 0, 7]
+      [0, 0, 0, 0, 0, 0, 1, 0, 7, 0]
+      [0, 0, 0, 0, 0, 1, 0, 7, 0, 0]
+      [0, 0, 0, 0, 1, 0, 7, 0, 0, 0]
+      [0, 0, 0, 1, 0, 7, 0, 0, 0, 0]
+      [0, 0, 1, 0, 7, 0, 0, 0, 0, 0]
+      [0, 1, 0, 7, 0, 0, 0, 0, 0, 0]
+      [1, 0, 7, 0, 0, 0, 0, 0, 0, 0]
+    Actual output from AST:
+      [0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0]
+      [1, 0, 7, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      [Dimension Mismatch] Expected: 10x10, Actual: 5x5
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=8  ✗ unsolved=15  → active=8  ⏳ pending=369  done=23/400  success=34.8%  time=16.3s (avg=0.7s/completed)  straggler_max=16.3s
+  → [ 32] STARTING  91413438
+  ✗ [ 28/400] DONE      67e8384a                     evals=  5.3k train=0.68 test=0.62 (1.6s) → g_repeat_2x2(x)
+    [FAILURE ANALYSIS] Best AST: g_repeat_2x2(x)
+    Input Grid:
+      [5, 3, 4]
+      [3, 4, 5]
+      [3, 4, 4]
+    Expected Output:
+      [5, 3, 4, 4, 3, 5]
+      [3, 4, 5, 5, 4, 3]
+      [3, 4, 4, 4, 4, 3]
+      [3, 4, 4, 4, 4, 3]
+      [3, 4, 5, 5, 4, 3]
+      [5, 3, 4, 4, 3, 5]
+    Actual output from AST:
+      [5, 3, 4, 5, 3, 4]
+      [3, 4, 5, 3, 4, 5]
+      [3, 4, 4, 3, 4, 4]
+      [5, 3, 4, 5, 3, 4]
+      [3, 4, 5, 3, 4, 5]
+      [3, 4, 4, 3, 4, 4]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.', 'X', '.', 'X']
+      ['.', '.', '.', 'X', '.', 'X']
+      ['.', '.', '.', 'X', '.', 'X']
+      ['X', 'X', '.', 'X', 'X', 'X']
+      ['.', '.', '.', 'X', '.', 'X']
+      ['X', 'X', '.', 'X', 'X', 'X']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=8  ✗ unsolved=16  → active=8  ⏳ pending=368  done=24/400  success=33.3%  time=16.8s (avg=0.7s/completed)  straggler_max=16.8s
+  → [ 33] STARTING  9565186b
+  ✓ [ 29/400] DONE      6d0aefbc                     evals=  5.3k train=1.00 test=1.00 (1.9s) → gmirror_h(g_flood_fill(g_replace_2_with_3(g_overla
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=9  ✗ unsolved=16  → active=8  ⏳ pending=367  done=25/400  success=36.0%  time=17.5s (avg=0.7s/completed)  straggler_max=17.5s
+  → [ 34] STARTING  a85d4709
+  ✓ [ 31/400] DONE      74dd1130                     evals=  5.3k train=1.00 test=1.00 (1.7s) → gtrsp(x)
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=10  ✗ unsolved=16  → active=8  ⏳ pending=366  done=26/400  success=38.5%  time=18.0s (avg=0.7s/completed)  straggler_max=18.0s
+  → [ 35] STARTING  d631b094
+  ✓ [ 30/400] DONE      6fa7a44f                     evals=  5.3k train=1.00 test=1.00 (2.8s) → gmirror_v(gvstack(x, gframe8(x)))
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=11  ✗ unsolved=16  → active=8  ⏳ pending=365  done=27/400  success=40.7%  time=18.6s (avg=0.7s/completed)  straggler_max=18.6s
+  → [ 36] STARTING  ed36ccf7
+  ✓ [ 33/400] DONE      9565186b                     evals=  5.3k train=1.00 test=1.00 (1.4s) → g_flood_fill(gswap_05(gkeep_largest(gfill_bg(g_flo
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=12  ✗ unsolved=16  → active=8  ⏳ pending=364  done=28/400  success=42.9%  time=19.0s (avg=0.7s/completed)  straggler_max=18.9s
+  → [ 37] STARTING  f5b8619d
+  ✗ [ 35/400] DONE      d631b094                     evals=  5.3k train=0.35 test=0.08 (0.8s) → gcrop_right(g_downscale_2x(x))
+    [FAILURE ANALYSIS] Best AST: gcrop_right(g_downscale_2x(x))
+    Input Grid:
+      [0, 0, 0]
+      [1, 0, 0]
+      [0, 1, 0]
+    Expected Output:
+      [1, 1]
+    Actual output from AST:
+      [1]
+    [DIFF MAP] (Expected vs Actual):
+      [Dimension Mismatch] Expected: 1x2, Actual: 1x1
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=12  ✗ unsolved=17  → active=8  ⏳ pending=363  done=29/400  success=41.4%  time=19.5s (avg=0.7s/completed)  straggler_max=19.5s
+  → [ 38] STARTING  9dfd6313
+  ✗ [ 34/400] DONE      a85d4709                     evals=  5.3k train=0.62 test=0.50 (1.9s) → gsort_cols_desc(gdiag2(gframe3(x)))
+    [FAILURE ANALYSIS] Best AST: gsort_cols_desc(gdiag2(gframe3(x)))
+    Input Grid:
+      [0, 0, 5]
+      [0, 5, 0]
+      [5, 0, 0]
+    Expected Output:
+      [3, 3, 3]
+      [4, 4, 4]
+      [2, 2, 2]
+    Actual output from AST:
+      [3, 3, 3]
+      [3, 3, 3]
+      [2, 2, 2]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.']
+      ['X', 'X', 'X']
+      ['.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=12  ✗ unsolved=18  → active=8  ⏳ pending=362  done=30/400  success=40.0%  time=19.9s (avg=0.7s/completed)  straggler_max=19.9s
+  → [ 39] STARTING  017c7c7b
+  ✓ [ 36/400] DONE      ed36ccf7                     evals=  5.3k train=1.00 test=1.00 (1.6s) → g_replace_1_with_3(grot270(x))
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=13  ✗ unsolved=18  → active=8  ⏳ pending=361  done=31/400  success=41.9%  time=20.6s (avg=0.7s/completed)  straggler_max=20.6s
+  → [ 40] STARTING  b1948b0a
+  ✓ [ 38/400] DONE      9dfd6313                     evals=  5.3k train=1.00 test=1.00 (1.1s) → gtrsp(x)
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=14  ✗ unsolved=18  → active=8  ⏳ pending=360  done=32/400  success=43.8%  time=21.0s (avg=0.7s/completed)  straggler_max=21.0s
+  → [ 41] STARTING  9af7a82c
+  ✗ [ 39/400] DONE      017c7c7b                     evals=  5.3k train=0.23 test=0.23 (0.9s) → gpad1(ghalf_left(x))
+    [FAILURE ANALYSIS] Best AST: gpad1(ghalf_left(x))
+    Input Grid:
+      [0, 1, 0]
+      [1, 1, 0]
+      [0, 1, 0]
+      [0, 1, 1]
+      [0, 1, 0]
+      [1, 1, 0]
+    Expected Output:
+      [0, 2, 0]
+      [2, 2, 0]
+      [0, 2, 0]
+      [0, 2, 2]
+      [0, 2, 0]
+      [2, 2, 0]
+      [0, 2, 0]
+      [0, 2, 2]
+      [0, 2, 0]
+    Actual output from AST:
+      [0, 0, 0]
+      [0, 0, 0]
+      [0, 1, 0]
+      [0, 0, 0]
+      [0, 0, 0]
+      [0, 0, 0]
+      [0, 1, 0]
+      [0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      [Dimension Mismatch] Expected: 9x3, Actual: 8x3
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=14  ✗ unsolved=19  → active=8  ⏳ pending=359  done=33/400  success=42.4%  time=21.5s (avg=0.7s/completed)  straggler_max=21.5s
+  → [ 42] STARTING  bbc9ae5d
+  ~ [ 17/400] DONE      d13f3404                     evals=  5.3k train=0.82 test=0.88 (14.4s) → g_render_object(x, g_overlay(x, gkeep_color8(gscal
+    [FAILURE ANALYSIS] Best AST: g_render_object(x, g_overlay(x, gkeep_color8(gscale2x(gkeep_solid(x)))))
+    Input Grid:
+      [6, 1, 0]
+      [3, 0, 0]
+      [0, 0, 0]
+    Expected Output:
+      [6, 1, 0, 0, 0, 0]
+      [3, 6, 1, 0, 0, 0]
+      [0, 3, 6, 1, 0, 0]
+      [0, 0, 3, 6, 1, 0]
+      [0, 0, 0, 3, 6, 1]
+      [0, 0, 0, 0, 3, 6]
+    Actual output from AST:
+      [6, 1, 0, 0, 0, 0]
+      [3, 6, 1, 0, 0, 0]
+      [0, 3, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.']
+      ['.', '.', 'X', 'X', '.', '.']
+      ['.', '.', 'X', 'X', 'X', '.']
+      ['.', '.', '.', 'X', 'X', 'X']
+      ['.', '.', '.', '.', 'X', 'X']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=14  ✗ unsolved=20  → active=8  ⏳ pending=358  done=34/400  success=41.2%  time=21.6s (avg=0.6s/completed)  straggler_max=21.6s
+  → [ 43] STARTING  4c4377d9
+  ✗ [ 41/400] DONE      9af7a82c                     evals=  5.3k train=0.45 test=0.20 (2.1s) → g_shift_left(gcrop_top(g_shift_left(gdiag1(grot270
+    [FAILURE ANALYSIS] Best AST: g_shift_left(gcrop_top(g_shift_left(gdiag1(grot270(g_repeat_h(x))))))
+    Input Grid:
+      [2, 2, 1]
+      [2, 3, 1]
+      [1, 1, 1]
+    Expected Output:
+      [1, 2, 3]
+      [1, 2, 0]
+      [1, 2, 0]
+      [1, 0, 0]
+      [1, 0, 0]
+    Actual output from AST:
+      [1, 0, 0]
+      [1, 0, 0]
+      [1, 0, 0]
+      [1, 0, 0]
+      [1, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', 'X', 'X']
+      ['.', 'X', '.']
+      ['.', 'X', '.']
+      ['.', '.', '.']
+      ['.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=14  ✗ unsolved=21  → active=8  ⏳ pending=357  done=35/400  success=40.0%  time=23.7s (avg=0.7s/completed)  straggler_max=23.7s
+  → [ 44] STARTING  a79310a0
+  ✗ [ 42/400] DONE      bbc9ae5d                     evals=  5.3k train=0.66 test=0.21 (2.1s) → gvstack(gvstack(x, gdilate(x)), gdilate(x))
+    [FAILURE ANALYSIS] Best AST: gvstack(gvstack(x, gdilate(x)), gdilate(x))
+    Input Grid:
+      [1, 1, 0, 0, 0, 0]
+    Expected Output:
+      [1, 1, 0, 0, 0, 0]
+      [1, 1, 1, 0, 0, 0]
+      [1, 1, 1, 1, 0, 0]
+    Actual output from AST:
+      [1, 1, 0, 0, 0, 0]
+      [1, 1, 1, 0, 0, 0]
+      [1, 1, 1, 0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', 'X', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=14  ✗ unsolved=22  → active=8  ⏳ pending=356  done=36/400  success=38.9%  time=23.7s (avg=0.7s/completed)  straggler_max=23.7s
+  → [ 45] STARTING  d23f8c26
+  ✗ [ 37/400] DONE      f5b8619d                     evals=  5.3k train=0.72 test=0.58 (4.6s) → g_repeat_2x2(x)
+    [FAILURE ANALYSIS] Best AST: g_repeat_2x2(x)
+    Input Grid:
+      [2, 0, 0]
+      [0, 0, 0]
+      [0, 0, 2]
+    Expected Output:
+      [2, 0, 8, 2, 0, 8]
+      [8, 0, 8, 8, 0, 8]
+      [8, 0, 2, 8, 0, 2]
+      [2, 0, 8, 2, 0, 8]
+      [8, 0, 8, 8, 0, 8]
+      [8, 0, 2, 8, 0, 2]
+    Actual output from AST:
+      [2, 0, 0, 2, 0, 0]
+      [0, 0, 0, 0, 0, 0]
+      [0, 0, 2, 0, 0, 2]
+      [2, 0, 0, 2, 0, 0]
+      [0, 0, 0, 0, 0, 0]
+      [0, 0, 2, 0, 0, 2]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', 'X', '.', '.', 'X']
+      ['X', '.', 'X', 'X', '.', 'X']
+      ['X', '.', '.', 'X', '.', '.']
+      ['.', '.', 'X', '.', '.', 'X']
+      ['X', '.', 'X', 'X', '.', 'X']
+      ['X', '.', '.', 'X', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=14  ✗ unsolved=23  → active=8  ⏳ pending=355  done=37/400  success=37.8%  time=24.1s (avg=0.7s/completed)  straggler_max=24.1s
+  → [ 46] STARTING  f76d97a5
+  ✓ [ 44/400] DONE      a79310a0                     evals=  5.3k train=1.00 test=1.00 (1.3s) → g_replace_1_with_3(gmod3(g_shift_down(x)))
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=15  ✗ unsolved=23  → active=8  ⏳ pending=354  done=38/400  success=39.5%  time=25.0s (avg=0.7s/completed)  straggler_max=25.0s
+  → [ 47] STARTING  10fcaaa3
+  ✓ [ 40/400] DONE      b1948b0a                     evals=  5.3k train=1.00 test=1.00 (4.0s) → gswap_01(g_replace_0_with_2(gmap_largest_cc(g_repl
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=16  ✗ unsolved=23  → active=8  ⏳ pending=353  done=39/400  success=41.0%  time=25.0s (avg=0.6s/completed)  straggler_max=25.0s
+  → [ 48] STARTING  7b7f7511
+  ✓ [ 43/400] DONE      4c4377d9                     evals=  5.3k train=1.00 test=1.00 (1.4s) → gmirror_v(g_replace_0_with_2(g_repeat_v(grefl_v(gs
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=17  ✗ unsolved=23  → active=8  ⏳ pending=352  done=40/400  success=42.5%  time=25.1s (avg=0.6s/completed)  straggler_max=25.1s
+  → [ 49] STARTING  bdad9b1f
+  ~ [ 45/400] DONE      d23f8c26                     evals=  5.3k train=0.89 test=0.89 (1.9s) → gmap_rot90(ginterior_only(x))
+    [FAILURE ANALYSIS] Best AST: gmap_rot90(ginterior_only(x))
+    Input Grid:
+      [6, 4, 0]
+      [0, 3, 9]
+      [1, 0, 0]
+    Expected Output:
+      [0, 4, 0]
+      [0, 3, 0]
+      [0, 0, 0]
+    Actual output from AST:
+      [0, 0, 0]
+      [0, 3, 0]
+      [0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', 'X', '.']
+      ['.', '.', '.']
+      ['.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=17  ✗ unsolved=24  → active=8  ⏳ pending=351  done=41/400  success=41.5%  time=25.9s (avg=0.6s/completed)  straggler_max=25.9s
+  → [ 50] STARTING  0520fde7
+  ✗ [ 48/400] DONE      7b7f7511                     evals=  5.3k train=0.68 test=0.04 (1.3s) → ghalf_left(x)
+    [FAILURE ANALYSIS] Best AST: ghalf_left(x)
+    Input Grid:
+      [1, 1, 3, 2, 1, 1, 3, 2]
+      [1, 1, 3, 3, 1, 1, 3, 3]
+      [3, 3, 1, 1, 3, 3, 1, 1]
+      [2, 3, 1, 1, 2, 3, 1, 1]
+    Expected Output:
+      [1, 1, 3, 2]
+      [1, 1, 3, 3]
+      [3, 3, 1, 1]
+      [2, 3, 1, 1]
+    Actual output from AST:
+      [1, 1, 3, 2]
+      [1, 1, 3, 3]
+      [3, 3, 1, 1]
+      [2, 3, 1, 1]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.', '.']
+      ['.', '.', '.', '.']
+      ['.', '.', '.', '.']
+      ['.', '.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=17  ✗ unsolved=25  → active=8  ⏳ pending=350  done=42/400  success=40.5%  time=26.4s (avg=0.6s/completed)  straggler_max=26.4s
+  → [ 51] STARTING  aedd82e4
+  ✗ [ 46/400] DONE      f76d97a5                     evals=  5.3k train=0.69 test=0.73 (2.3s) → gkeep_color2(x)
+    [FAILURE ANALYSIS] Best AST: gkeep_color2(x)
+    Input Grid:
+      [4, 5, 4]
+      [5, 5, 5]
+      [4, 5, 4]
+    Expected Output:
+      [0, 4, 0]
+      [4, 4, 4]
+      [0, 4, 0]
+    Actual output from AST:
+      [0, 0, 0]
+      [0, 0, 0]
+      [0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', 'X', '.']
+      ['X', 'X', 'X']
+      ['.', 'X', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=17  ✗ unsolved=26  → active=8  ⏳ pending=349  done=43/400  success=39.5%  time=27.3s (avg=0.6s/completed)  straggler_max=27.3s
+  → [ 52] STARTING  007bbfb7
+  ✗ [ 47/400] DONE      10fcaaa3                     evals=  5.3k train=0.75 test=0.77 (2.7s) → g_repeat_2x2(x)
+    [FAILURE ANALYSIS] Best AST: g_repeat_2x2(x)
+    Input Grid:
+      [0, 0, 0, 0]
+      [0, 5, 0, 0]
+    Expected Output:
+      [8, 0, 8, 0, 8, 0, 8, 0]
+      [0, 5, 0, 0, 0, 5, 0, 0]
+      [8, 0, 8, 0, 8, 0, 8, 0]
+      [0, 5, 0, 0, 0, 5, 0, 0]
+    Actual output from AST:
+      [0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 5, 0, 0, 0, 5, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 5, 0, 0, 0, 5, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['X', '.', 'X', '.', 'X', '.', 'X', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.']
+      ['X', '.', 'X', '.', 'X', '.', 'X', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=17  ✗ unsolved=27  → active=8  ⏳ pending=348  done=44/400  success=38.6%  time=27.7s (avg=0.6s/completed)  straggler_max=27.7s
+  → [ 53] STARTING  6e02f1e3
+  ~ [ 49/400] DONE      bdad9b1f                     evals=  5.3k train=0.85 test=0.85 (2.2s) → x
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=17  ✗ unsolved=28  → active=8  ⏳ pending=347  done=45/400  success=37.8%  time=28.1s (avg=0.6s/completed)  straggler_max=28.1s
+  → [ 54] STARTING  b91ae062
+  ✗ [ 50/400] DONE      0520fde7                     evals=  5.3k train=0.89 test=0.75 (1.8s) → ghalf_left(ginterior_only(gkeep_symmetric_h(g_repl
+    [FAILURE ANALYSIS] Best AST: ghalf_left(ginterior_only(gkeep_symmetric_h(g_replace_1_with_2(x))))
+    Input Grid:
+      [1, 0, 0, 5, 0, 1, 0]
+      [0, 1, 0, 5, 1, 1, 1]
+      [1, 0, 0, 5, 0, 0, 0]
+    Expected Output:
+      [0, 0, 0]
+      [0, 2, 0]
+      [0, 0, 0]
+    Actual output from AST:
+      [0, 0, 0]
+      [0, 2, 0]
+      [0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.']
+      ['.', '.', '.']
+      ['.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=17  ✗ unsolved=29  → active=8  ⏳ pending=346  done=46/400  success=37.0%  time=28.2s (avg=0.6s/completed)  straggler_max=28.2s
+  → [ 55] STARTING  b190f7f5
+  ~ [ 51/400] DONE      aedd82e4                     evals=  5.3k train=0.90 test=0.89 (1.1s) → x
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=17  ✗ unsolved=30  → active=8  ⏳ pending=345  done=47/400  success=36.2%  time=28.4s (avg=0.6s/completed)  straggler_max=28.4s
+  → [ 56] STARTING  496994bd
+  ✗ [ 53/400] DONE      6e02f1e3                     evals=  5.3k train=0.80 test=0.67 (2.1s) → gdiag5(gkeep_color6(x))
+    [FAILURE ANALYSIS] Best AST: gdiag5(gkeep_color6(x))
+    Input Grid:
+      [2, 2, 2]
+      [3, 2, 3]
+      [3, 3, 3]
+    Expected Output:
+      [5, 0, 0]
+      [0, 5, 0]
+      [0, 0, 5]
+    Actual output from AST:
+      [5, 0, 0]
+      [0, 5, 0]
+      [0, 0, 5]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.']
+      ['.', '.', '.']
+      ['.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=17  ✗ unsolved=31  → active=8  ⏳ pending=344  done=48/400  success=35.4%  time=30.2s (avg=0.6s/completed)  straggler_max=30.2s
+  → [ 57] STARTING  a9f96cdd
+  ✗ [ 55/400] DONE      b190f7f5                     evals=  5.3k train=0.59 test=0.10 (2.8s) → gkeep_largest(gcrop_left(gcrop_left(gcrop_left(g_r
+    [FAILURE ANALYSIS] Best AST: gkeep_largest(gcrop_left(gcrop_left(gcrop_left(g_repeat_v3(g_repeat_h(x))))))
+    Input Grid:
+      [2, 0, 4, 0, 8, 0]
+      [0, 3, 0, 8, 8, 8]
+      [0, 0, 0, 0, 8, 0]
+    Expected Output:
+      [0, 2, 0, 0, 0, 0, 0, 4, 0]
+      [2, 2, 2, 0, 0, 0, 4, 4, 4]
+      [0, 2, 0, 0, 0, 0, 0, 4, 0]
+      [0, 0, 0, 0, 3, 0, 0, 0, 0]
+      [0, 0, 0, 3, 3, 3, 0, 0, 0]
+      [0, 0, 0, 0, 3, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    Actual output from AST:
+      [0, 8, 0, 0, 0, 0, 0, 0, 0]
+      [8, 8, 8, 0, 0, 0, 0, 0, 0]
+      [0, 8, 0, 0, 0, 0, 0, 0, 0]
+      [0, 8, 0, 0, 0, 0, 0, 0, 0]
+      [8, 8, 8, 0, 0, 0, 0, 0, 0]
+      [0, 8, 0, 0, 0, 0, 0, 0, 0]
+      [0, 8, 0, 0, 0, 0, 0, 0, 0]
+      [8, 8, 8, 0, 0, 0, 0, 0, 0]
+      [0, 8, 0, 0, 0, 0, 0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', 'X', '.', '.', '.', '.', '.', 'X', '.']
+      ['X', 'X', 'X', '.', '.', '.', 'X', 'X', 'X']
+      ['.', 'X', '.', '.', '.', '.', '.', 'X', '.']
+      ['.', 'X', '.', '.', 'X', '.', '.', '.', '.']
+      ['X', 'X', 'X', 'X', 'X', 'X', '.', '.', '.']
+      ['.', 'X', '.', '.', 'X', '.', '.', '.', '.']
+      ['.', 'X', '.', '.', '.', '.', '.', '.', '.']
+      ['X', 'X', 'X', '.', '.', '.', '.', '.', '.']
+      ['.', 'X', '.', '.', '.', '.', '.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=17  ✗ unsolved=32  → active=8  ⏳ pending=343  done=49/400  success=34.7%  time=31.3s (avg=0.6s/completed)  straggler_max=31.3s
+  → [ 58] STARTING  f25ffba3
+  ✓ [ 56/400] DONE      496994bd                     evals=  5.3k train=1.00 test=1.00 (1.7s) → gkeep_solid(gmirror_v(x))
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=18  ✗ unsolved=32  → active=8  ⏳ pending=342  done=50/400  success=36.0%  time=31.9s (avg=0.6s/completed)  straggler_max=31.9s
+  → [ 59] STARTING  3618c87e
+  ~ [ 57/400] DONE      a9f96cdd                     evals=  5.3k train=0.86 test=0.90 (1.0s) → gkeep_color8(x)
+    [FAILURE ANALYSIS] Best AST: gkeep_color8(x)
+    Input Grid:
+      [0, 0, 0, 0, 0]
+      [0, 2, 0, 0, 0]
+      [0, 0, 0, 0, 0]
+    Expected Output:
+      [3, 0, 6, 0, 0]
+      [0, 0, 0, 0, 0]
+      [8, 0, 7, 0, 0]
+    Actual output from AST:
+      [0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['X', '.', 'X', '.', '.']
+      ['.', '.', '.', '.', '.']
+      ['X', '.', 'X', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=18  ✗ unsolved=33  → active=8  ⏳ pending=341  done=51/400  success=35.3%  time=32.3s (avg=0.6s/completed)  straggler_max=32.2s
+  → [ 60] STARTING  469497ad
+  ✗ [ 32/400] DONE      91413438                     evals=  5.3k train=0.31 test=0.11 (15.9s) → gtile_left_col(g_fractal_inflate(x))
+    [FAILURE ANALYSIS] Best AST: gtile_left_col(g_fractal_inflate(x))
+    Input Grid:
+      [6, 6, 0]
+      [0, 6, 6]
+      [0, 0, 6]
+    Expected Output:
+      [6, 6, 0, 6, 6, 0, 6, 6, 0, 6, 6, 0]
+      [0, 6, 6, 0, 6, 6, 0, 6, 6, 0, 6, 6]
+      [0, 0, 6, 0, 0, 6, 0, 0, 6, 0, 0, 6]
+      [6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    Actual output from AST:
+      [6, 6, 6, 6, 6, 6, 6, 6, 6]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      [Dimension Mismatch] Expected: 12x12, Actual: 9x9
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=18  ✗ unsolved=34  → active=8  ⏳ pending=340  done=52/400  success=34.6%  time=32.7s (avg=0.6s/completed)  straggler_max=32.7s
+  → [ 61] STARTING  539a4f51
+  ✗ [ 54/400] DONE      b91ae062                     evals=  5.3k train=0.49 test=0.12 (4.5s) → gswap_23(gscale2x(x))
+    [FAILURE ANALYSIS] Best AST: gswap_23(gscale2x(x))
+    Input Grid:
+      [6, 7, 0]
+      [0, 6, 6]
+      [0, 0, 0]
+    Expected Output:
+      [6, 6, 7, 7, 0, 0]
+      [6, 6, 7, 7, 0, 0]
+      [0, 0, 6, 6, 6, 6]
+      [0, 0, 6, 6, 6, 6]
+      [0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0]
+    Actual output from AST:
+      [6, 6, 7, 7, 0, 0]
+      [6, 6, 7, 7, 0, 0]
+      [0, 0, 6, 6, 6, 6]
+      [0, 0, 6, 6, 6, 6]
+      [0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=18  ✗ unsolved=35  → active=8  ⏳ pending=339  done=53/400  success=34.0%  time=32.7s (avg=0.6s/completed)  straggler_max=32.7s
+  → [ 62] STARTING  88a62173
+  ~ [ 59/400] DONE      3618c87e                     evals=  5.3k train=0.95 test=0.94 (2.0s) → gmap_largest_cc(x)
+    [FAILURE ANALYSIS] Best AST: gmap_largest_cc(x)
+    Input Grid:
+      [0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0]
+      [0, 0, 1, 0, 0]
+      [0, 0, 5, 0, 0]
+      [5, 5, 5, 5, 5]
+    Expected Output:
+      [0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0]
+      [0, 0, 5, 0, 0]
+      [5, 5, 1, 5, 5]
+    Actual output from AST:
+      [0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0]
+      [0, 0, 5, 0, 0]
+      [5, 5, 5, 5, 5]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.']
+      ['.', '.', 'X', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=18  ✗ unsolved=36  → active=8  ⏳ pending=338  done=54/400  success=33.3%  time=34.2s (avg=0.6s/completed)  straggler_max=34.2s
+  → [ 63] STARTING  bd4472b8
+  ~ [ 58/400] DONE      f25ffba3                     evals=  5.3k train=0.96 test=0.93 (2.6s) → gmirror_v(gcountbar_cols(x))
+    [FAILURE ANALYSIS] Best AST: gmirror_v(gcountbar_cols(x))
+    Input Grid:
+      [0, 0, 0, 0]
+      [0, 0, 0, 0]
+      [0, 0, 0, 0]
+      [0, 0, 0, 0]
+      [0, 0, 0, 0]
+      [0, 0, 0, 9]
+      [0, 0, 3, 9]
+      [0, 0, 3, 9]
+      [2, 0, 3, 9]
+      [2, 4, 3, 9]
+    Expected Output:
+      [2, 4, 3, 9]
+      [2, 0, 3, 9]
+      [0, 0, 3, 9]
+      [0, 0, 3, 9]
+      [0, 0, 0, 9]
+      [0, 0, 0, 9]
+      [0, 0, 3, 9]
+      [0, 0, 3, 9]
+      [2, 0, 3, 9]
+      [2, 4, 3, 9]
+    Actual output from AST:
+      [2, 4, 3, 9]
+      [2, 0, 3, 9]
+      [0, 0, 3, 9]
+      [0, 0, 3, 9]
+      [0, 0, 0, 9]
+      [0, 0, 0, 9]
+      [0, 0, 3, 9]
+      [0, 0, 3, 9]
+      [2, 0, 3, 9]
+      [2, 4, 3, 9]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.', '.']
+      ['.', '.', '.', '.']
+      ['.', '.', '.', '.']
+      ['.', '.', '.', '.']
+      ['.', '.', '.', '.']
+      ['.', '.', '.', '.']
+      ['.', '.', '.', '.']
+      ['.', '.', '.', '.']
+      ['.', '.', '.', '.']
+      ['.', '.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=18  ✗ unsolved=37  → active=8  ⏳ pending=337  done=55/400  success=32.7%  time=34.5s (avg=0.6s/completed)  straggler_max=34.5s
+  → [ 64] STARTING  1e0a9b12
+  ~ [ 61/400] DONE      539a4f51                     evals=  5.3k train=0.74 test=0.88 (2.4s) → g_replace_0_with_1(ggravity_left(g_repeat_2x2(x)))
+    [FAILURE ANALYSIS] Best AST: g_replace_0_with_1(ggravity_left(g_repeat_2x2(x)))
+    Input Grid:
+      [2, 2, 2, 3, 0]
+      [2, 2, 2, 3, 0]
+      [2, 2, 2, 3, 0]
+      [3, 3, 3, 3, 0]
+      [0, 0, 0, 0, 0]
+    Expected Output:
+      [2, 2, 2, 3, 2, 2, 2, 3, 2, 2]
+      [2, 2, 2, 3, 2, 2, 2, 3, 2, 2]
+      [2, 2, 2, 3, 2, 2, 2, 3, 2, 2]
+      [3, 3, 3, 3, 2, 2, 2, 3, 2, 2]
+      [2, 2, 2, 2, 2, 2, 2, 3, 2, 2]
+      [2, 2, 2, 2, 2, 2, 2, 3, 2, 2]
+      [2, 2, 2, 2, 2, 2, 2, 3, 2, 2]
+      [3, 3, 3, 3, 3, 3, 3, 3, 2, 2]
+      [2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
+      [2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
+    Actual output from AST:
+      [2, 2, 2, 3, 2, 2, 2, 3, 1, 1]
+      [2, 2, 2, 3, 2, 2, 2, 3, 1, 1]
+      [2, 2, 2, 3, 2, 2, 2, 3, 1, 1]
+      [3, 3, 3, 3, 3, 3, 3, 3, 1, 1]
+      [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+      [2, 2, 2, 3, 2, 2, 2, 3, 1, 1]
+      [2, 2, 2, 3, 2, 2, 2, 3, 1, 1]
+      [2, 2, 2, 3, 2, 2, 2, 3, 1, 1]
+      [3, 3, 3, 3, 3, 3, 3, 3, 1, 1]
+      [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.', '.', '.', '.', '.', '.', 'X', 'X']
+      ['.', '.', '.', '.', '.', '.', '.', '.', 'X', 'X']
+      ['.', '.', '.', '.', '.', '.', '.', '.', 'X', 'X']
+      ['.', '.', '.', '.', 'X', 'X', 'X', '.', 'X', 'X']
+      ['X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X']
+      ['.', '.', '.', 'X', '.', '.', '.', '.', 'X', 'X']
+      ['.', '.', '.', 'X', '.', '.', '.', '.', 'X', 'X']
+      ['X', 'X', 'X', '.', 'X', 'X', 'X', '.', 'X', 'X']
+      ['X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X']
+      ['X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=18  ✗ unsolved=38  → active=8  ⏳ pending=336  done=56/400  success=32.1%  time=35.1s (avg=0.6s/completed)  straggler_max=35.1s
+  → [ 65] STARTING  6f8cd79b
+  ~ [ 62/400] DONE      88a62173                     evals=  5.3k train=0.81 test=0.81 (2.6s) → g_extract_objects(x)
+    [FAILURE ANALYSIS] Best AST: g_extract_objects(x)
+    Input Grid:
+      [0, 2, 0, 0, 2]
+      [2, 2, 0, 2, 2]
+      [0, 0, 0, 0, 0]
+      [0, 2, 0, 2, 2]
+      [2, 2, 0, 2, 0]
+    Expected Output:
+      [2, 2]
+      [2, 0]
+    Actual output from AST:
+      [0, 2]
+      [2, 2]
+    [DIFF MAP] (Expected vs Actual):
+      ['X', '.']
+      ['.', 'X']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=18  ✗ unsolved=39  → active=8  ⏳ pending=335  done=57/400  success=31.6%  time=36.8s (avg=0.6s/completed)  straggler_max=36.8s
+  → [ 66] STARTING  db3e9e38
+  ✗ [ 63/400] DONE      bd4472b8                     evals=  5.3k train=0.56 test=0.50 (2.5s) → g_replace_0_with_2(x)
+    [FAILURE ANALYSIS] Best AST: g_replace_0_with_2(x)
+    Input Grid:
+      [2, 1, 4]
+      [5, 5, 5]
+      [0, 0, 0]
+      [0, 0, 0]
+      [0, 0, 0]
+      [0, 0, 0]
+      [0, 0, 0]
+      [0, 0, 0]
+    Expected Output:
+      [2, 1, 4]
+      [5, 5, 5]
+      [2, 2, 2]
+      [1, 1, 1]
+      [4, 4, 4]
+      [2, 2, 2]
+      [1, 1, 1]
+      [4, 4, 4]
+    Actual output from AST:
+      [2, 1, 4]
+      [5, 5, 5]
+      [2, 2, 2]
+      [2, 2, 2]
+      [2, 2, 2]
+      [2, 2, 2]
+      [2, 2, 2]
+      [2, 2, 2]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.']
+      ['.', '.', '.']
+      ['.', '.', '.']
+      ['X', 'X', 'X']
+      ['X', 'X', 'X']
+      ['.', '.', '.']
+      ['X', 'X', 'X']
+      ['X', 'X', 'X']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=18  ✗ unsolved=40  → active=8  ⏳ pending=334  done=58/400  success=31.0%  time=37.0s (avg=0.6s/completed)  straggler_max=37.0s
+  → [ 67] STARTING  ea786f4a
+  ✓ [ 64/400] DONE      1e0a9b12                     evals=  5.3k train=1.00 test=1.00 (3.0s) → gkeep_symmetric_h(gsort_cols_asc(x))
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=19  ✗ unsolved=40  → active=8  ⏳ pending=333  done=59/400  success=32.2%  time=38.0s (avg=0.6s/completed)  straggler_max=38.0s
+  → [ 68] STARTING  44f52bb0
+  ✗ [ 66/400] DONE      db3e9e38                     evals=  5.3k train=0.76 test=0.68 (1.3s) → x
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=19  ✗ unsolved=41  → active=8  ⏳ pending=332  done=60/400  success=31.7%  time=38.3s (avg=0.6s/completed)  straggler_max=38.3s
+  → [ 69] STARTING  746b3537
+  ✓ [ 65/400] DONE      6f8cd79b                     evals=  5.3k train=1.00 test=1.00 (2.0s) → grefl_h(gframe8(x))
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=20  ✗ unsolved=41  → active=8  ⏳ pending=331  done=61/400  success=32.8%  time=38.8s (avg=0.6s/completed)  straggler_max=38.8s
+  → [ 70] STARTING  2dee498d
+  ✗ [ 69/400] DONE      746b3537                     evals=  5.3k train=0.42 test=0.21 (1.1s) → gcrop_left(gmod5(gkeep_cols2(gcrop_border(gcrop_ri
+    [FAILURE ANALYSIS] Best AST: gcrop_left(gmod5(gkeep_cols2(gcrop_border(gcrop_right(x)))))
+    Input Grid:
+      [1, 1, 1]
+      [2, 2, 2]
+      [1, 1, 1]
+    Expected Output:
+      [1]
+      [2]
+      [1]
+    Actual output from AST:
+      [1]
+      [2]
+      [1]
+    [DIFF MAP] (Expected vs Actual):
+      ['.']
+      ['.']
+      ['.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=20  ✗ unsolved=42  → active=8  ⏳ pending=330  done=62/400  success=32.3%  time=39.9s (avg=0.6s/completed)  straggler_max=39.9s
+  → [ 71] STARTING  3aa6fb7a
+  ✗ [ 68/400] DONE      44f52bb0                     evals=  5.3k train=0.62 test=0.62 (1.7s) → g_downscale_3x(gstripe_v3(x))
+    [FAILURE ANALYSIS] Best AST: g_downscale_3x(gstripe_v3(x))
+    Input Grid:
+      [2, 0, 2]
+      [0, 2, 0]
+      [2, 0, 2]
+    Expected Output:
+      [1]
+    Actual output from AST:
+      [1]
+    [DIFF MAP] (Expected vs Actual):
+      ['.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=20  ✗ unsolved=43  → active=8  ⏳ pending=329  done=63/400  success=31.7%  time=40.0s (avg=0.6s/completed)  straggler_max=40.0s
+  → [ 72] STARTING  aabf363d
+  ✗ [ 67/400] DONE      ea786f4a                     evals=  5.3k train=1.00 test=0.38 (2.4s) → grot180(gmod5(gdiag5(grefl_h(gmod5(gdiag5(x))))))
+    [FAILURE ANALYSIS] Best AST: grot180(gmod5(gdiag5(grefl_h(gmod5(gdiag5(x))))))
+    Input Grid:
+      [1, 1, 1]
+      [1, 0, 1]
+      [1, 1, 1]
+    Expected Output:
+      [0, 1, 0]
+      [1, 0, 1]
+      [0, 1, 0]
+    Actual output from AST:
+      [0, 1, 0]
+      [1, 0, 1]
+      [0, 1, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.']
+      ['.', '.', '.']
+      ['.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=20  ✗ unsolved=44  → active=8  ⏳ pending=328  done=64/400  success=31.2%  time=40.5s (avg=0.6s/completed)  straggler_max=40.5s
+  → [ 73] STARTING  67385a82
+  ✗ [ 70/400] DONE      2dee498d                     evals=  5.3k train=0.74 test=0.23 (1.5s) → gcrop_right(ghalf_left(x))
+    [FAILURE ANALYSIS] Best AST: gcrop_right(ghalf_left(x))
+    Input Grid:
+      [4, 5, 1, 1, 5, 4, 4, 5, 1]
+      [5, 5, 5, 5, 5, 5, 5, 5, 5]
+      [1, 5, 4, 4, 5, 1, 1, 5, 4]
+    Expected Output:
+      [4, 5, 1]
+      [5, 5, 5]
+      [1, 5, 4]
+    Actual output from AST:
+      [4, 5, 1]
+      [5, 5, 5]
+      [1, 5, 4]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.']
+      ['.', '.', '.']
+      ['.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=20  ✗ unsolved=45  → active=8  ⏳ pending=327  done=65/400  success=30.8%  time=41.4s (avg=0.6s/completed)  straggler_max=41.4s
+  → [ 74] STARTING  a3df8b1e
+  ~ [ 71/400] DONE      3aa6fb7a                     evals=  5.3k train=0.96 test=0.94 (1.6s) → x
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=20  ✗ unsolved=46  → active=8  ⏳ pending=326  done=66/400  success=30.3%  time=41.7s (avg=0.6s/completed)  straggler_max=41.6s
+  → [ 75] STARTING  e179c5f4
+  ✗ [ 60/400] DONE      469497ad                     evals=  5.3k train=0.43 test=0.15 (10.3s) → g_scale_3x(g_replace_2_with_3(x))
+    [FAILURE ANALYSIS] Best AST: g_scale_3x(g_replace_2_with_3(x))
+    Input Grid:
+      [0, 0, 0, 0, 3]
+      [0, 8, 8, 0, 3]
+      [0, 8, 8, 0, 3]
+      [0, 0, 0, 0, 3]
+      [3, 3, 3, 3, 3]
+    Expected Output:
+      [2, 0, 0, 0, 0, 0, 0, 2, 3, 3]
+      [0, 2, 0, 0, 0, 0, 2, 0, 3, 3]
+      [0, 0, 8, 8, 8, 8, 0, 0, 3, 3]
+      [0, 0, 8, 8, 8, 8, 0, 0, 3, 3]
+      [0, 0, 8, 8, 8, 8, 0, 0, 3, 3]
+      [0, 0, 8, 8, 8, 8, 0, 0, 3, 3]
+      [0, 2, 0, 0, 0, 0, 2, 0, 3, 3]
+      [2, 0, 0, 0, 0, 0, 0, 2, 3, 3]
+      [3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
+      [3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
+    Actual output from AST:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3]
+      [0, 0, 0, 8, 8, 8, 8, 8, 8, 0, 0, 0, 3, 3, 3]
+      [0, 0, 0, 8, 8, 8, 8, 8, 8, 0, 0, 0, 3, 3, 3]
+      [0, 0, 0, 8, 8, 8, 8, 8, 8, 0, 0, 0, 3, 3, 3]
+      [0, 0, 0, 8, 8, 8, 8, 8, 8, 0, 0, 0, 3, 3, 3]
+      [0, 0, 0, 8, 8, 8, 8, 8, 8, 0, 0, 0, 3, 3, 3]
+      [0, 0, 0, 8, 8, 8, 8, 8, 8, 0, 0, 0, 3, 3, 3]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 3]
+      [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
+      [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
+      [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
+    [DIFF MAP] (Expected vs Actual):
+      [Dimension Mismatch] Expected: 10x10, Actual: 15x15
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=20  ✗ unsolved=47  → active=8  ⏳ pending=325  done=67/400  success=29.9%  time=42.9s (avg=0.6s/completed)  straggler_max=42.9s
+  → [ 76] STARTING  f9012d9b
+  ✗ [ 73/400] DONE      67385a82                     evals=  5.3k train=0.77 test=0.73 (1.9s) → x
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=20  ✗ unsolved=48  → active=8  ⏳ pending=324  done=68/400  success=29.4%  time=43.3s (avg=0.6s/completed)  straggler_max=43.3s
+  → [ 77] STARTING  3ac3eb23
+  ~ [ 72/400] DONE      aabf363d                     evals=  5.3k train=0.98 test=0.98 (3.1s) → g_fg_to_least_common(x)
+    [FAILURE ANALYSIS] Best AST: g_fg_to_least_common(x)
+    Input Grid:
+      [0, 0, 0, 0, 0, 0, 0]
+      [0, 2, 2, 2, 0, 0, 0]
+      [0, 0, 2, 0, 0, 0, 0]
+      [0, 2, 2, 2, 2, 0, 0]
+      [0, 0, 2, 2, 2, 0, 0]
+      [0, 0, 0, 2, 0, 0, 0]
+      [4, 0, 0, 0, 0, 0, 0]
+    Expected Output:
+      [0, 0, 0, 0, 0, 0, 0]
+      [0, 4, 4, 4, 0, 0, 0]
+      [0, 0, 4, 0, 0, 0, 0]
+      [0, 4, 4, 4, 4, 0, 0]
+      [0, 0, 4, 4, 4, 0, 0]
+      [0, 0, 0, 4, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0]
+    Actual output from AST:
+      [0, 0, 0, 0, 0, 0, 0]
+      [0, 4, 4, 4, 0, 0, 0]
+      [0, 0, 4, 0, 0, 0, 0]
+      [0, 4, 4, 4, 4, 0, 0]
+      [0, 0, 4, 4, 4, 0, 0]
+      [0, 0, 0, 4, 0, 0, 0]
+      [4, 0, 0, 0, 0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.']
+      ['X', '.', '.', '.', '.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=20  ✗ unsolved=49  → active=8  ⏳ pending=323  done=69/400  success=29.0%  time=43.5s (avg=0.6s/completed)  straggler_max=43.5s
+  → [ 78] STARTING  68b16354
+  ~ [  5/400] DONE      8d5021e8                     evals=  5.3k train=0.83 test=0.88 (43.9s) → gmirror_h(grefl_h(gmap_fill_color(g_fractal_inflat
+    [FAILURE ANALYSIS] Best AST: gmirror_h(grefl_h(gmap_fill_color(g_fractal_inflate(x))))
+    Input Grid:
+      [0, 8]
+      [0, 0]
+      [0, 8]
+    Expected Output:
+      [8, 0, 0, 8]
+      [0, 0, 0, 0]
+      [8, 0, 0, 8]
+      [8, 0, 0, 8]
+      [0, 0, 0, 0]
+      [8, 0, 0, 8]
+      [8, 0, 0, 8]
+      [0, 0, 0, 0]
+      [8, 0, 0, 8]
+    Actual output from AST:
+      [8, 0, 0, 8]
+      [0, 0, 0, 0]
+      [8, 0, 0, 8]
+      [0, 0, 0, 0]
+      [0, 0, 0, 0]
+      [0, 0, 0, 0]
+      [8, 0, 0, 8]
+      [0, 0, 0, 0]
+      [8, 0, 0, 8]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.', '.']
+      ['.', '.', '.', '.']
+      ['.', '.', '.', '.']
+      ['X', '.', '.', 'X']
+      ['.', '.', '.', '.']
+      ['X', '.', '.', 'X']
+      ['.', '.', '.', '.']
+      ['.', '.', '.', '.']
+      ['.', '.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=20  ✗ unsolved=50  → active=8  ⏳ pending=322  done=70/400  success=28.6%  time=44.0s (avg=0.6s/completed)  straggler_max=44.0s
+  → [ 79] STARTING  8e5a5113
+  ✗ [ 76/400] DONE      f9012d9b                     evals=  5.3k train=0.71 test=0.17 (2.7s) → gsort_rows_desc(g_downscale_3x(x))
+    [FAILURE ANALYSIS] Best AST: gsort_rows_desc(g_downscale_3x(x))
+    Input Grid:
+      [2, 1, 2, 1, 2]
+      [1, 1, 1, 1, 1]
+      [2, 1, 2, 1, 2]
+      [0, 0, 1, 1, 1]
+      [0, 0, 2, 1, 2]
+    Expected Output:
+      [1, 1]
+      [2, 1]
+    Actual output from AST:
+      [1]
+    [DIFF MAP] (Expected vs Actual):
+      [Dimension Mismatch] Expected: 2x2, Actual: 1x1
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=20  ✗ unsolved=51  → active=8  ⏳ pending=321  done=71/400  success=28.2%  time=46.0s (avg=0.6s/completed)  straggler_max=46.0s
+  → [ 80] STARTING  29c11459
+  ✓ [ 78/400] DONE      68b16354                     evals=  5.3k train=1.00 test=1.00 (2.1s) → grefl_v(x)
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=21  ✗ unsolved=51  → active=8  ⏳ pending=320  done=72/400  success=29.2%  time=46.1s (avg=0.6s/completed)  straggler_max=46.1s
+  → [ 81] STARTING  d90796e8
+  ~ [ 74/400] DONE      a3df8b1e                     evals=  5.3k train=0.76 test=0.86 (4.6s) → x
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=21  ✗ unsolved=52  → active=8  ⏳ pending=319  done=73/400  success=28.8%  time=46.2s (avg=0.6s/completed)  straggler_max=46.2s
+  → [ 82] STARTING  67a3c6ac
+  ✗ [ 80/400] DONE      29c11459                     evals=  5.3k train=0.92 test=0.77 (1.4s) → gkeep_smallest(gmajority(x))
+    [FAILURE ANALYSIS] Best AST: gkeep_smallest(gmajority(x))
+    Input Grid:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    Expected Output:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [1, 1, 1, 1, 1, 5, 2, 2, 2, 2, 2]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    Actual output from AST:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', 'X', 'X', 'X', 'X', 'X', 'X']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=21  ✗ unsolved=53  → active=8  ⏳ pending=318  done=74/400  success=28.4%  time=47.5s (avg=0.6s/completed)  straggler_max=47.5s
+  → [ 83] STARTING  27a28665
+  ✗ [ 79/400] DONE      8e5a5113                     evals=  5.3k train=0.80 test=0.80 (1.8s) → g_overlay(grot180(x), x)
+    [FAILURE ANALYSIS] Best AST: g_overlay(grot180(x), x)
+    Input Grid:
+      [1, 1, 2, 5, 0, 0, 0, 5, 0, 0, 0]
+      [4, 1, 1, 5, 0, 0, 0, 5, 0, 0, 0]
+      [4, 4, 1, 5, 0, 0, 0, 5, 0, 0, 0]
+    Expected Output:
+      [1, 1, 2, 5, 4, 4, 1, 5, 1, 4, 4]
+      [4, 1, 1, 5, 4, 1, 1, 5, 1, 1, 4]
+      [4, 4, 1, 5, 1, 1, 2, 5, 2, 1, 1]
+    Actual output from AST:
+      [1, 1, 2, 5, 0, 0, 0, 5, 1, 4, 4]
+      [4, 1, 1, 5, 0, 0, 0, 5, 1, 1, 4]
+      [4, 4, 1, 5, 0, 0, 0, 5, 2, 1, 1]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.', '.', 'X', 'X', 'X', '.', '.', '.', '.']
+      ['.', '.', '.', '.', 'X', 'X', 'X', '.', '.', '.', '.']
+      ['.', '.', '.', '.', 'X', 'X', 'X', '.', '.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=21  ✗ unsolved=54  → active=8  ⏳ pending=317  done=75/400  success=28.0%  time=47.8s (avg=0.6s/completed)  straggler_max=47.8s
+  → [ 84] STARTING  963e52fc
+  ~ [ 81/400] DONE      d90796e8                     evals=  5.3k train=0.92 test=0.92 (2.4s) → g_flood_fill(gkeep_color5(x))
+    [FAILURE ANALYSIS] Best AST: g_flood_fill(gkeep_color5(x))
+    Input Grid:
+      [3, 2, 0]
+      [0, 0, 0]
+      [0, 5, 0]
+    Expected Output:
+      [8, 0, 0]
+      [0, 0, 0]
+      [0, 5, 0]
+    Actual output from AST:
+      [0, 0, 0]
+      [0, 0, 0]
+      [0, 5, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['X', '.', '.']
+      ['.', '.', '.']
+      ['.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=21  ✗ unsolved=55  → active=8  ⏳ pending=316  done=76/400  success=27.6%  time=48.6s (avg=0.6s/completed)  straggler_max=48.6s
+  → [ 85] STARTING  beb8660c
+  ~ [ 75/400] DONE      e179c5f4                     evals=  5.3k train=0.88 test=0.85 (6.0s) → grot180(gswap_02(ganti_diag1(gtile2x2(ganti_diag1(
+    [FAILURE ANALYSIS] Best AST: grot180(gswap_02(ganti_diag1(gtile2x2(ganti_diag1(gframe8(gmap_rot180(x)))))))
+    Input Grid:
+      [0, 0]
+      [0, 0]
+      [0, 0]
+      [0, 0]
+      [0, 0]
+      [0, 0]
+      [0, 0]
+      [0, 0]
+      [0, 0]
+      [1, 0]
+    Expected Output:
+      [8, 1]
+      [1, 8]
+      [8, 1]
+      [1, 8]
+      [8, 1]
+      [1, 8]
+      [8, 1]
+      [1, 8]
+      [8, 1]
+      [1, 8]
+    Actual output from AST:
+      [8, 1]
+      [1, 8]
+      [8, 1]
+      [1, 8]
+      [8, 1]
+      [1, 8]
+      [8, 1]
+      [1, 8]
+      [8, 1]
+      [1, 8]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.']
+      ['.', '.']
+      ['.', '.']
+      ['.', '.']
+      ['.', '.']
+      ['.', '.']
+      ['.', '.']
+      ['.', '.']
+      ['.', '.']
+      ['.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=21  ✗ unsolved=56  → active=8  ⏳ pending=315  done=77/400  success=27.3%  time=49.0s (avg=0.6s/completed)  straggler_max=48.9s
+  → [ 86] STARTING  93b581b8
+  ✓ [ 82/400] DONE      67a3c6ac                     evals=  5.3k train=1.00 test=1.00 (1.5s) → gfill_bg(grefl_h(x))
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=22  ✗ unsolved=56  → active=8  ⏳ pending=314  done=78/400  success=28.2%  time=49.0s (avg=0.6s/completed)  straggler_max=49.0s
+  → [ 87] STARTING  a5f85a15
+  ✗ [ 77/400] DONE      3ac3eb23                     evals=  5.3k train=0.83 test=0.75 (5.6s) → gborder_only(x)
+    [FAILURE ANALYSIS] Best AST: gborder_only(x)
+    Input Grid:
+      [0, 2, 0, 0, 0, 8, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    Expected Output:
+      [0, 2, 0, 0, 0, 8, 0, 0, 0, 0]
+      [2, 0, 2, 0, 8, 0, 8, 0, 0, 0]
+      [0, 2, 0, 0, 0, 8, 0, 0, 0, 0]
+      [2, 0, 2, 0, 8, 0, 8, 0, 0, 0]
+      [0, 2, 0, 0, 0, 8, 0, 0, 0, 0]
+      [2, 0, 2, 0, 8, 0, 8, 0, 0, 0]
+    Actual output from AST:
+      [0, 2, 0, 0, 0, 8, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['X', '.', 'X', '.', 'X', '.', 'X', '.', '.', '.']
+      ['.', 'X', '.', '.', '.', 'X', '.', '.', '.', '.']
+      ['X', '.', 'X', '.', 'X', '.', 'X', '.', '.', '.']
+      ['.', 'X', '.', '.', '.', 'X', '.', '.', '.', '.']
+      ['X', '.', 'X', '.', 'X', '.', 'X', '.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=22  ✗ unsolved=57  → active=8  ⏳ pending=313  done=79/400  success=27.8%  time=49.2s (avg=0.6s/completed)  straggler_max=49.1s
+  → [ 88] STARTING  dc1df850
+  ✗ [ 83/400] DONE      27a28665                     evals=  5.3k train=0.68 test=0.75 (2.2s) → gkeep_smallest(gcrop_border(gmod3(gswap_01(x))))
+    [FAILURE ANALYSIS] Best AST: gkeep_smallest(gcrop_border(gmod3(gswap_01(x))))
+    Input Grid:
+      [5, 5, 0]
+      [5, 0, 5]
+      [0, 5, 0]
+    Expected Output:
+      [1]
+    Actual output from AST:
+      [1]
+    [DIFF MAP] (Expected vs Actual):
+      ['.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=22  ✗ unsolved=58  → active=8  ⏳ pending=312  done=80/400  success=27.5%  time=50.1s (avg=0.6s/completed)  straggler_max=50.0s
+  → [ 89] STARTING  eb281b96
+  ✓ [ 84/400] DONE      963e52fc                     evals=  5.3k train=0.95 test=1.00 (2.0s) → ghstack(x, x)
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=23  ✗ unsolved=58  → active=8  ⏳ pending=311  done=81/400  success=28.4%  time=50.6s (avg=0.6s/completed)  straggler_max=50.6s
+  → [ 90] STARTING  dae9d2b5
+  ~ [ 87/400] DONE      a5f85a15                     evals=  5.3k train=0.93 test=0.94 (1.8s) → x
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=23  ✗ unsolved=59  → active=8  ⏳ pending=310  done=82/400  success=28.0%  time=51.0s (avg=0.6s/completed)  straggler_max=51.0s
+  → [ 91] STARTING  fafffa47
+  ✗ [ 85/400] DONE      beb8660c                     evals=  5.3k train=0.90 test=0.79 (2.3s) → gswap_14(gsort_cols_asc(gswap_14(gsort_rows_asc(x)
+    [FAILURE ANALYSIS] Best AST: gswap_14(gsort_cols_asc(gswap_14(gsort_rows_asc(x))))
+    Input Grid:
+      [0, 2, 2, 0, 0, 0, 0]
+      [0, 0, 0, 0, 3, 0, 0]
+      [1, 1, 1, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0]
+      [0, 5, 5, 5, 5, 5, 5]
+      [0, 0, 0, 0, 0, 0, 0]
+      [6, 6, 6, 6, 6, 0, 0]
+      [0, 0, 0, 4, 4, 4, 4]
+      [0, 0, 0, 0, 0, 0, 0]
+      [8, 8, 8, 8, 8, 8, 8]
+    Expected Output:
+      [0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 3]
+      [0, 0, 0, 0, 0, 2, 2]
+      [0, 0, 0, 0, 1, 1, 1]
+      [0, 0, 0, 4, 4, 4, 4]
+      [0, 0, 6, 6, 6, 6, 6]
+      [0, 5, 5, 5, 5, 5, 5]
+      [8, 8, 8, 8, 8, 8, 8]
+    Actual output from AST:
+      [0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 4]
+      [0, 0, 0, 0, 0, 4, 2]
+      [0, 0, 0, 0, 4, 2, 3]
+      [0, 0, 0, 4, 1, 1, 1]
+      [0, 0, 5, 5, 5, 5, 5]
+      [0, 5, 6, 6, 6, 6, 6]
+      [8, 8, 8, 8, 8, 8, 8]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', 'X']
+      ['.', '.', '.', '.', '.', 'X', '.']
+      ['.', '.', '.', '.', 'X', 'X', 'X']
+      ['.', '.', '.', '.', 'X', 'X', 'X']
+      ['.', '.', 'X', 'X', 'X', 'X', 'X']
+      ['.', '.', 'X', 'X', 'X', 'X', 'X']
+      ['.', '.', '.', '.', '.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=23  ✗ unsolved=60  → active=8  ⏳ pending=309  done=83/400  success=27.7%  time=51.2s (avg=0.6s/completed)  straggler_max=51.2s
+  → [ 92] STARTING  834ec97d
+  ✗ [ 90/400] DONE      dae9d2b5                     evals=  5.3k train=0.75 test=0.71 (1.7s) → gframe6(ghalf_right(x))
+    [FAILURE ANALYSIS] Best AST: gframe6(ghalf_right(x))
+    Input Grid:
+      [4, 4, 0, 3, 3, 0]
+      [4, 0, 0, 3, 0, 0]
+      [0, 0, 0, 0, 0, 3]
+    Expected Output:
+      [6, 6, 0]
+      [6, 0, 0]
+      [0, 0, 6]
+    Actual output from AST:
+      [6, 6, 6]
+      [6, 0, 6]
+      [6, 6, 6]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', 'X']
+      ['.', '.', 'X']
+      ['X', 'X', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=23  ✗ unsolved=61  → active=8  ⏳ pending=308  done=84/400  success=27.4%  time=52.7s (avg=0.6s/completed)  straggler_max=52.7s
+  → [ 93] STARTING  67a423a3
+  ✗ [ 86/400] DONE      93b581b8                     evals=  5.3k train=0.72 test=0.75 (3.8s) → x
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=23  ✗ unsolved=62  → active=8  ⏳ pending=307  done=85/400  success=27.1%  time=52.8s (avg=0.6s/completed)  straggler_max=52.8s
+  → [ 94] STARTING  662c240a
+  ~ [ 91/400] DONE      fafffa47                     evals=  5.3k train=0.78 test=0.83 (2.4s) → gerode(g_remove_empty_rows(ginterior_only(gcrop_bo
+    [FAILURE ANALYSIS] Best AST: gerode(g_remove_empty_rows(ginterior_only(gcrop_bottom(gfill_ones(x)))))
+    Input Grid:
+      [0, 9, 9]
+      [0, 9, 9]
+      [9, 9, 9]
+      [0, 1, 0]
+      [0, 0, 1]
+      [1, 1, 1]
+    Expected Output:
+      [2, 0, 0]
+      [2, 0, 0]
+      [0, 0, 0]
+    Actual output from AST:
+      [0, 0, 0]
+      [0, 0, 0]
+      [0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['X', '.', '.']
+      ['X', '.', '.']
+      ['.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=23  ✗ unsolved=63  → active=8  ⏳ pending=306  done=86/400  success=26.7%  time=53.6s (avg=0.6s/completed)  straggler_max=53.6s
+  → [ 95] STARTING  b8cdaf2b
+  ~ [ 92/400] DONE      834ec97d                     evals=  5.3k train=0.81 test=0.88 (1.1s) → g_shift_down(x)
+    [FAILURE ANALYSIS] Best AST: g_shift_down(x)
+    Input Grid:
+      [0, 2, 0]
+      [0, 0, 0]
+      [0, 0, 0]
+    Expected Output:
+      [0, 4, 0]
+      [0, 2, 0]
+      [0, 0, 0]
+    Actual output from AST:
+      [0, 0, 0]
+      [0, 2, 0]
+      [0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', 'X', '.']
+      ['.', '.', '.']
+      ['.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=23  ✗ unsolved=64  → active=8  ⏳ pending=305  done=87/400  success=26.4%  time=53.8s (avg=0.6s/completed)  straggler_max=53.8s
+  → [ 96] STARTING  54d82841
+  ~ [ 93/400] DONE      67a423a3                     evals=  5.3k train=0.79 test=0.96 (1.8s) → x
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=23  ✗ unsolved=65  → active=8  ⏳ pending=304  done=88/400  success=26.1%  time=54.6s (avg=0.6s/completed)  straggler_max=54.6s
+  → [ 97] STARTING  99fa7670
+  ✗ [ 89/400] DONE      eb281b96                     evals=  5.3k train=0.57 test=0.24 (4.0s) → gtile2x2(gswap_14(g_repeat_v3(x)))
+    [FAILURE ANALYSIS] Best AST: gtile2x2(gswap_14(g_repeat_v3(x)))
+    Input Grid:
+      [0, 0, 8, 0, 0, 0, 8, 0, 0, 0, 8, 0, 0, 0, 8, 0, 0]
+      [0, 8, 0, 8, 0, 8, 0, 8, 0, 8, 0, 8, 0, 8, 0, 8, 0]
+      [8, 0, 0, 0, 8, 0, 0, 0, 8, 0, 0, 0, 8, 0, 0, 0, 8]
+    Expected Output:
+      [0, 0, 8, 0, 0, 0, 8, 0, 0, 0, 8, 0, 0, 0, 8, 0, 0]
+      [0, 8, 0, 8, 0, 8, 0, 8, 0, 8, 0, 8, 0, 8, 0, 8, 0]
+      [8, 0, 0, 0, 8, 0, 0, 0, 8, 0, 0, 0, 8, 0, 0, 0, 8]
+      [0, 8, 0, 8, 0, 8, 0, 8, 0, 8, 0, 8, 0, 8, 0, 8, 0]
+      [0, 0, 8, 0, 0, 0, 8, 0, 0, 0, 8, 0, 0, 0, 8, 0, 0]
+      [0, 8, 0, 8, 0, 8, 0, 8, 0, 8, 0, 8, 0, 8, 0, 8, 0]
+      [8, 0, 0, 0, 8, 0, 0, 0, 8, 0, 0, 0, 8, 0, 0, 0, 8]
+      [0, 8, 0, 8, 0, 8, 0, 8, 0, 8, 0, 8, 0, 8, 0, 8, 0]
+      [0, 0, 8, 0, 0, 0, 8, 0, 0, 0, 8, 0, 0, 0, 8, 0, 0]
+    Actual output from AST:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 8, 0, 8, 0, 8, 0, 8, 0, 8, 0, 8, 0, 8, 0, 8, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 8, 0, 8, 0, 8, 0, 8, 0, 8, 0, 8, 0, 8, 0, 8, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 8, 0, 8, 0, 8, 0, 8, 0, 8, 0, 8, 0, 8, 0, 8, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 8, 0, 8, 0, 8, 0, 8, 0, 8, 0, 8, 0, 8, 0, 8, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', 'X', '.', '.', '.', 'X', '.', '.', '.', 'X', '.', '.', '.', 'X', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['X', '.', '.', '.', 'X', '.', '.', '.', 'X', '.', '.', '.', 'X', '.', '.', '.', 'X']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', 'X', '.', '.', '.', 'X', '.', '.', '.', 'X', '.', '.', '.', 'X', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['X', '.', '.', '.', 'X', '.', '.', '.', 'X', '.', '.', '.', 'X', '.', '.', '.', 'X']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', 'X', '.', '.', '.', 'X', '.', '.', '.', 'X', '.', '.', '.', 'X', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=23  ✗ unsolved=66  → active=8  ⏳ pending=303  done=89/400  success=25.8%  time=54.6s (avg=0.6s/completed)  straggler_max=54.6s
+  → [ 98] STARTING  a740d043
+  ~ [ 88/400] DONE      dc1df850                     evals=  5.3k train=0.95 test=0.88 (4.6s) → g_overlay(x, gmod3(gmap_largest_cc(gmap_bounding_b
+    [FAILURE ANALYSIS] Best AST: g_overlay(x, gmod3(gmap_largest_cc(gmap_bounding_boxes(gswap_12(gdilate(g_replace_1_with_2(x)))))))
+    Input Grid:
+      [2, 0, 0, 0, 0]
+      [0, 0, 0, 2, 0]
+      [0, 0, 0, 0, 0]
+      [0, 6, 0, 0, 0]
+      [0, 0, 0, 0, 0]
+    Expected Output:
+      [2, 1, 1, 1, 1]
+      [1, 1, 1, 2, 1]
+      [0, 0, 1, 1, 1]
+      [0, 6, 0, 0, 0]
+      [0, 0, 0, 0, 0]
+    Actual output from AST:
+      [2, 1, 1, 1, 1]
+      [1, 1, 1, 2, 1]
+      [0, 0, 0, 1, 1]
+      [0, 6, 0, 0, 0]
+      [0, 0, 0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.']
+      ['.', '.', 'X', '.', '.']
+      ['.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=23  ✗ unsolved=67  → active=8  ⏳ pending=302  done=90/400  success=25.6%  time=54.6s (avg=0.6s/completed)  straggler_max=54.6s
+  → [ 99] STARTING  7447852a
+  ~ [ 95/400] DONE      b8cdaf2b                     evals=  5.3k train=0.90 test=0.94 (1.8s) → x
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=23  ✗ unsolved=68  → active=8  ⏳ pending=301  done=91/400  success=25.3%  time=55.6s (avg=0.6s/completed)  straggler_max=55.5s
+  → [100] STARTING  234bbc79
+  ✗ [ 98/400] DONE      a740d043                     evals=  5.3k train=0.46 test=0.25 (1.6s) → gsort_cols_asc(gcrop_border(gcrop_border(g_shift_r
+    [FAILURE ANALYSIS] Best AST: gsort_cols_asc(gcrop_border(gcrop_border(g_shift_right(x))))
+    Input Grid:
+      [1, 1, 1, 1, 1, 1, 1]
+      [1, 2, 2, 1, 1, 1, 1]
+      [1, 2, 2, 3, 1, 1, 1]
+      [1, 1, 1, 2, 1, 1, 1]
+      [1, 1, 1, 1, 1, 1, 1]
+    Expected Output:
+      [2, 2, 0]
+      [2, 2, 3]
+      [0, 0, 2]
+    Actual output from AST:
+      [2, 2, 3]
+    [DIFF MAP] (Expected vs Actual):
+      [Dimension Mismatch] Expected: 3x3, Actual: 1x3
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=23  ✗ unsolved=69  → active=8  ⏳ pending=300  done=92/400  success=25.0%  time=56.2s (avg=0.6s/completed)  straggler_max=56.2s
+  → [101] STARTING  bda2d7a6
+  ✗ [ 94/400] DONE      662c240a                     evals=  5.3k train=0.50 test=0.42 (3.2s) → g_replace_1_with_3(g_repeat_h3(gcheckerboard14(g_d
+    [FAILURE ANALYSIS] Best AST: g_replace_1_with_3(g_repeat_h3(gcheckerboard14(g_downscale_3x(x))))
+    Input Grid:
+      [8, 9, 8]
+      [9, 8, 8]
+      [8, 8, 8]
+      [2, 2, 1]
+      [2, 2, 1]
+      [1, 1, 2]
+      [4, 4, 4]
+      [4, 4, 3]
+      [3, 3, 3]
+    Expected Output:
+      [4, 4, 4]
+      [4, 4, 3]
+      [3, 3, 3]
+    Actual output from AST:
+      [3, 3, 3]
+      [4, 4, 4]
+      [3, 3, 3]
+    [DIFF MAP] (Expected vs Actual):
+      ['X', 'X', 'X']
+      ['.', '.', 'X']
+      ['.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=23  ✗ unsolved=70  → active=8  ⏳ pending=299  done=93/400  success=24.7%  time=56.8s (avg=0.6s/completed)  straggler_max=56.8s
+  → [102] STARTING  94f9d214
+  ~ [ 99/400] DONE      7447852a                     evals=  5.3k train=0.83 test=0.82 (2.2s) → gkeep_color2(x)
+    [FAILURE ANALYSIS] Best AST: gkeep_color2(x)
+    Input Grid:
+      [2, 0, 0, 0, 2, 0, 0, 0, 2, 0]
+      [0, 2, 0, 2, 0, 2, 0, 2, 0, 2]
+      [0, 0, 2, 0, 0, 0, 2, 0, 0, 0]
+    Expected Output:
+      [2, 0, 0, 0, 2, 4, 4, 4, 2, 0]
+      [4, 2, 0, 2, 0, 2, 4, 2, 0, 2]
+      [4, 4, 2, 0, 0, 0, 2, 0, 0, 0]
+    Actual output from AST:
+      [2, 0, 0, 0, 2, 0, 0, 0, 2, 0]
+      [0, 2, 0, 2, 0, 2, 0, 2, 0, 2]
+      [0, 0, 2, 0, 0, 0, 2, 0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.', '.', '.', 'X', 'X', 'X', '.', '.']
+      ['X', '.', '.', '.', '.', '.', 'X', '.', '.', '.']
+      ['X', 'X', '.', '.', '.', '.', '.', '.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=23  ✗ unsolved=71  → active=8  ⏳ pending=298  done=94/400  success=24.5%  time=57.8s (avg=0.6s/completed)  straggler_max=57.8s
+  → [103] STARTING  05269061
+  ✗ [ 97/400] DONE      99fa7670                     evals=  5.3k train=0.81 test=0.80 (3.3s) → x
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=23  ✗ unsolved=72  → active=8  ⏳ pending=297  done=95/400  success=24.2%  time=57.9s (avg=0.6s/completed)  straggler_max=57.9s
+  → [104] STARTING  08ed6ac7
+  ✗ [100/400] DONE      234bbc79                     evals=  5.3k train=0.81 test=0.72 (2.4s) → gmod5(g_remove_empty_cols(x))
+    [FAILURE ANALYSIS] Best AST: gmod5(g_remove_empty_cols(x))
+    Input Grid:
+      [0, 5, 0, 0, 0, 0, 0, 0, 0]
+      [2, 2, 0, 5, 1, 0, 5, 2, 2]
+      [0, 0, 0, 0, 5, 0, 0, 0, 0]
+    Expected Output:
+      [0, 2, 1, 1, 0, 0, 0]
+      [2, 2, 0, 1, 2, 2, 2]
+      [0, 0, 0, 0, 0, 0, 0]
+    Actual output from AST:
+      [0, 0, 0, 0, 0, 0, 0]
+      [2, 2, 0, 1, 0, 2, 2]
+      [0, 0, 0, 0, 0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', 'X', 'X', 'X', '.', '.', '.']
+      ['.', '.', '.', '.', 'X', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=23  ✗ unsolved=73  → active=8  ⏳ pending=296  done=96/400  success=24.0%  time=58.7s (avg=0.6s/completed)  straggler_max=58.7s
+  → [105] STARTING  23581191
+  ✗ [101/400] DONE      bda2d7a6                     evals=  5.3k train=0.74 test=0.46 (3.1s) → g_fg_to_least_common(gkeep_symmetric_h(gswap_03(x)
+    [FAILURE ANALYSIS] Best AST: g_fg_to_least_common(gkeep_symmetric_h(gswap_03(x)))
+    Input Grid:
+      [3, 3, 3, 3, 3, 3]
+      [3, 2, 2, 2, 2, 3]
+      [3, 2, 0, 0, 2, 3]
+      [3, 2, 0, 0, 2, 3]
+      [3, 2, 2, 2, 2, 3]
+      [3, 3, 3, 3, 3, 3]
+    Expected Output:
+      [0, 0, 0, 0, 0, 0]
+      [0, 3, 3, 3, 3, 0]
+      [0, 3, 2, 2, 3, 0]
+      [0, 3, 2, 2, 3, 0]
+      [0, 3, 3, 3, 3, 0]
+      [0, 0, 0, 0, 0, 0]
+    Actual output from AST:
+      [0, 0, 0, 0, 0, 0]
+      [0, 3, 3, 3, 3, 0]
+      [0, 3, 3, 3, 3, 0]
+      [0, 3, 3, 3, 3, 0]
+      [0, 3, 3, 3, 3, 0]
+      [0, 0, 0, 0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.']
+      ['.', '.', 'X', 'X', '.', '.']
+      ['.', '.', 'X', 'X', '.', '.']
+      ['.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=23  ✗ unsolved=74  → active=8  ⏳ pending=295  done=97/400  success=23.7%  time=59.9s (avg=0.6s/completed)  straggler_max=59.9s
+  → [106] STARTING  4258a5f9
+  ~ [102/400] DONE      94f9d214                     evals=  5.3k train=0.87 test=0.81 (2.2s) → gkeep_color9(gid(ghalf_top(x)))
+    [FAILURE ANALYSIS] Best AST: gkeep_color9(gid(ghalf_top(x)))
+    Input Grid:
+      [0, 0, 0, 0]
+      [0, 3, 3, 0]
+      [0, 0, 0, 0]
+      [3, 0, 0, 3]
+      [0, 0, 0, 1]
+      [1, 0, 1, 1]
+      [1, 1, 1, 1]
+      [0, 1, 0, 1]
+    Expected Output:
+      [2, 2, 2, 0]
+      [0, 0, 0, 0]
+      [0, 0, 0, 0]
+      [0, 0, 2, 0]
+    Actual output from AST:
+      [0, 0, 0, 0]
+      [0, 0, 0, 0]
+      [0, 0, 0, 0]
+      [0, 0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['X', 'X', 'X', '.']
+      ['.', '.', '.', '.']
+      ['.', '.', '.', '.']
+      ['.', '.', 'X', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=23  ✗ unsolved=75  → active=8  ⏳ pending=294  done=98/400  success=23.5%  time=60.0s (avg=0.6s/completed)  straggler_max=60.0s
+  → [107] STARTING  5614dbcf
+  ✗ [103/400] DONE      05269061                     evals=  5.3k train=0.57 test=0.63 (3.3s) → gdilate(gswap_04(ganti_diag2(x)))
+    [FAILURE ANALYSIS] Best AST: gdilate(gswap_04(ganti_diag2(x)))
+    Input Grid:
+      [2, 8, 3, 0, 0, 0, 0]
+      [8, 3, 0, 0, 0, 0, 0]
+      [3, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0]
+    Expected Output:
+      [2, 8, 3, 2, 8, 3, 2]
+      [8, 3, 2, 8, 3, 2, 8]
+      [3, 2, 8, 3, 2, 8, 3]
+      [2, 8, 3, 2, 8, 3, 2]
+      [8, 3, 2, 8, 3, 2, 8]
+      [3, 2, 8, 3, 2, 8, 3]
+      [2, 8, 3, 2, 8, 3, 2]
+    Actual output from AST:
+      [2, 8, 3, 4, 4, 4, 2]
+      [8, 3, 4, 4, 4, 2, 4]
+      [3, 4, 4, 4, 2, 4, 4]
+      [4, 4, 4, 2, 4, 4, 4]
+      [4, 4, 2, 4, 4, 4, 4]
+      [4, 2, 4, 4, 4, 4, 4]
+      [2, 4, 4, 4, 4, 4, 4]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.', 'X', 'X', 'X', '.']
+      ['.', '.', 'X', 'X', 'X', '.', 'X']
+      ['.', 'X', 'X', 'X', '.', 'X', 'X']
+      ['X', 'X', 'X', '.', 'X', 'X', 'X']
+      ['X', 'X', '.', 'X', 'X', 'X', 'X']
+      ['X', '.', 'X', 'X', 'X', 'X', 'X']
+      ['.', 'X', 'X', 'X', 'X', 'X', 'X']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=23  ✗ unsolved=76  → active=8  ⏳ pending=293  done=99/400  success=23.2%  time=61.2s (avg=0.6s/completed)  straggler_max=61.2s
+  → [108] STARTING  60b61512
+  ✓ [104/400] DONE      08ed6ac7                     evals=  5.3k train=1.00 test=1.00 (3.4s) → ggravity_down(g_unique_color_per_obj(x))
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=24  ✗ unsolved=76  → active=8  ⏳ pending=292  done=100/400  success=24.0%  time=62.1s (avg=0.6s/completed)  straggler_max=62.1s
+  → [109] STARTING  a61f2674
+  ~ [106/400] DONE      4258a5f9                     evals=  5.3k train=0.88 test=0.83 (2.7s) → gdilate(gmod2(gdilate(x)))
+    [FAILURE ANALYSIS] Best AST: gdilate(gmod2(gdilate(x)))
+    Input Grid:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 5, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 5, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 5, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    Expected Output:
+      [0, 0, 0, 0, 0, 1, 1, 1, 0]
+      [0, 0, 0, 0, 0, 1, 5, 1, 0]
+      [0, 0, 0, 0, 0, 1, 1, 1, 0]
+      [0, 0, 1, 1, 1, 0, 0, 0, 0]
+      [0, 0, 1, 5, 1, 0, 0, 0, 0]
+      [0, 0, 1, 1, 1, 0, 0, 0, 0]
+      [1, 1, 1, 0, 0, 0, 0, 0, 0]
+      [1, 5, 1, 0, 0, 0, 0, 0, 0]
+      [1, 1, 1, 0, 0, 0, 0, 0, 0]
+    Actual output from AST:
+      [0, 0, 0, 0, 0, 1, 1, 1, 0]
+      [0, 0, 0, 0, 1, 1, 1, 1, 1]
+      [0, 0, 0, 1, 0, 1, 1, 1, 0]
+      [0, 0, 1, 1, 1, 0, 1, 0, 0]
+      [0, 1, 1, 1, 1, 1, 0, 0, 0]
+      [0, 1, 1, 1, 1, 0, 0, 0, 0]
+      [1, 1, 1, 1, 0, 0, 0, 0, 0]
+      [1, 1, 1, 1, 0, 0, 0, 0, 0]
+      [1, 1, 1, 0, 0, 0, 0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', 'X', '.', 'X', '.', 'X']
+      ['.', '.', '.', 'X', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', 'X', '.', '.']
+      ['.', 'X', '.', 'X', '.', 'X', '.', '.', '.']
+      ['.', 'X', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', 'X', '.', '.', '.', '.', '.']
+      ['.', 'X', '.', 'X', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=24  ✗ unsolved=77  → active=8  ⏳ pending=291  done=101/400  success=23.8%  time=62.8s (avg=0.6s/completed)  straggler_max=62.7s
+  → [110] STARTING  b60334d2
+  ✓ [107/400] DONE      5614dbcf                     evals=  5.3k train=1.00 test=1.00 (2.4s) → g_downscale_3x(g_xor(x, gkeep_color5(x)))
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=25  ✗ unsolved=77  → active=8  ⏳ pending=290  done=102/400  success=24.5%  time=63.6s (avg=0.6s/completed)  straggler_max=63.5s
+  → [111] STARTING  ce22a75a
+  ~ [105/400] DONE      23581191                     evals=  5.3k train=0.98 test=0.98 (3.8s) → g_replace_1_with_2(g_render_object(gmajority(x), g
+    [FAILURE ANALYSIS] Best AST: g_replace_1_with_2(g_render_object(gmajority(x), gkeep_symmetric_v(g_xor(g_align_up(gcol_majority(g_center_v(x))), x))))
+    Input Grid:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 8, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 7, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    Expected Output:
+      [0, 0, 8, 0, 0, 0, 7, 0, 0]
+      [0, 0, 8, 0, 0, 0, 7, 0, 0]
+      [8, 8, 8, 8, 8, 8, 2, 8, 8]
+      [0, 0, 8, 0, 0, 0, 7, 0, 0]
+      [0, 0, 8, 0, 0, 0, 7, 0, 0]
+      [0, 0, 8, 0, 0, 0, 7, 0, 0]
+      [7, 7, 2, 7, 7, 7, 7, 7, 7]
+      [0, 0, 8, 0, 0, 0, 7, 0, 0]
+      [0, 0, 8, 0, 0, 0, 7, 0, 0]
+    Actual output from AST:
+      [0, 0, 8, 0, 0, 0, 7, 0, 0]
+      [0, 0, 8, 0, 0, 0, 7, 0, 0]
+      [8, 8, 8, 8, 8, 8, 8, 8, 8]
+      [0, 0, 8, 0, 0, 0, 7, 0, 0]
+      [0, 0, 8, 0, 0, 0, 7, 0, 0]
+      [0, 0, 8, 0, 0, 0, 7, 0, 0]
+      [7, 7, 7, 7, 7, 7, 7, 7, 7]
+      [0, 0, 8, 0, 0, 0, 7, 0, 0]
+      [0, 0, 8, 0, 0, 0, 7, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', 'X', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', 'X', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=25  ✗ unsolved=78  → active=8  ⏳ pending=289  done=103/400  success=24.3%  time=63.7s (avg=0.6s/completed)  straggler_max=63.7s
+  → [112] STARTING  6430c8c4
+  ~ [109/400] DONE      a61f2674                     evals=  5.3k train=0.90 test=0.92 (2.6s) → gtile_top_row(x)
+    [FAILURE ANALYSIS] Best AST: gtile_top_row(x)
+    Input Grid:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 5, 0, 0, 0, 0, 0, 0]
+      [0, 0, 5, 0, 0, 0, 5, 0, 0]
+      [5, 0, 5, 0, 0, 0, 5, 0, 0]
+      [5, 0, 5, 0, 0, 0, 5, 0, 0]
+      [5, 0, 5, 0, 5, 0, 5, 0, 0]
+      [5, 0, 5, 0, 5, 0, 5, 0, 5]
+      [5, 0, 5, 0, 5, 0, 5, 0, 5]
+      [5, 0, 5, 0, 5, 0, 5, 0, 5]
+    Expected Output:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 1, 0, 0, 0, 0, 0, 0]
+      [0, 0, 1, 0, 0, 0, 0, 0, 0]
+      [0, 0, 1, 0, 0, 0, 0, 0, 0]
+      [0, 0, 1, 0, 0, 0, 0, 0, 0]
+      [0, 0, 1, 0, 0, 0, 0, 0, 0]
+      [0, 0, 1, 0, 0, 0, 0, 0, 2]
+      [0, 0, 1, 0, 0, 0, 0, 0, 2]
+      [0, 0, 1, 0, 0, 0, 0, 0, 2]
+    Actual output from AST:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', 'X', '.', '.', '.', '.', '.', '.']
+      ['.', '.', 'X', '.', '.', '.', '.', '.', '.']
+      ['.', '.', 'X', '.', '.', '.', '.', '.', '.']
+      ['.', '.', 'X', '.', '.', '.', '.', '.', '.']
+      ['.', '.', 'X', '.', '.', '.', '.', '.', '.']
+      ['.', '.', 'X', '.', '.', '.', '.', '.', 'X']
+      ['.', '.', 'X', '.', '.', '.', '.', '.', 'X']
+      ['.', '.', 'X', '.', '.', '.', '.', '.', 'X']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=25  ✗ unsolved=79  → active=8  ⏳ pending=288  done=104/400  success=24.0%  time=65.3s (avg=0.6s/completed)  straggler_max=65.3s
+  → [113] STARTING  99b1bc43
+  ~ [108/400] DONE      60b61512                     evals=  5.3k train=0.95 test=0.92 (3.6s) → x
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=25  ✗ unsolved=80  → active=8  ⏳ pending=287  done=105/400  success=23.8%  time=65.6s (avg=0.6s/completed)  straggler_max=65.6s
+  → [114] STARTING  a87f7484
+  ~ [110/400] DONE      b60334d2                     evals=  5.3k train=0.87 test=0.85 (3.3s) → ghollow(gdilate(gmod2(x)))
+    [FAILURE ANALYSIS] Best AST: ghollow(gdilate(gmod2(x)))
+    Input Grid:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 5, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 5, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 5, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    Expected Output:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 5, 1, 5, 0, 0, 0, 0]
+      [0, 0, 1, 0, 1, 0, 0, 0, 0]
+      [0, 0, 5, 1, 5, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 5, 1, 5, 0]
+      [0, 0, 0, 0, 0, 1, 0, 1, 0]
+      [0, 5, 1, 5, 0, 5, 1, 5, 0]
+      [0, 1, 0, 1, 0, 0, 0, 0, 0]
+      [0, 5, 1, 5, 0, 0, 0, 0, 0]
+    Actual output from AST:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 1, 0, 0, 0, 0, 0]
+      [0, 0, 1, 0, 1, 0, 0, 0, 0]
+      [0, 0, 0, 1, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 1, 0, 0]
+      [0, 0, 0, 0, 0, 1, 0, 1, 0]
+      [0, 0, 1, 0, 0, 0, 1, 0, 0]
+      [0, 1, 0, 1, 0, 0, 0, 0, 0]
+      [0, 0, 1, 0, 0, 0, 0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', 'X', '.', 'X', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', 'X', '.', 'X', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', 'X', '.', 'X', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', 'X', '.', 'X', '.', 'X', '.', 'X', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', 'X', '.', 'X', '.', '.', '.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=25  ✗ unsolved=81  → active=8  ⏳ pending=286  done=106/400  success=23.6%  time=66.9s (avg=0.6s/completed)  straggler_max=66.9s
+  → [115] STARTING  ce4f8723
+  ~ [112/400] DONE      6430c8c4                     evals=  5.3k train=0.79 test=0.86 (2.4s) → gmin_color(gmap_reflect_v(ghalf_top(x)))
+    [FAILURE ANALYSIS] Best AST: gmin_color(gmap_reflect_v(ghalf_top(x)))
+    Input Grid:
+      [7, 7, 0, 7]
+      [0, 7, 7, 0]
+      [0, 7, 7, 7]
+      [0, 7, 7, 0]
+      [4, 4, 4, 4]
+      [0, 0, 0, 0]
+      [0, 2, 0, 2]
+      [2, 2, 2, 0]
+      [2, 0, 0, 2]
+    Expected Output:
+      [0, 0, 3, 0]
+      [3, 0, 0, 0]
+      [0, 0, 0, 0]
+      [0, 0, 0, 0]
+    Actual output from AST:
+      [0, 0, 0, 0]
+      [0, 0, 0, 0]
+      [0, 0, 0, 0]
+      [0, 0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', 'X', '.']
+      ['X', '.', '.', '.']
+      ['.', '.', '.', '.']
+      ['.', '.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=25  ✗ unsolved=82  → active=8  ⏳ pending=285  done=107/400  success=23.4%  time=67.7s (avg=0.6s/completed)  straggler_max=67.7s
+  → [116] STARTING  d406998b
+  ✗ [113/400] DONE      99b1bc43                     evals=  5.3k train=0.71 test=0.72 (2.5s) → gswap_03(ggravity_up(ghalf_top(gcheckerboard03(x))
+    [FAILURE ANALYSIS] Best AST: gswap_03(ggravity_up(ghalf_top(gcheckerboard03(x))))
+    Input Grid:
+      [0, 1, 0, 1]
+      [0, 0, 0, 1]
+      [1, 0, 1, 0]
+      [0, 0, 0, 1]
+      [4, 4, 4, 4]
+      [0, 2, 0, 2]
+      [0, 0, 0, 2]
+      [2, 0, 0, 2]
+      [2, 2, 2, 0]
+    Expected Output:
+      [0, 0, 0, 0]
+      [0, 0, 0, 0]
+      [0, 0, 3, 3]
+      [3, 3, 3, 3]
+    Actual output from AST:
+      [0, 0, 0, 0]
+      [0, 0, 0, 0]
+      [3, 3, 3, 3]
+      [3, 3, 3, 3]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.', '.']
+      ['.', '.', '.', '.']
+      ['X', 'X', '.', '.']
+      ['.', '.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=25  ✗ unsolved=83  → active=8  ⏳ pending=284  done=108/400  success=23.1%  time=68.1s (avg=0.6s/completed)  straggler_max=68.1s
+  → [117] STARTING  794b24be
+  ✗ [114/400] DONE      a87f7484                     evals=  5.3k train=0.66 test=0.21 (2.1s) → gtile_top_row(g_extract_objects(x))
+    [FAILURE ANALYSIS] Best AST: gtile_top_row(g_extract_objects(x))
+    Input Grid:
+      [6, 0, 6]
+      [0, 6, 6]
+      [6, 0, 6]
+      [4, 0, 4]
+      [0, 4, 4]
+      [4, 0, 4]
+      [8, 8, 8]
+      [8, 0, 8]
+      [8, 8, 8]
+    Expected Output:
+      [8, 8, 8]
+      [8, 0, 8]
+      [8, 8, 8]
+    Actual output from AST:
+      [8, 8, 8]
+      [8, 8, 8]
+      [8, 8, 8]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.']
+      ['.', 'X', '.']
+      ['.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=25  ✗ unsolved=84  → active=8  ⏳ pending=283  done=109/400  success=22.9%  time=69.0s (avg=0.6s/completed)  straggler_max=69.0s
+  → [118] STARTING  f2829549
+  ~ [111/400] DONE      ce22a75a                     evals=  5.3k train=0.94 test=0.94 (5.5s) → g_replace_3_with_2(gmod4(gdilate(gdilate(x))))
+    [FAILURE ANALYSIS] Best AST: g_replace_3_with_2(gmod4(gdilate(gdilate(x))))
+    Input Grid:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 5, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 5, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 5, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    Expected Output:
+      [1, 1, 1, 0, 0, 0, 0, 0, 0]
+      [1, 1, 1, 0, 0, 0, 0, 0, 0]
+      [1, 1, 1, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 1, 1, 1, 0, 0, 0]
+      [0, 0, 0, 1, 1, 1, 0, 0, 0]
+      [0, 0, 0, 1, 1, 1, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 1, 1, 1]
+      [0, 0, 0, 0, 0, 0, 1, 1, 1]
+      [0, 0, 0, 0, 0, 0, 1, 1, 1]
+    Actual output from AST:
+      [1, 1, 1, 0, 0, 0, 0, 0, 0]
+      [1, 1, 1, 1, 0, 0, 0, 0, 0]
+      [1, 1, 1, 0, 1, 0, 0, 0, 0]
+      [0, 1, 0, 1, 1, 1, 0, 0, 0]
+      [0, 0, 1, 1, 1, 1, 1, 0, 0]
+      [0, 0, 0, 1, 1, 1, 0, 1, 0]
+      [0, 0, 0, 0, 1, 0, 1, 1, 1]
+      [0, 0, 0, 0, 0, 1, 1, 1, 1]
+      [0, 0, 0, 0, 0, 0, 1, 1, 1]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', 'X', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', 'X', '.', '.', '.', '.']
+      ['.', 'X', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', 'X', '.', '.', '.', 'X', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', 'X', '.']
+      ['.', '.', '.', '.', 'X', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', 'X', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=25  ✗ unsolved=85  → active=8  ⏳ pending=282  done=110/400  success=22.7%  time=69.2s (avg=0.6s/completed)  straggler_max=69.2s
+  → [119] STARTING  760b3cac
+  ✓ [ 18/400] DONE      c59eb873                     evals=  5.3k train=1.00 test=1.00 (62.7s) → g_scale_2x(x)
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=85  → active=8  ⏳ pending=281  done=111/400  success=23.4%  time=70.3s (avg=0.6s/completed)  straggler_max=70.3s
+  → [120] STARTING  77fdfe62
+  ~ [117/400] DONE      794b24be                     evals=  5.3k train=0.92 test=0.83 (2.4s) → gsort_rows_desc(ggravity_up(g_replace_1_with_2(x))
+    [FAILURE ANALYSIS] Best AST: gsort_rows_desc(ggravity_up(g_replace_1_with_2(x)))
+    Input Grid:
+      [0, 0, 0]
+      [1, 0, 0]
+      [0, 0, 0]
+    Expected Output:
+      [2, 0, 0]
+      [0, 0, 0]
+      [0, 0, 0]
+    Actual output from AST:
+      [2, 0, 0]
+      [0, 0, 0]
+      [0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.']
+      ['.', '.', '.']
+      ['.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=86  → active=8  ⏳ pending=280  done=112/400  success=23.2%  time=71.4s (avg=0.6s/completed)  straggler_max=71.4s
+  → [121] STARTING  aba27056
+  ~ [119/400] DONE      760b3cac                     evals=  5.3k train=0.93 test=0.93 (2.4s) → x
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=87  → active=8  ⏳ pending=279  done=113/400  success=23.0%  time=72.7s (avg=0.6s/completed)  straggler_max=72.7s
+  → [122] STARTING  d10ecb37
+  ~ [115/400] DONE      ce4f8723                     evals=  5.3k train=0.89 test=0.81 (5.3s) → gswap_14(ghalf_top(g_replace_1_with_3(ganti_diag1(
+    [FAILURE ANALYSIS] Best AST: gswap_14(ghalf_top(g_replace_1_with_3(ganti_diag1(x))))
+    Input Grid:
+      [1, 1, 0, 0]
+      [0, 1, 0, 1]
+      [0, 1, 0, 0]
+      [1, 0, 1, 0]
+      [4, 4, 4, 4]
+      [2, 2, 2, 2]
+      [0, 0, 2, 2]
+      [2, 2, 0, 0]
+      [0, 0, 2, 2]
+    Expected Output:
+      [3, 3, 3, 3]
+      [0, 3, 3, 3]
+      [3, 3, 0, 0]
+      [3, 0, 3, 3]
+    Actual output from AST:
+      [3, 3, 0, 3]
+      [0, 3, 3, 3]
+      [0, 3, 0, 0]
+      [3, 0, 3, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', 'X', '.']
+      ['.', '.', '.', '.']
+      ['X', '.', '.', '.']
+      ['.', '.', '.', 'X']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=88  → active=8  ⏳ pending=278  done=114/400  success=22.8%  time=73.1s (avg=0.6s/completed)  straggler_max=73.1s
+  → [123] STARTING  a65b410d
+  ~ [116/400] DONE      d406998b                     evals=  5.3k train=0.87 test=0.87 (6.1s) → gswap_12(x)
+    [FAILURE ANALYSIS] Best AST: gswap_12(x)
+    Input Grid:
+      [5, 0, 5, 0, 0, 5, 0, 0, 0, 5]
+      [0, 5, 0, 0, 5, 0, 0, 5, 0, 0]
+      [0, 0, 0, 5, 0, 0, 5, 0, 5, 0]
+    Expected Output:
+      [5, 0, 5, 0, 0, 3, 0, 0, 0, 3]
+      [0, 3, 0, 0, 5, 0, 0, 3, 0, 0]
+      [0, 0, 0, 3, 0, 0, 5, 0, 5, 0]
+    Actual output from AST:
+      [5, 0, 5, 0, 0, 5, 0, 0, 0, 5]
+      [0, 5, 0, 0, 5, 0, 0, 5, 0, 0]
+      [0, 0, 0, 5, 0, 0, 5, 0, 5, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.', '.', '.', 'X', '.', '.', '.', 'X']
+      ['.', 'X', '.', '.', '.', '.', '.', 'X', '.', '.']
+      ['.', '.', '.', 'X', '.', '.', '.', '.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=89  → active=8  ⏳ pending=277  done=115/400  success=22.6%  time=74.2s (avg=0.6s/completed)  straggler_max=74.2s
+  → [124] STARTING  54d9e175
+  ✗ [121/400] DONE      aba27056                     evals=  5.3k train=0.76 test=0.74 (1.7s) → gswap_04(x)
+    [FAILURE ANALYSIS] Best AST: gswap_04(x)
+    Input Grid:
+      [0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0]
+      [0, 6, 6, 0, 6, 6, 0]
+      [0, 6, 0, 0, 0, 6, 0]
+      [0, 6, 6, 6, 6, 6, 0]
+    Expected Output:
+      [0, 0, 0, 4, 0, 0, 0]
+      [4, 0, 0, 4, 0, 0, 4]
+      [0, 4, 0, 4, 0, 4, 0]
+      [0, 0, 4, 4, 4, 0, 0]
+      [0, 6, 6, 4, 6, 6, 0]
+      [0, 6, 4, 4, 4, 6, 0]
+      [0, 6, 6, 6, 6, 6, 0]
+    Actual output from AST:
+      [4, 4, 4, 4, 4, 4, 4]
+      [4, 4, 4, 4, 4, 4, 4]
+      [4, 4, 4, 4, 4, 4, 4]
+      [4, 4, 4, 4, 4, 4, 4]
+      [4, 6, 6, 4, 6, 6, 4]
+      [4, 6, 4, 4, 4, 6, 4]
+      [4, 6, 6, 6, 6, 6, 4]
+    [DIFF MAP] (Expected vs Actual):
+      ['X', 'X', 'X', '.', 'X', 'X', 'X']
+      ['.', 'X', 'X', '.', 'X', 'X', '.']
+      ['X', '.', 'X', '.', 'X', '.', 'X']
+      ['X', 'X', '.', '.', '.', 'X', 'X']
+      ['X', '.', '.', '.', '.', '.', 'X']
+      ['X', '.', '.', '.', '.', '.', 'X']
+      ['X', '.', '.', '.', '.', '.', 'X']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=90  → active=8  ⏳ pending=276  done=116/400  success=22.4%  time=74.4s (avg=0.6s/completed)  straggler_max=74.4s
+  → [125] STARTING  025d127b
+  ✗ [122/400] DONE      d10ecb37                     evals=  5.3k train=0.65 test=0.19 (2.0s) → g_downscale_3x(gtile2x2(x))
+    [FAILURE ANALYSIS] Best AST: g_downscale_3x(gtile2x2(x))
+    Input Grid:
+      [4, 3, 6, 4, 0, 6]
+      [6, 0, 0, 3, 3, 4]
+      [6, 4, 4, 3, 3, 0]
+      [0, 3, 6, 0, 4, 6]
+      [0, 6, 3, 0, 4, 3]
+      [3, 4, 4, 6, 6, 0]
+    Expected Output:
+      [4, 3]
+      [6, 0]
+    Actual output from AST:
+      [4, 3]
+      [6, 6]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.']
+      ['.', 'X']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=91  → active=8  ⏳ pending=275  done=117/400  success=22.2%  time=75.1s (avg=0.6s/completed)  straggler_max=75.1s
+  → [126] STARTING  1bfc4729
+  ✗ [120/400] DONE      77fdfe62                     evals=  5.3k train=0.41 test=0.21 (3.7s) → g_downscale_2x(gkeep_color6(x))
+    [FAILURE ANALYSIS] Best AST: g_downscale_2x(gkeep_color6(x))
+    Input Grid:
+      [2, 1, 0, 0, 0, 0, 1, 3]
+      [1, 1, 1, 1, 1, 1, 1, 1]
+      [0, 1, 0, 8, 0, 0, 1, 0]
+      [0, 1, 8, 8, 0, 8, 1, 0]
+      [0, 1, 0, 0, 8, 0, 1, 0]
+      [0, 1, 8, 0, 8, 8, 1, 0]
+      [1, 1, 1, 1, 1, 1, 1, 1]
+      [4, 1, 0, 0, 0, 0, 1, 6]
+    Expected Output:
+      [0, 2, 0, 0]
+      [2, 2, 0, 3]
+      [0, 0, 6, 0]
+      [4, 0, 6, 6]
+    Actual output from AST:
+      [0, 0, 0, 0]
+      [0, 0, 0, 0]
+      [0, 0, 0, 0]
+      [0, 0, 0, 6]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', 'X', '.', '.']
+      ['X', 'X', '.', 'X']
+      ['.', '.', 'X', '.']
+      ['X', '.', 'X', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=92  → active=8  ⏳ pending=274  done=118/400  success=22.0%  time=75.1s (avg=0.6s/completed)  straggler_max=75.1s
+  → [127] STARTING  2013d3e2
+  ✗ [123/400] DONE      a65b410d                     evals=  5.3k train=0.80 test=0.79 (2.4s) → x
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=93  → active=8  ⏳ pending=273  done=119/400  success=21.8%  time=76.6s (avg=0.6s/completed)  straggler_max=76.6s
+  → [128] STARTING  321b1fc6
+  ~ [125/400] DONE      025d127b                     evals=  5.3k train=0.97 test=0.98 (2.3s) → g_shift_right(g_replace_3_with_1(x))
+    [FAILURE ANALYSIS] Best AST: g_shift_right(g_replace_3_with_1(x))
+    Input Grid:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 6, 6, 6, 0, 0, 0, 0, 0]
+      [0, 6, 0, 0, 6, 0, 0, 0, 0]
+      [0, 0, 6, 0, 0, 6, 0, 0, 0]
+      [0, 0, 0, 6, 0, 0, 6, 0, 0]
+      [0, 0, 0, 0, 6, 6, 6, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 2, 2, 2, 0, 0, 0, 0]
+      [0, 0, 2, 0, 0, 2, 0, 0, 0]
+      [0, 0, 0, 2, 2, 2, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    Expected Output:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 6, 6, 6, 0, 0, 0, 0]
+      [0, 0, 6, 0, 0, 6, 0, 0, 0]
+      [0, 0, 0, 6, 0, 0, 6, 0, 0]
+      [0, 0, 0, 0, 6, 0, 6, 0, 0]
+      [0, 0, 0, 0, 6, 6, 6, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 2, 2, 2, 0, 0, 0]
+      [0, 0, 0, 2, 0, 2, 0, 0, 0]
+      [0, 0, 0, 2, 2, 2, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    Actual output from AST:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 6, 6, 6, 0, 0, 0, 0]
+      [0, 0, 6, 0, 0, 6, 0, 0, 0]
+      [0, 0, 0, 6, 0, 0, 6, 0, 0]
+      [0, 0, 0, 0, 6, 0, 0, 6, 0]
+      [0, 0, 0, 0, 0, 6, 6, 6, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 2, 2, 2, 0, 0, 0]
+      [0, 0, 0, 2, 0, 0, 2, 0, 0]
+      [0, 0, 0, 0, 2, 2, 2, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', 'X', 'X', '.']
+      ['.', '.', '.', '.', 'X', '.', '.', 'X', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', 'X', 'X', '.', '.']
+      ['.', '.', '.', 'X', '.', '.', 'X', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=94  → active=8  ⏳ pending=272  done=120/400  success=21.7%  time=77.4s (avg=0.6s/completed)  straggler_max=77.4s
+  → [129] STARTING  53b68214
+  ✗ [126/400] DONE      1bfc4729                     evals=  5.3k train=0.80 test=0.73 (2.5s) → gframe1(gmajority(x))
+    [FAILURE ANALYSIS] Best AST: gframe1(gmajority(x))
+    Input Grid:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 6, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 7, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    Expected Output:
+      [6, 6, 6, 6, 6, 6, 6, 6, 6, 6]
+      [6, 0, 0, 0, 0, 0, 0, 0, 0, 6]
+      [6, 6, 6, 6, 6, 6, 6, 6, 6, 6]
+      [6, 0, 0, 0, 0, 0, 0, 0, 0, 6]
+      [6, 0, 0, 0, 0, 0, 0, 0, 0, 6]
+      [7, 0, 0, 0, 0, 0, 0, 0, 0, 7]
+      [7, 0, 0, 0, 0, 0, 0, 0, 0, 7]
+      [7, 7, 7, 7, 7, 7, 7, 7, 7, 7]
+      [7, 0, 0, 0, 0, 0, 0, 0, 0, 7]
+      [7, 7, 7, 7, 7, 7, 7, 7, 7, 7]
+    Actual output from AST:
+      [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+      [1, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+      [1, 6, 6, 6, 6, 6, 6, 6, 6, 1]
+      [1, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+      [1, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+      [1, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+      [1, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+      [1, 7, 7, 7, 7, 7, 7, 7, 7, 1]
+      [1, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+      [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+    [DIFF MAP] (Expected vs Actual):
+      ['X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X']
+      ['X', '.', '.', '.', '.', '.', '.', '.', '.', 'X']
+      ['X', '.', '.', '.', '.', '.', '.', '.', '.', 'X']
+      ['X', '.', '.', '.', '.', '.', '.', '.', '.', 'X']
+      ['X', '.', '.', '.', '.', '.', '.', '.', '.', 'X']
+      ['X', '.', '.', '.', '.', '.', '.', '.', '.', 'X']
+      ['X', '.', '.', '.', '.', '.', '.', '.', '.', 'X']
+      ['X', '.', '.', '.', '.', '.', '.', '.', '.', 'X']
+      ['X', '.', '.', '.', '.', '.', '.', '.', '.', 'X']
+      ['X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=95  → active=8  ⏳ pending=271  done=121/400  success=21.5%  time=77.7s (avg=0.6s/completed)  straggler_max=77.7s
+  → [130] STARTING  694f12f3
+  ✗ [124/400] DONE      54d9e175                     evals=  5.3k train=0.52 test=0.52 (3.3s) → gdilate(gframe6(x))
+    [FAILURE ANALYSIS] Best AST: gdilate(gframe6(x))
+    Input Grid:
+      [0, 0, 0, 5, 0, 0, 0, 5, 0, 0, 0]
+      [0, 1, 0, 5, 0, 2, 0, 5, 0, 1, 0]
+      [0, 0, 0, 5, 0, 0, 0, 5, 0, 0, 0]
+    Expected Output:
+      [6, 6, 6, 5, 7, 7, 7, 5, 6, 6, 6]
+      [6, 6, 6, 5, 7, 7, 7, 5, 6, 6, 6]
+      [6, 6, 6, 5, 7, 7, 7, 5, 6, 6, 6]
+    Actual output from AST:
+      [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6]
+      [6, 1, 6, 5, 6, 2, 6, 5, 6, 1, 6]
+      [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.', 'X', 'X', 'X', 'X', 'X', '.', '.', '.']
+      ['.', 'X', '.', '.', 'X', 'X', 'X', '.', '.', 'X', '.']
+      ['.', '.', '.', 'X', 'X', 'X', 'X', 'X', '.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=96  → active=8  ⏳ pending=270  done=122/400  success=21.3%  time=77.7s (avg=0.6s/completed)  straggler_max=77.7s
+  → [131] STARTING  6c434453
+  ✗ [118/400] DONE      f2829549                     evals=  5.3k train=0.75 test=0.50 (8.9s) → ggravity_down(gkeep_symmetric_h(g_diff(g_extract_o
+    [FAILURE ANALYSIS] Best AST: ggravity_down(gkeep_symmetric_h(g_diff(g_extract_objects(gmap_bounding_boxes(gswap_03(x))), x)))
+    Input Grid:
+      [7, 7, 0, 1, 5, 0, 0]
+      [7, 0, 0, 1, 5, 0, 0]
+      [0, 0, 0, 1, 5, 0, 5]
+      [0, 0, 0, 1, 5, 5, 0]
+    Expected Output:
+      [0, 0, 3]
+      [0, 3, 3]
+      [0, 3, 0]
+      [0, 0, 3]
+    Actual output from AST:
+      [0, 0, 0]
+      [0, 0, 0]
+      [0, 0, 0]
+      [0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', 'X']
+      ['.', 'X', 'X']
+      ['.', 'X', '.']
+      ['.', '.', 'X']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=97  → active=8  ⏳ pending=269  done=123/400  success=21.1%  time=78.1s (avg=0.6s/completed)  straggler_max=78.1s
+  → [132] STARTING  6e19193c
+  ✗ [127/400] DONE      2013d3e2                     evals=  5.3k train=0.75 test=0.50 (2.6s) → gswap_13(g_shift_right(g_downscale_3x(grefl_h(gant
+    [FAILURE ANALYSIS] Best AST: gswap_13(g_shift_right(g_downscale_3x(grefl_h(ganti_trsp(x)))))
+    Input Grid:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 7, 7, 0, 0, 0, 0]
+      [0, 0, 0, 6, 8, 8, 6, 0, 0, 0]
+      [0, 0, 7, 8, 4, 4, 8, 7, 0, 0]
+      [0, 0, 7, 8, 4, 4, 8, 7, 0, 0]
+      [0, 0, 0, 6, 8, 8, 6, 0, 0, 0]
+      [0, 0, 0, 0, 7, 7, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    Expected Output:
+      [0, 0, 7]
+      [0, 6, 8]
+      [7, 8, 4]
+    Actual output from AST:
+      [0, 0, 7]
+      [0, 7, 8]
+      [0, 0, 8]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.']
+      ['.', 'X', '.']
+      ['X', 'X', 'X']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=98  → active=8  ⏳ pending=268  done=124/400  success=21.0%  time=79.1s (avg=0.6s/completed)  straggler_max=79.1s
+  → [133] STARTING  8d510a79
+  ~ [130/400] DONE      694f12f3                     evals=  5.3k train=0.91 test=0.85 (2.1s) → x
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=99  → active=8  ⏳ pending=267  done=125/400  success=20.8%  time=79.9s (avg=0.6s/completed)  straggler_max=79.8s
+  → [134] STARTING  a48eeaf7
+  ✗ [129/400] DONE      53b68214                     evals=  5.3k train=0.47 test=0.57 (2.9s) → g_repeat_v(x)
+    [FAILURE ANALYSIS] Best AST: g_repeat_v(x)
+    Input Grid:
+      [1, 1, 1, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 1, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 1, 1, 1, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 1, 1, 1, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
+    Expected Output:
+      [1, 1, 1, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 1, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 1, 1, 1, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 1, 1, 1, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 1, 1, 1, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 1, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 1, 1]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    Actual output from AST:
+      [1, 1, 1, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 1, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 1, 1, 1, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 1, 1, 1, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
+      [1, 1, 1, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 1, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 1, 1, 1, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 1, 1, 1, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 1, 0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      [Dimension Mismatch] Expected: 10x10, Actual: 12x10
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=100  → active=8  ⏳ pending=266  done=126/400  success=20.6%  time=80.6s (avg=0.6s/completed)  straggler_max=80.6s
+  → [135] STARTING  b6afb2da
+  ✗ [128/400] DONE      321b1fc6                     evals=  5.3k train=0.90 test=0.77 (3.6s) → gtile_left_col(x)
+    [FAILURE ANALYSIS] Best AST: gtile_left_col(x)
+    Input Grid:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 7, 6, 0, 0, 0, 0, 0, 0, 0]
+      [0, 9, 4, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 8, 8, 0, 0, 0]
+      [0, 0, 0, 0, 0, 8, 8, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 8, 8, 0, 0, 0, 0, 0, 0]
+      [0, 0, 8, 8, 0, 0, 0, 0, 8, 8]
+      [0, 0, 0, 0, 0, 0, 0, 0, 8, 8]
+    Expected Output:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 7, 6, 0, 0, 0]
+      [0, 0, 0, 0, 0, 9, 4, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 7, 6, 0, 0, 0, 0, 0, 0]
+      [0, 0, 9, 4, 0, 0, 0, 0, 7, 6]
+      [0, 0, 0, 0, 0, 0, 0, 0, 9, 4]
+    Actual output from AST:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', 'X', 'X', '.', '.', '.']
+      ['.', '.', '.', '.', '.', 'X', 'X', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', 'X', 'X', '.', '.', '.', '.', '.', '.']
+      ['.', '.', 'X', 'X', '.', '.', '.', '.', 'X', 'X']
+      ['.', '.', '.', '.', '.', '.', '.', '.', 'X', 'X']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=101  → active=8  ⏳ pending=265  done=127/400  success=20.5%  time=81.0s (avg=0.6s/completed)  straggler_max=80.9s
+  → [136] STARTING  bb43febb
+  ~ [134/400] DONE      a48eeaf7                     evals=  5.3k train=0.95 test=0.94 (2.2s) → x
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=102  → active=8  ⏳ pending=264  done=128/400  success=20.3%  time=82.8s (avg=0.6s/completed)  straggler_max=82.8s
+  → [137] STARTING  d364b489
+  ~ [133/400] DONE      8d510a79                     evals=  5.3k train=0.91 test=0.90 (3.3s) → x
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=103  → active=8  ⏳ pending=263  done=129/400  success=20.2%  time=83.1s (avg=0.6s/completed)  straggler_max=83.1s
+  → [138] STARTING  d4f3cd78
+  ~ [135/400] DONE      b6afb2da                     evals=  5.3k train=0.83 test=0.85 (3.9s) → gswap_24(gmod3(x))
+    [FAILURE ANALYSIS] Best AST: gswap_24(gmod3(x))
+    Input Grid:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 5, 5, 5, 5, 0, 0, 0, 0, 0]
+      [0, 5, 5, 5, 5, 0, 0, 0, 0, 0]
+      [0, 5, 5, 5, 5, 0, 0, 0, 0, 0]
+      [0, 5, 5, 5, 5, 0, 5, 5, 5, 5]
+      [0, 0, 0, 0, 0, 0, 5, 5, 5, 5]
+      [0, 0, 0, 0, 0, 0, 5, 5, 5, 5]
+      [0, 0, 0, 0, 0, 0, 5, 5, 5, 5]
+      [0, 0, 0, 0, 0, 0, 5, 5, 5, 5]
+    Expected Output:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 1, 4, 4, 1, 0, 0, 0, 0, 0]
+      [0, 4, 2, 2, 4, 0, 0, 0, 0, 0]
+      [0, 4, 2, 2, 4, 0, 0, 0, 0, 0]
+      [0, 1, 4, 4, 1, 0, 1, 4, 4, 1]
+      [0, 0, 0, 0, 0, 0, 4, 2, 2, 4]
+      [0, 0, 0, 0, 0, 0, 4, 2, 2, 4]
+      [0, 0, 0, 0, 0, 0, 4, 2, 2, 4]
+      [0, 0, 0, 0, 0, 0, 1, 4, 4, 1]
+    Actual output from AST:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 4, 4, 4, 4, 0, 0, 0, 0, 0]
+      [0, 4, 4, 4, 4, 0, 0, 0, 0, 0]
+      [0, 4, 4, 4, 4, 0, 0, 0, 0, 0]
+      [0, 4, 4, 4, 4, 0, 4, 4, 4, 4]
+      [0, 0, 0, 0, 0, 0, 4, 4, 4, 4]
+      [0, 0, 0, 0, 0, 0, 4, 4, 4, 4]
+      [0, 0, 0, 0, 0, 0, 4, 4, 4, 4]
+      [0, 0, 0, 0, 0, 0, 4, 4, 4, 4]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', 'X', '.', '.', 'X', '.', '.', '.', '.', '.']
+      ['.', '.', 'X', 'X', '.', '.', '.', '.', '.', '.']
+      ['.', '.', 'X', 'X', '.', '.', '.', '.', '.', '.']
+      ['.', 'X', '.', '.', 'X', '.', 'X', '.', '.', 'X']
+      ['.', '.', '.', '.', '.', '.', '.', 'X', 'X', '.']
+      ['.', '.', '.', '.', '.', '.', '.', 'X', 'X', '.']
+      ['.', '.', '.', '.', '.', '.', '.', 'X', 'X', '.']
+      ['.', '.', '.', '.', '.', '.', 'X', '.', '.', 'X']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=104  → active=8  ⏳ pending=262  done=130/400  success=20.0%  time=84.8s (avg=0.7s/completed)  straggler_max=84.8s
+  → [139] STARTING  d9f24cd1
+  ~ [137/400] DONE      d364b489                     evals=  5.3k train=0.86 test=0.83 (2.2s) → x
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=105  → active=8  ⏳ pending=261  done=131/400  success=19.8%  time=85.3s (avg=0.7s/completed)  straggler_max=85.3s
+  → [140] STARTING  e76a88a6
+  ~ [138/400] DONE      d4f3cd78                     evals=  5.3k train=0.86 test=0.88 (1.8s) → x
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=106  → active=8  ⏳ pending=260  done=132/400  success=19.7%  time=86.7s (avg=0.7s/completed)  straggler_max=86.7s
+  → [141] STARTING  e9614598
+  ~ [136/400] DONE      bb43febb                     evals=  5.3k train=0.90 test=0.82 (4.6s) → x
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=107  → active=8  ⏳ pending=259  done=133/400  success=19.5%  time=87.4s (avg=0.7s/completed)  straggler_max=87.4s
+  → [142] STARTING  28bf18c6
+  ~ [139/400] DONE      d9f24cd1                     evals=  5.3k train=0.93 test=0.82 (2.7s) → gswap_13(g_overlay(x, gkeep_square(gcol_majority(g
+    [FAILURE ANALYSIS] Best AST: gswap_13(g_overlay(x, gkeep_square(gcol_majority(gkeep_color2(x)))))
+    Input Grid:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 5, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 5, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 2, 0, 0, 2, 0, 2, 0, 0, 0]
+    Expected Output:
+      [0, 2, 0, 0, 2, 0, 0, 2, 0, 0]
+      [0, 2, 0, 0, 2, 0, 0, 2, 0, 0]
+      [0, 2, 0, 0, 2, 0, 0, 2, 0, 0]
+      [0, 2, 0, 0, 2, 0, 5, 2, 0, 0]
+      [0, 2, 0, 0, 2, 0, 2, 2, 0, 0]
+      [0, 2, 5, 0, 2, 0, 2, 0, 0, 0]
+      [0, 2, 0, 0, 2, 0, 2, 0, 0, 0]
+      [0, 2, 0, 0, 2, 0, 2, 0, 0, 0]
+      [0, 2, 0, 0, 2, 0, 2, 0, 0, 0]
+      [0, 2, 0, 0, 2, 0, 2, 0, 0, 0]
+    Actual output from AST:
+      [0, 2, 0, 0, 2, 0, 2, 0, 0, 0]
+      [0, 2, 0, 0, 2, 0, 2, 0, 0, 0]
+      [0, 2, 0, 0, 2, 0, 2, 0, 0, 0]
+      [0, 2, 0, 0, 2, 0, 5, 0, 0, 0]
+      [0, 2, 0, 0, 2, 0, 2, 0, 0, 0]
+      [0, 2, 5, 0, 2, 0, 2, 0, 0, 0]
+      [0, 2, 0, 0, 2, 0, 2, 0, 0, 0]
+      [0, 2, 0, 0, 2, 0, 2, 0, 0, 0]
+      [0, 2, 0, 0, 2, 0, 2, 0, 0, 0]
+      [0, 2, 0, 0, 2, 0, 2, 0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.', '.', '.', '.', 'X', 'X', '.', '.']
+      ['.', '.', '.', '.', '.', '.', 'X', 'X', '.', '.']
+      ['.', '.', '.', '.', '.', '.', 'X', 'X', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', 'X', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', 'X', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=108  → active=8  ⏳ pending=258  done=134/400  success=19.4%  time=88.0s (avg=0.7s/completed)  straggler_max=88.0s
+  → [143] STARTING  cbded52d
+  ~ [141/400] DONE      e9614598                     evals=  5.3k train=0.96 test=0.96 (1.6s) → x
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=109  → active=8  ⏳ pending=257  done=135/400  success=19.3%  time=89.0s (avg=0.7s/completed)  straggler_max=89.0s
+  → [144] STARTING  1b2d62fb
+  ✗ [142/400] DONE      28bf18c6                     evals=  5.3k train=0.71 test=0.79 (1.6s) → g_shift_left(gcrop_right(gcrop_right(g_remove_empt
+    [FAILURE ANALYSIS] Best AST: g_shift_left(gcrop_right(gcrop_right(g_remove_empty_rows(x))))
+    Input Grid:
+      [0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 8, 8, 0, 0, 0, 0, 0]
+      [0, 0, 8, 0, 0, 0, 0, 0]
+      [0, 8, 8, 8, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0]
+    Expected Output:
+      [8, 8, 0, 8, 8, 0]
+      [0, 8, 0, 0, 8, 0]
+      [8, 8, 8, 8, 8, 8]
+    Actual output from AST:
+      [8, 8, 0, 0, 0, 0]
+      [0, 8, 0, 0, 0, 0]
+      [8, 8, 8, 0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.', 'X', 'X', '.']
+      ['.', '.', '.', '.', 'X', '.']
+      ['.', '.', '.', 'X', 'X', 'X']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=110  → active=8  ⏳ pending=256  done=136/400  success=19.1%  time=89.6s (avg=0.7s/completed)  straggler_max=89.6s
+  → [145] STARTING  2dc579da
+  ~ [ 96/400] DONE      54d82841                     evals=  5.3k train=0.97 test=0.97 (35.4s) → x
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=111  → active=8  ⏳ pending=255  done=137/400  success=19.0%  time=90.0s (avg=0.7s/completed)  straggler_max=89.9s
+  → [146] STARTING  bc1d5164
+  ~ [145/400] DONE      2dc579da                     evals=  5.3k train=0.91 test=0.98 (1.6s) → ghalf_top(ghalf_left(x))
+    [FAILURE ANALYSIS] Best AST: ghalf_top(ghalf_left(x))
+    Input Grid:
+      [8, 8, 3, 8, 8]
+      [8, 8, 3, 8, 8]
+      [3, 3, 3, 3, 3]
+      [8, 8, 3, 8, 8]
+      [4, 8, 3, 8, 8]
+    Expected Output:
+      [8, 8]
+      [4, 8]
+    Actual output from AST:
+      [8, 8]
+      [8, 8]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.']
+      ['X', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=112  → active=8  ⏳ pending=254  done=138/400  success=18.8%  time=91.6s (avg=0.7s/completed)  straggler_max=91.6s
+  → [147] STARTING  ba26e723
+  ✗ [144/400] DONE      1b2d62fb                     evals=  5.3k train=0.82 test=0.75 (2.4s) → gerode(ghalf_left(x))
+    [FAILURE ANALYSIS] Best AST: gerode(ghalf_left(x))
+    Input Grid:
+      [0, 9, 9, 1, 9, 9, 9]
+      [0, 0, 9, 1, 9, 9, 0]
+      [9, 0, 9, 1, 9, 9, 0]
+      [0, 0, 0, 1, 9, 0, 0]
+      [0, 9, 9, 1, 9, 9, 9]
+    Expected Output:
+      [0, 0, 0]
+      [0, 0, 0]
+      [0, 0, 0]
+      [0, 8, 8]
+      [0, 0, 0]
+    Actual output from AST:
+      [0, 0, 0]
+      [0, 0, 0]
+      [0, 0, 0]
+      [0, 0, 0]
+      [0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.']
+      ['.', '.', '.']
+      ['.', '.', '.']
+      ['.', 'X', 'X']
+      ['.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=113  → active=8  ⏳ pending=253  done=139/400  success=18.7%  time=92.0s (avg=0.7s/completed)  straggler_max=92.0s
+  → [148] STARTING  1caeab9d
+  ~ [143/400] DONE      cbded52d                     evals=  5.3k train=0.97 test=0.96 (3.1s) → x
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=114  → active=8  ⏳ pending=252  done=140/400  success=18.6%  time=92.1s (avg=0.7s/completed)  straggler_max=92.1s
+  → [149] STARTING  d4469b4b
+  ✗ [146/400] DONE      bc1d5164                     evals=  5.3k train=0.21 test=0.21 (1.3s) → g_downscale_2x(gid(x))
+    [FAILURE ANALYSIS] Best AST: g_downscale_2x(gid(x))
+    Input Grid:
+      [0, 8, 0, 0, 0, 8, 0]
+      [8, 8, 0, 0, 0, 8, 8]
+      [0, 0, 0, 0, 0, 0, 0]
+      [8, 8, 0, 0, 0, 8, 8]
+      [0, 8, 0, 0, 0, 8, 0]
+    Expected Output:
+      [0, 8, 0]
+      [8, 8, 8]
+      [0, 8, 0]
+    Actual output from AST:
+      [8, 0, 8]
+      [8, 0, 8]
+    [DIFF MAP] (Expected vs Actual):
+      [Dimension Mismatch] Expected: 3x3, Actual: 2x3
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=115  → active=8  ⏳ pending=251  done=141/400  success=18.4%  time=92.9s (avg=0.7s/completed)  straggler_max=92.9s
+  → [150] STARTING  ce9e57f2
+  ~ [148/400] DONE      1caeab9d                     evals=  5.3k train=0.91 test=0.93 (2.8s) → gmod2(x)
+    [FAILURE ANALYSIS] Best AST: gmod2(x)
+    Input Grid:
+      [0, 2, 2, 0, 0, 0, 0, 0, 0, 0]
+      [0, 2, 2, 0, 0, 0, 0, 1, 1, 0]
+      [0, 0, 0, 0, 4, 4, 0, 1, 1, 0]
+      [0, 0, 0, 0, 4, 4, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    Expected Output:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 2, 2, 0, 4, 4, 0, 1, 1, 0]
+      [0, 2, 2, 0, 4, 4, 0, 1, 1, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    Actual output from AST:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 1, 1, 0]
+      [0, 0, 0, 0, 0, 0, 0, 1, 1, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', 'X', 'X', '.', 'X', 'X', '.', '.', '.', '.']
+      ['.', 'X', 'X', '.', 'X', 'X', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=116  → active=8  ⏳ pending=250  done=142/400  success=18.3%  time=94.9s (avg=0.7s/completed)  straggler_max=94.9s
+  → [151] STARTING  88a10436
+  ~ [147/400] DONE      ba26e723                     evals=  5.3k train=0.81 test=0.82 (3.2s) → x
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=117  → active=8  ⏳ pending=249  done=143/400  success=18.2%  time=95.2s (avg=0.7s/completed)  straggler_max=95.2s
+  → [152] STARTING  caa06a1f
+  ✗ [149/400] DONE      d4469b4b                     evals=  5.3k train=0.77 test=0.75 (2.5s) → ggravity_up(g_shift_right(gframe5(gcrop_border(gho
+    [FAILURE ANALYSIS] Best AST: ggravity_up(g_shift_right(gframe5(gcrop_border(ghollow(x)))))
+    Input Grid:
+      [2, 0, 0, 0, 0]
+      [0, 2, 0, 0, 2]
+      [2, 0, 0, 2, 0]
+      [0, 0, 0, 2, 2]
+      [0, 0, 2, 2, 0]
+    Expected Output:
+      [5, 5, 5]
+      [0, 5, 0]
+      [0, 5, 0]
+    Actual output from AST:
+      [0, 5, 5]
+      [0, 5, 5]
+      [0, 5, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['X', '.', '.']
+      ['.', '.', 'X']
+      ['.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=118  → active=8  ⏳ pending=248  done=144/400  success=18.1%  time=95.5s (avg=0.7s/completed)  straggler_max=95.5s
+  → [153] STARTING  a699fb00
+  ~ [150/400] DONE      ce9e57f2                     evals=  5.3k train=0.91 test=0.91 (3.0s) → gmod3(x)
+    [FAILURE ANALYSIS] Best AST: gmod3(x)
+    Input Grid:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 2, 0, 0, 0, 0, 0, 0, 0]
+      [0, 2, 0, 2, 0, 0, 0, 0, 0]
+      [0, 2, 0, 2, 0, 2, 0, 0, 0]
+      [0, 2, 0, 2, 0, 2, 0, 2, 0]
+      [0, 2, 0, 2, 0, 2, 0, 2, 0]
+      [0, 2, 0, 2, 0, 2, 0, 2, 0]
+    Expected Output:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 2, 0, 0, 0, 0, 0, 0, 0]
+      [0, 2, 0, 2, 0, 0, 0, 0, 0]
+      [0, 2, 0, 2, 0, 2, 0, 0, 0]
+      [0, 8, 0, 2, 0, 2, 0, 2, 0]
+      [0, 8, 0, 8, 0, 8, 0, 2, 0]
+      [0, 8, 0, 8, 0, 8, 0, 8, 0]
+    Actual output from AST:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 2, 0, 0, 0, 0, 0, 0, 0]
+      [0, 2, 0, 2, 0, 0, 0, 0, 0]
+      [0, 2, 0, 2, 0, 2, 0, 0, 0]
+      [0, 2, 0, 2, 0, 2, 0, 2, 0]
+      [0, 2, 0, 2, 0, 2, 0, 2, 0]
+      [0, 2, 0, 2, 0, 2, 0, 2, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', 'X', '.', '.', '.', '.', '.', '.', '.']
+      ['.', 'X', '.', 'X', '.', 'X', '.', '.', '.']
+      ['.', 'X', '.', 'X', '.', 'X', '.', 'X', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=119  → active=8  ⏳ pending=247  done=145/400  success=17.9%  time=97.9s (avg=0.7s/completed)  straggler_max=97.9s
+  → [154] STARTING  d8c310e9
+  ~ [151/400] DONE      88a10436                     evals=  5.3k train=0.93 test=0.96 (3.1s) → x
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=120  → active=8  ⏳ pending=246  done=146/400  success=17.8%  time=98.3s (avg=0.7s/completed)  straggler_max=98.3s
+  → [155] STARTING  5168d44c
+  ~ [153/400] DONE      a699fb00                     evals=  5.3k train=0.95 test=0.95 (3.1s) → x
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=121  → active=8  ⏳ pending=245  done=147/400  success=17.7%  time=101.0s (avg=0.7s/completed)  straggler_max=101.0s
+  → [156] STARTING  56dc2b01
+  ~ [154/400] DONE      d8c310e9                     evals=  5.3k train=0.88 test=0.89 (3.9s) → x
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=122  → active=8  ⏳ pending=244  done=148/400  success=17.6%  time=102.2s (avg=0.7s/completed)  straggler_max=102.2s
+  → [157] STARTING  995c5fa3
+  ~ [131/400] DONE      6c434453                     evals=  5.3k train=0.93 test=0.93 (26.2s) → gmod5(gkeep_solid(x))
+    [FAILURE ANALYSIS] Best AST: gmod5(gkeep_solid(x))
+    Input Grid:
+      [1, 1, 1, 0, 0, 0, 0, 0, 0, 0]
+      [1, 0, 1, 0, 0, 0, 0, 1, 0, 0]
+      [1, 1, 1, 0, 0, 0, 1, 1, 1, 0]
+      [0, 0, 0, 0, 0, 0, 0, 1, 0, 0]
+      [0, 1, 0, 0, 0, 0, 0, 0, 0, 0]
+      [1, 1, 1, 0, 0, 0, 0, 0, 0, 0]
+      [0, 1, 0, 1, 1, 1, 0, 0, 0, 0]
+      [0, 0, 0, 1, 0, 1, 0, 0, 1, 1]
+      [0, 0, 0, 1, 1, 1, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    Expected Output:
+      [0, 2, 0, 0, 0, 0, 0, 0, 0, 0]
+      [2, 2, 2, 0, 0, 0, 0, 1, 0, 0]
+      [0, 2, 0, 0, 0, 0, 1, 1, 1, 0]
+      [0, 0, 0, 0, 0, 0, 0, 1, 0, 0]
+      [0, 1, 0, 0, 0, 0, 0, 0, 0, 0]
+      [1, 1, 1, 0, 0, 0, 0, 0, 0, 0]
+      [0, 1, 0, 0, 2, 0, 0, 0, 0, 0]
+      [0, 0, 0, 2, 2, 2, 0, 0, 1, 1]
+      [0, 0, 0, 0, 2, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    Actual output from AST:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 1, 0, 0]
+      [0, 0, 0, 0, 0, 0, 1, 1, 1, 0]
+      [0, 0, 0, 0, 0, 0, 0, 1, 0, 0]
+      [0, 1, 0, 0, 0, 0, 0, 0, 0, 0]
+      [1, 1, 1, 0, 0, 0, 0, 0, 0, 0]
+      [0, 1, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 1, 1]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', 'X', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['X', 'X', 'X', '.', '.', '.', '.', '.', '.', '.']
+      ['.', 'X', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', 'X', '.', '.', '.', '.', '.']
+      ['.', '.', '.', 'X', 'X', 'X', '.', '.', '.', '.']
+      ['.', '.', '.', '.', 'X', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=123  → active=8  ⏳ pending=243  done=149/400  success=17.4%  time=104.3s (avg=0.7s/completed)  straggler_max=104.3s
+  → [158] STARTING  0ca9ddb6
+  ~ [156/400] DONE      56dc2b01                     evals=  5.3k train=0.86 test=0.88 (3.7s) → gmod3(x)
+    [FAILURE ANALYSIS] Best AST: gmod3(x)
+    Input Grid:
+      [0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0]
+      [0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0]
+      [3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0]
+      [0, 3, 3, 3, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0]
+    Expected Output:
+      [0, 0, 0, 0, 0, 8, 0, 3, 0, 0, 2, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 8, 0, 3, 3, 3, 2, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 8, 3, 3, 0, 0, 2, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 8, 0, 3, 3, 3, 2, 0, 0, 0, 0, 0]
+    Actual output from AST:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.', '.', '.', 'X', '.', 'X', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', 'X', '.', 'X', 'X', 'X', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', 'X', 'X', 'X', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', 'X', '.', 'X', 'X', 'X', '.', '.', '.', '.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=124  → active=8  ⏳ pending=242  done=150/400  success=17.3%  time=105.9s (avg=0.7s/completed)  straggler_max=105.9s
+  → [159] STARTING  1fad071e
+  ✗ [155/400] DONE      5168d44c                     evals=  5.3k train=0.95 test=0.80 (6.4s) → grefl_v(x)
+    [FAILURE ANALYSIS] Best AST: grefl_v(x)
+    Input Grid:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [2, 3, 2, 3, 0, 3, 0, 3, 0, 3, 0, 3, 0]
+      [2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    Expected Output:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 3, 2, 3, 2, 3, 0, 3, 0, 3, 0, 3, 0]
+      [0, 0, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    Actual output from AST:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [2, 3, 2, 3, 0, 3, 0, 3, 0, 3, 0, 3, 0]
+      [2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['X', 'X', '.', 'X', 'X', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['X', '.', '.', '.', 'X', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['X', 'X', '.', 'X', 'X', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=125  → active=8  ⏳ pending=241  done=151/400  success=17.2%  time=107.4s (avg=0.7s/completed)  straggler_max=107.4s
+  → [160] STARTING  7c008303
+  ~ [158/400] DONE      0ca9ddb6                     evals=  5.3k train=0.90 test=0.89 (3.0s) → x
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=126  → active=8  ⏳ pending=240  done=152/400  success=17.1%  time=108.9s (avg=0.7s/completed)  straggler_max=108.9s
+  → [161] STARTING  8f2ea7aa
+  ✗ [159/400] DONE      1fad071e                     evals=  5.3k train=0.19 test=0.17 (2.2s) → gcrop_bottom(g_repeat_h(g_extract_objects_any(x)))
+    [FAILURE ANALYSIS] Best AST: gcrop_bottom(g_repeat_h(g_extract_objects_any(x)))
+    Input Grid:
+      [0, 0, 0, 0, 2, 2, 0, 0, 1]
+      [0, 1, 1, 0, 2, 2, 0, 0, 0]
+      [0, 1, 1, 0, 0, 0, 0, 2, 2]
+      [0, 0, 0, 0, 0, 0, 0, 2, 2]
+      [1, 0, 2, 2, 0, 0, 0, 0, 0]
+      [0, 0, 2, 2, 0, 1, 1, 0, 0]
+      [0, 0, 0, 0, 0, 1, 1, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 1, 0, 0, 0, 0, 0, 0, 1]
+    Expected Output:
+      [1, 1, 0, 0, 0]
+    Actual output from AST:
+      [2, 2, 2, 2]
+    [DIFF MAP] (Expected vs Actual):
+      [Dimension Mismatch] Expected: 1x5, Actual: 1x4
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=127  → active=8  ⏳ pending=239  done=153/400  success=17.0%  time=109.6s (avg=0.7s/completed)  straggler_max=109.5s
+  → [162] STARTING  f25fbde4
+  ✗ [157/400] DONE      995c5fa3                     evals=  5.3k train=0.56 test=0.25 (7.2s) → gmod3(gcheckerboard25(g_extract_objects(gdiag2(g_e
+    [FAILURE ANALYSIS] Best AST: gmod3(gcheckerboard25(g_extract_objects(gdiag2(g_extract_objects(g_scale_3x(x))))))
+    Input Grid:
+      [5, 5, 5, 5, 0, 5, 5, 5, 5, 0, 5, 5, 5, 5]
+      [5, 5, 5, 5, 0, 5, 0, 0, 5, 0, 0, 5, 5, 0]
+      [5, 5, 5, 5, 0, 5, 0, 0, 5, 0, 0, 5, 5, 0]
+      [5, 5, 5, 5, 0, 5, 5, 5, 5, 0, 5, 5, 5, 5]
+    Expected Output:
+      [2, 2, 2]
+      [8, 8, 8]
+      [3, 3, 3]
+    Actual output from AST:
+      [2, 2, 2]
+      [2, 2, 2]
+      [2, 2, 2]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.']
+      ['X', 'X', 'X']
+      ['X', 'X', 'X']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=128  → active=8  ⏳ pending=238  done=154/400  success=16.9%  time=111.5s (avg=0.7s/completed)  straggler_max=111.5s
+  → [163] STARTING  150deff5
+  ~ [161/400] DONE      8f2ea7aa                     evals=  5.3k train=0.86 test=0.81 (2.4s) → x
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=129  → active=8  ⏳ pending=237  done=155/400  success=16.8%  time=112.0s (avg=0.7s/completed)  straggler_max=112.0s
+  → [164] STARTING  47c1f68c
+  ✗ [162/400] DONE      f25fbde4                     evals=  5.3k train=0.38 test=0.19 (1.2s) → gcrop_bottom(gcrop_right(gcrop_border(x)))
+    [FAILURE ANALYSIS] Best AST: gcrop_bottom(gcrop_right(gcrop_border(x)))
+    Input Grid:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 4, 4, 0, 0, 0, 0, 0]
+      [0, 4, 4, 4, 4, 0, 0, 0, 0]
+      [0, 0, 4, 4, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    Expected Output:
+      [0, 0, 4, 4, 4, 4, 0, 0]
+      [0, 0, 4, 4, 4, 4, 0, 0]
+      [4, 4, 4, 4, 4, 4, 4, 4]
+      [4, 4, 4, 4, 4, 4, 4, 4]
+      [0, 0, 4, 4, 4, 4, 0, 0]
+      [0, 0, 4, 4, 4, 4, 0, 0]
+    Actual output from AST:
+      [0, 0, 0, 0, 0, 0]
+      [0, 4, 4, 0, 0, 0]
+      [4, 4, 4, 4, 0, 0]
+      [0, 4, 4, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      [Dimension Mismatch] Expected: 6x8, Actual: 6x6
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=130  → active=8  ⏳ pending=236  done=156/400  success=16.7%  time=112.6s (avg=0.7s/completed)  straggler_max=112.6s
+  → [165] STARTING  239be575
+  ✗ [160/400] DONE      7c008303                     evals=  5.3k train=0.65 test=0.71 (5.3s) → g_has_gt2_objects(g_extract_objects(g_replace_0_wi
+    [FAILURE ANALYSIS] Best AST: g_has_gt2_objects(g_extract_objects(g_replace_0_with_1(g_extract_objects(x))))
+    Input Grid:
+      [2, 4, 8, 0, 0, 0, 0, 0, 0]
+      [1, 6, 8, 0, 0, 0, 0, 0, 0]
+      [8, 8, 8, 8, 8, 8, 8, 8, 8]
+      [0, 0, 8, 0, 3, 0, 0, 3, 0]
+      [0, 0, 8, 3, 3, 3, 3, 3, 3]
+      [0, 0, 8, 0, 3, 0, 0, 3, 0]
+      [0, 0, 8, 0, 3, 0, 0, 3, 0]
+      [0, 0, 8, 3, 3, 3, 3, 3, 3]
+      [0, 0, 8, 0, 3, 0, 0, 3, 0]
+    Expected Output:
+      [0, 2, 0, 0, 4, 0]
+      [2, 2, 2, 4, 4, 4]
+      [0, 2, 0, 0, 4, 0]
+      [0, 1, 0, 0, 6, 0]
+      [1, 1, 1, 6, 6, 6]
+      [0, 1, 0, 0, 6, 0]
+    Actual output from AST:
+      [0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', 'X', '.', '.', 'X', '.']
+      ['X', 'X', 'X', 'X', 'X', 'X']
+      ['.', 'X', '.', '.', 'X', '.']
+      ['.', 'X', '.', '.', 'X', '.']
+      ['X', 'X', 'X', 'X', 'X', 'X']
+      ['.', 'X', '.', '.', 'X', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=131  → active=8  ⏳ pending=235  done=157/400  success=16.6%  time=114.2s (avg=0.7s/completed)  straggler_max=114.2s
+  → [166] STARTING  97999447
+  ~ [163/400] DONE      150deff5                     evals=  5.3k train=0.90 test=0.90 (4.1s) → gmod3(x)
+    [FAILURE ANALYSIS] Best AST: gmod3(x)
+    Input Grid:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 5, 5, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 5, 5, 5, 5, 5, 0, 0, 0, 0]
+      [0, 0, 0, 5, 5, 5, 0, 0, 0, 0, 0]
+      [0, 0, 0, 5, 5, 5, 5, 5, 0, 0, 0]
+      [0, 0, 0, 5, 0, 0, 5, 5, 0, 0, 0]
+      [0, 0, 0, 0, 0, 5, 5, 5, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    Expected Output:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 8, 8, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 8, 8, 2, 2, 2, 0, 0, 0, 0]
+      [0, 0, 0, 2, 8, 8, 0, 0, 0, 0, 0]
+      [0, 0, 0, 2, 8, 8, 8, 8, 0, 0, 0]
+      [0, 0, 0, 2, 0, 0, 8, 8, 0, 0, 0]
+      [0, 0, 0, 0, 0, 2, 2, 2, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    Actual output from AST:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 2, 2, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 2, 2, 2, 2, 2, 0, 0, 0, 0]
+      [0, 0, 0, 2, 2, 2, 0, 0, 0, 0, 0]
+      [0, 0, 0, 2, 2, 2, 2, 2, 0, 0, 0]
+      [0, 0, 0, 2, 0, 0, 2, 2, 0, 0, 0]
+      [0, 0, 0, 0, 0, 2, 2, 2, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', 'X', 'X', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', 'X', 'X', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', 'X', 'X', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', 'X', 'X', 'X', 'X', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', 'X', 'X', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=132  → active=8  ⏳ pending=234  done=158/400  success=16.5%  time=116.0s (avg=0.7s/completed)  straggler_max=116.0s
+  → [167] STARTING  6d75e8bb
+  ✗ [164/400] DONE      47c1f68c                     evals=  5.3k train=0.76 test=0.73 (3.4s) → gkeep_color3(gcrop_left(gcrop_bottom(x)))
+    [FAILURE ANALYSIS] Best AST: gkeep_color3(gcrop_left(gcrop_bottom(x)))
+    Input Grid:
+      [0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0]
+      [0, 1, 0, 0, 0, 2, 0, 0, 0, 0, 0]
+      [1, 1, 0, 0, 0, 2, 0, 0, 0, 0, 0]
+      [0, 1, 1, 0, 0, 2, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0]
+      [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
+      [0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0]
+    Expected Output:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 2, 0, 0, 0, 0, 0, 0, 2, 0]
+      [2, 2, 0, 0, 0, 0, 0, 0, 2, 2]
+      [0, 2, 2, 0, 0, 0, 0, 2, 2, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 2, 2, 0, 0, 0, 0, 2, 2, 0]
+      [2, 2, 0, 0, 0, 0, 0, 0, 2, 2]
+      [0, 2, 0, 0, 0, 0, 0, 0, 2, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    Actual output from AST:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', 'X', '.', '.', '.', '.', '.', '.', 'X', '.']
+      ['X', 'X', '.', '.', '.', '.', '.', '.', 'X', 'X']
+      ['.', 'X', 'X', '.', '.', '.', '.', 'X', 'X', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', 'X', 'X', '.', '.', '.', '.', 'X', 'X', '.']
+      ['X', 'X', '.', '.', '.', '.', '.', '.', 'X', 'X']
+      ['.', 'X', '.', '.', '.', '.', '.', '.', 'X', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=133  → active=8  ⏳ pending=233  done=159/400  success=16.4%  time=116.1s (avg=0.7s/completed)  straggler_max=116.1s
+  → [168] STARTING  3428a4f5
+  ✗ [165/400] DONE      239be575                     evals=  5.3k train=1.00 test=0.12 (3.2s) → ghalf_left(gtrsp(ghalf_left(g_downscale_2x(gkeep_s
+    [FAILURE ANALYSIS] Best AST: ghalf_left(gtrsp(ghalf_left(g_downscale_2x(gkeep_smallest(x)))))
+    Input Grid:
+      [0, 0, 8, 0, 8]
+      [2, 2, 8, 0, 0]
+      [2, 2, 0, 0, 8]
+      [0, 0, 0, 2, 2]
+      [8, 8, 0, 2, 2]
+    Expected Output:
+      [0]
+    Actual output from AST:
+      [0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=134  → active=8  ⏳ pending=232  done=160/400  success=16.2%  time=117.5s (avg=0.7s/completed)  straggler_max=117.4s
+  → [169] STARTING  e3497940
+  ~ [167/400] DONE      6d75e8bb                     evals=  5.3k train=0.90 test=0.86 (3.3s) → gswap_12(x)
+    [FAILURE ANALYSIS] Best AST: gswap_12(x)
+    Input Grid:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 8, 8, 8, 0, 0, 0, 0, 0, 0]
+      [0, 8, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 8, 8, 8, 8, 0, 0, 0, 0, 0]
+      [0, 8, 8, 0, 0, 0, 0, 0, 0, 0]
+      [0, 8, 8, 8, 0, 0, 0, 0, 0, 0]
+      [0, 8, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 8, 8, 8, 0, 0, 0, 0, 0, 0]
+      [0, 8, 8, 8, 0, 0, 0, 0, 0, 0]
+      [0, 8, 8, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    Expected Output:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 8, 8, 8, 2, 0, 0, 0, 0, 0]
+      [0, 8, 2, 2, 2, 0, 0, 0, 0, 0]
+      [0, 8, 8, 8, 8, 0, 0, 0, 0, 0]
+      [0, 8, 8, 2, 2, 0, 0, 0, 0, 0]
+      [0, 8, 8, 8, 2, 0, 0, 0, 0, 0]
+      [0, 8, 2, 2, 2, 0, 0, 0, 0, 0]
+      [0, 8, 8, 8, 2, 0, 0, 0, 0, 0]
+      [0, 8, 8, 8, 2, 0, 0, 0, 0, 0]
+      [0, 8, 8, 2, 2, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    Actual output from AST:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 8, 8, 8, 0, 0, 0, 0, 0, 0]
+      [0, 8, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 8, 8, 8, 8, 0, 0, 0, 0, 0]
+      [0, 8, 8, 0, 0, 0, 0, 0, 0, 0]
+      [0, 8, 8, 8, 0, 0, 0, 0, 0, 0]
+      [0, 8, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 8, 8, 8, 0, 0, 0, 0, 0, 0]
+      [0, 8, 8, 8, 0, 0, 0, 0, 0, 0]
+      [0, 8, 8, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', 'X', '.', '.', '.', '.', '.']
+      ['.', '.', 'X', 'X', 'X', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', 'X', 'X', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', 'X', '.', '.', '.', '.', '.']
+      ['.', '.', 'X', 'X', 'X', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', 'X', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', 'X', '.', '.', '.', '.', '.']
+      ['.', '.', '.', 'X', 'X', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=135  → active=8  ⏳ pending=231  done=161/400  success=16.1%  time=119.4s (avg=0.7s/completed)  straggler_max=119.4s
+  → [170] STARTING  178fcbfb
+  ✗ [168/400] DONE      3428a4f5                     evals=  5.3k train=0.68 test=0.62 (3.3s) → g_replace_1_with_3(g_replace_2_with_3(ghalf_top(x)
+    [FAILURE ANALYSIS] Best AST: g_replace_1_with_3(g_replace_2_with_3(ghalf_top(x)))
+    Input Grid:
+      [0, 0, 0, 2, 2]
+      [0, 0, 2, 0, 2]
+      [2, 0, 0, 2, 2]
+      [2, 2, 0, 0, 2]
+      [0, 0, 0, 0, 2]
+      [0, 2, 0, 0, 0]
+      [4, 4, 4, 4, 4]
+      [2, 0, 0, 0, 0]
+      [2, 2, 0, 0, 0]
+      [2, 0, 2, 0, 0]
+      [0, 0, 2, 0, 0]
+      [0, 0, 0, 2, 2]
+      [2, 0, 0, 2, 0]
+    Expected Output:
+      [3, 0, 0, 3, 3]
+      [3, 3, 3, 0, 3]
+      [0, 0, 3, 3, 3]
+      [3, 3, 3, 0, 3]
+      [0, 0, 0, 3, 0]
+      [3, 3, 0, 3, 0]
+    Actual output from AST:
+      [0, 0, 0, 3, 3]
+      [0, 0, 3, 0, 3]
+      [3, 0, 0, 3, 3]
+      [3, 3, 0, 0, 3]
+      [0, 0, 0, 0, 3]
+      [0, 3, 0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['X', '.', '.', '.', '.']
+      ['X', 'X', '.', '.', '.']
+      ['X', '.', 'X', '.', '.']
+      ['.', '.', 'X', '.', '.']
+      ['.', '.', '.', 'X', 'X']
+      ['X', '.', '.', 'X', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=136  → active=8  ⏳ pending=230  done=162/400  success=16.0%  time=120.8s (avg=0.7s/completed)  straggler_max=120.8s
+  → [171] STARTING  a5313dff
+  ~ [169/400] DONE      e3497940                     evals=  5.3k train=0.93 test=0.87 (3.0s) → ghalf_left(x)
+    [FAILURE ANALYSIS] Best AST: ghalf_left(x)
+    Input Grid:
+      [0, 0, 0, 0, 5, 0, 0, 0, 0]
+      [0, 0, 0, 0, 5, 0, 0, 0, 0]
+      [0, 0, 0, 4, 5, 0, 0, 0, 0]
+      [0, 0, 0, 4, 5, 4, 4, 0, 0]
+      [0, 0, 3, 3, 5, 0, 0, 0, 0]
+      [0, 0, 0, 3, 5, 0, 0, 0, 0]
+      [0, 0, 0, 3, 5, 3, 3, 3, 0]
+      [0, 0, 0, 3, 5, 0, 0, 0, 0]
+      [0, 0, 0, 0, 5, 0, 0, 0, 0]
+      [0, 0, 0, 0, 5, 0, 0, 0, 0]
+    Expected Output:
+      [0, 0, 0, 0]
+      [0, 0, 0, 0]
+      [0, 0, 0, 4]
+      [0, 0, 4, 4]
+      [0, 0, 3, 3]
+      [0, 0, 0, 3]
+      [0, 3, 3, 3]
+      [0, 0, 0, 3]
+      [0, 0, 0, 0]
+      [0, 0, 0, 0]
+    Actual output from AST:
+      [0, 0, 0, 0]
+      [0, 0, 0, 0]
+      [0, 0, 0, 4]
+      [0, 0, 0, 4]
+      [0, 0, 3, 3]
+      [0, 0, 0, 3]
+      [0, 0, 0, 3]
+      [0, 0, 0, 3]
+      [0, 0, 0, 0]
+      [0, 0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.', '.']
+      ['.', '.', '.', '.']
+      ['.', '.', '.', '.']
+      ['.', '.', 'X', '.']
+      ['.', '.', '.', '.']
+      ['.', '.', '.', '.']
+      ['.', 'X', 'X', '.']
+      ['.', '.', '.', '.']
+      ['.', '.', '.', '.']
+      ['.', '.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=137  → active=8  ⏳ pending=229  done=163/400  success=16.0%  time=122.5s (avg=0.8s/completed)  straggler_max=122.4s
+  → [172] STARTING  0962bcdd
+  ~ [170/400] DONE      178fcbfb                     evals=  5.3k train=0.85 test=0.83 (4.2s) → gmajority(x)
+    [FAILURE ANALYSIS] Best AST: gmajority(x)
+    Input Grid:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 2, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 3, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 1, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    Expected Output:
+      [0, 0, 2, 0, 0, 0, 0, 0, 0]
+      [0, 0, 2, 0, 0, 0, 0, 0, 0]
+      [0, 0, 2, 0, 0, 0, 0, 0, 0]
+      [0, 0, 2, 0, 0, 0, 0, 0, 0]
+      [3, 3, 3, 3, 3, 3, 3, 3, 3]
+      [0, 0, 2, 0, 0, 0, 0, 0, 0]
+      [1, 1, 1, 1, 1, 1, 1, 1, 1]
+      [0, 0, 2, 0, 0, 0, 0, 0, 0]
+      [0, 0, 2, 0, 0, 0, 0, 0, 0]
+    Actual output from AST:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [2, 2, 2, 2, 2, 2, 2, 2, 2]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [3, 3, 3, 3, 3, 3, 3, 3, 3]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [1, 1, 1, 1, 1, 1, 1, 1, 1]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', 'X', '.', '.', '.', '.', '.', '.']
+      ['.', '.', 'X', '.', '.', '.', '.', '.', '.']
+      ['X', 'X', '.', 'X', 'X', 'X', 'X', 'X', 'X']
+      ['.', '.', 'X', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', 'X', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', 'X', '.', '.', '.', '.', '.', '.']
+      ['.', '.', 'X', '.', '.', '.', '.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=138  → active=8  ⏳ pending=228  done=164/400  success=15.9%  time=124.9s (avg=0.8s/completed)  straggler_max=124.9s
+  → [173] STARTING  c9f8e694
+  ~ [171/400] DONE      a5313dff                     evals=  5.3k train=0.90 test=0.87 (3.1s) → x
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=139  → active=8  ⏳ pending=227  done=165/400  success=15.8%  time=125.5s (avg=0.8s/completed)  straggler_max=125.5s
+  → [174] STARTING  be94b721
+  ~ [166/400] DONE      97999447                     evals=  5.3k train=0.90 test=0.83 (12.6s) → x
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=140  → active=8  ⏳ pending=226  done=166/400  success=15.7%  time=128.7s (avg=0.8s/completed)  straggler_max=128.6s
+  → [175] STARTING  3bd67248
+  ~ [172/400] DONE      0962bcdd                     evals=  5.3k train=0.92 test=0.92 (4.3s) → gdilate(x)
+    [FAILURE ANALYSIS] Best AST: gdilate(x)
+    Input Grid:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 7, 2, 7, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 7, 2, 7, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    Expected Output:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [2, 0, 7, 0, 2, 0, 0, 0, 0, 0, 0, 0]
+      [0, 2, 7, 2, 0, 0, 0, 0, 0, 0, 0, 0]
+      [7, 7, 2, 7, 7, 0, 0, 0, 0, 0, 0, 0]
+      [0, 2, 7, 2, 0, 0, 0, 0, 0, 0, 0, 0]
+      [2, 0, 7, 0, 2, 0, 2, 0, 7, 0, 2, 0]
+      [0, 0, 0, 0, 0, 0, 0, 2, 7, 2, 0, 0]
+      [0, 0, 0, 0, 0, 0, 7, 7, 2, 7, 7, 0]
+      [0, 0, 0, 0, 0, 0, 0, 2, 7, 2, 0, 0]
+      [0, 0, 0, 0, 0, 0, 2, 0, 7, 0, 2, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    Actual output from AST:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 7, 7, 7, 0, 0, 0, 0, 0, 0, 0, 0]
+      [7, 7, 2, 7, 7, 0, 0, 0, 0, 0, 0, 0]
+      [0, 7, 7, 7, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 7, 0, 0, 0, 0, 0, 7, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 7, 7, 7, 0, 0]
+      [0, 0, 0, 0, 0, 0, 7, 7, 2, 7, 7, 0]
+      [0, 0, 0, 0, 0, 0, 0, 7, 7, 7, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['X', '.', '.', '.', 'X', '.', '.', '.', '.', '.', '.', '.']
+      ['.', 'X', '.', 'X', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', 'X', '.', 'X', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['X', '.', '.', '.', 'X', '.', 'X', '.', '.', '.', 'X', '.']
+      ['.', '.', '.', '.', '.', '.', '.', 'X', '.', 'X', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', 'X', '.', 'X', '.', '.']
+      ['.', '.', '.', '.', '.', '.', 'X', '.', '.', '.', 'X', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=141  → active=8  ⏳ pending=225  done=167/400  success=15.6%  time=129.2s (avg=0.8s/completed)  straggler_max=129.2s
+  → [176] STARTING  6a1e5592
+  ✗ [173/400] DONE      c9f8e694                     evals=  5.3k train=0.83 test=0.55 (5.5s) → g_fg_to_least_common(gmod4(x))
+    [FAILURE ANALYSIS] Best AST: g_fg_to_least_common(gmod4(x))
+    Input Grid:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [1, 0, 5, 5, 0, 0, 0, 0, 0, 0, 0, 0]
+      [2, 0, 5, 5, 0, 0, 0, 0, 0, 0, 0, 0]
+      [1, 0, 5, 5, 0, 0, 0, 0, 0, 0, 0, 0]
+      [1, 0, 5, 5, 0, 0, 0, 0, 0, 0, 0, 0]
+      [1, 0, 5, 5, 0, 0, 0, 0, 5, 5, 0, 0]
+      [2, 0, 5, 5, 0, 0, 0, 0, 5, 5, 0, 0]
+      [2, 0, 5, 5, 0, 0, 0, 0, 5, 5, 0, 0]
+      [1, 0, 0, 0, 0, 0, 0, 0, 5, 5, 0, 0]
+      [1, 0, 0, 0, 5, 5, 5, 0, 5, 5, 0, 0]
+      [1, 0, 0, 0, 5, 5, 5, 0, 5, 5, 0, 0]
+      [2, 0, 0, 0, 5, 5, 5, 0, 5, 5, 0, 0]
+    Expected Output:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0]
+      [2, 0, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0]
+      [1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0]
+      [1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0]
+      [1, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0]
+      [2, 0, 2, 2, 0, 0, 0, 0, 2, 2, 0, 0]
+      [2, 0, 2, 2, 0, 0, 0, 0, 2, 2, 0, 0]
+      [1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0]
+      [1, 0, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0]
+      [1, 0, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0]
+      [2, 0, 0, 0, 2, 2, 2, 0, 2, 2, 0, 0]
+    Actual output from AST:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [2, 0, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0]
+      [2, 0, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0]
+      [2, 0, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0]
+      [2, 0, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0]
+      [2, 0, 2, 2, 0, 0, 0, 0, 2, 2, 0, 0]
+      [2, 0, 2, 2, 0, 0, 0, 0, 2, 2, 0, 0]
+      [2, 0, 2, 2, 0, 0, 0, 0, 2, 2, 0, 0]
+      [2, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0, 0]
+      [2, 0, 0, 0, 2, 2, 2, 0, 2, 2, 0, 0]
+      [2, 0, 0, 0, 2, 2, 2, 0, 2, 2, 0, 0]
+      [2, 0, 0, 0, 2, 2, 2, 0, 2, 2, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['X', '.', 'X', 'X', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['X', '.', 'X', 'X', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['X', '.', 'X', 'X', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['X', '.', 'X', 'X', '.', '.', '.', '.', 'X', 'X', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['X', '.', '.', '.', '.', '.', '.', '.', 'X', 'X', '.', '.']
+      ['X', '.', '.', '.', 'X', 'X', 'X', '.', 'X', 'X', '.', '.']
+      ['X', '.', '.', '.', 'X', 'X', 'X', '.', 'X', 'X', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=142  → active=8  ⏳ pending=224  done=168/400  success=15.5%  time=131.0s (avg=0.8s/completed)  straggler_max=131.0s
+  → [177] STARTING  11852cab
+  ~ [132/400] DONE      6e19193c                     evals=  5.3k train=0.95 test=0.96 (52.1s) → g_replace_1_with_3(x)
+    [FAILURE ANALYSIS] Best AST: g_replace_1_with_3(x)
+    Input Grid:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 7, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 7, 7, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 7, 7, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 7, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    Expected Output:
+      [0, 0, 0, 0, 7, 0, 0, 0, 0, 0]
+      [0, 0, 0, 7, 0, 0, 0, 0, 0, 0]
+      [0, 7, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 7, 7, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 7, 7, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 7, 0, 0]
+      [0, 0, 0, 0, 0, 7, 0, 0, 0, 0]
+      [0, 0, 0, 0, 7, 0, 0, 0, 0, 0]
+      [0, 0, 0, 7, 0, 0, 0, 0, 0, 0]
+      [0, 0, 7, 0, 0, 0, 0, 0, 0, 0]
+    Actual output from AST:
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 7, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 7, 7, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 7, 7, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 7, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.', '.', 'X', '.', '.', '.', '.', '.']
+      ['.', '.', '.', 'X', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', 'X', '.', '.', '.', '.']
+      ['.', '.', '.', '.', 'X', '.', '.', '.', '.', '.']
+      ['.', '.', '.', 'X', '.', '.', '.', '.', '.', '.']
+      ['.', '.', 'X', '.', '.', '.', '.', '.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=26  ✗ unsolved=143  → active=8  ⏳ pending=223  done=169/400  success=15.4%  time=131.2s (avg=0.8s/completed)  straggler_max=131.2s
+  → [178] STARTING  1b60fb0c
+  ✓ [174/400] DONE      be94b721                     evals=  5.3k train=1.00 test=1.00 (3.1s) → g_extract_objects(x)
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=27  ✗ unsolved=143  → active=8  ⏳ pending=222  done=170/400  success=15.9%  time=131.8s (avg=0.8s/completed)  straggler_max=131.7s
+  → [179] STARTING  1f642eb9
+  ~ [176/400] DONE      6a1e5592                     evals=  5.3k train=0.91 test=0.88 (3.0s) → gmod5(x)
+    [FAILURE ANALYSIS] Best AST: gmod5(x)
+    Input Grid:
+      [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
+      [2, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0]
+      [2, 0, 0, 2, 2, 2, 0, 0, 0, 2, 2, 2, 2, 2, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0]
+      [0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 5, 0]
+      [0, 5, 5, 5, 0, 0, 5, 5, 0, 0, 0, 0, 0, 5, 0]
+      [0, 5, 5, 5, 0, 0, 5, 5, 5, 0, 0, 0, 0, 5, 0]
+    Expected Output:
+      [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
+      [2, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1]
+      [2, 1, 1, 2, 2, 2, 1, 1, 1, 2, 2, 2, 2, 2, 1]
+      [0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    Actual output from AST:
+      [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
+      [2, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0]
+      [2, 0, 0, 2, 2, 2, 0, 0, 0, 2, 2, 2, 2, 2, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', 'X', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'X']
+      ['.', 'X', 'X', '.', '.', '.', 'X', 'X', 'X', '.', '.', '.', '.', '.', 'X']
+      ['.', 'X', 'X', 'X', '.', '.', 'X', 'X', 'X', '.', '.', '.', '.', '.', 'X']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', 'X']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=27  ✗ unsolved=144  → active=8  ⏳ pending=221  done=171/400  success=15.8%  time=134.0s (avg=0.8s/completed)  straggler_max=134.0s
+  → [180] STARTING  1f876c06
+  ~ [175/400] DONE      3bd67248                     evals=  5.3k train=0.97 test=0.99 (4.9s) → ganti_diag2(gswap_24(ggravity_down(ganti_diag2(x))
+    [FAILURE ANALYSIS] Best AST: ganti_diag2(gswap_24(ggravity_down(ganti_diag2(x))))
+    Input Grid:
+      [6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    Expected Output:
+      [6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
+      [6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0]
+      [6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0]
+      [6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0]
+      [6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0]
+      [6, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0]
+      [6, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0]
+      [6, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0]
+      [6, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0]
+      [6, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [6, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [6, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [6, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [6, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [6, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
+    Actual output from AST:
+      [6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
+      [6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0]
+      [6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0]
+      [6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0]
+      [6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0]
+      [6, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0]
+      [6, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0]
+      [6, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0]
+      [6, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0]
+      [6, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [6, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [6, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [6, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [6, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+      [2, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
+    [DIFF MAP] (Expected vs Actual):
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+      ['X', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.', '.']
+    ----------------------------------------
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=27  ✗ unsolved=145  → active=8  ⏳ pending=220  done=172/400  success=15.7%  time=134.1s (avg=0.8s/completed)  straggler_max=134.1s
+  → [181] STARTING  2204b7a8
+  ~ [177/400] DONE      11852cab                     evals=  5.3k train=0.98 test=0.98 (3.0s) → x
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=27  ✗ unsolved=146  → active=8  ⏳ pending=219  done=173/400  success=15.6%  time=134.3s (avg=0.8s/completed)  straggler_max=134.3s
+  → [182] STARTING  22168020
+  ~ [178/400] DONE      1b60fb0c                     evals=  5.3k train=0.93 test=0.93 (3.3s) → x
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=27  ✗ unsolved=147  → active=8  ⏳ pending=218  done=174/400  success=15.5%  time=135.1s (avg=0.8s/completed)  straggler_max=135.1s
+  → [183] STARTING  22233c11
+  ~ [180/400] DONE      1f876c06                     evals=  5.3k train=0.93 test=0.90 (4.0s) → x
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=27  ✗ unsolved=148  → active=8  ⏳ pending=217  done=175/400  success=15.4%  time=138.1s (avg=0.8s/completed)  straggler_max=138.0s
+  → [184] STARTING  2281f1f4
+  ~ [182/400] DONE      22168020                     evals=  5.3k train=0.90 test=0.90 (3.0s) → x
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=27  ✗ unsolved=149  → active=8  ⏳ pending=216  done=176/400  success=15.3%  time=138.1s (avg=0.8s/completed)  straggler_max=138.0s
+  → [185] STARTING  228f6490
+  ~ [181/400] DONE      2204b7a8                     evals=  5.3k train=0.96 test=0.93 (4.3s) → x
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=27  ✗ unsolved=150  → active=8  ⏳ pending=215  done=177/400  success=15.3%  time=138.5s (avg=0.8s/completed)  straggler_max=138.5s
+  → [186] STARTING  22eb0ac0
+  ~ [179/400] DONE      1f642eb9                     evals=  5.3k train=0.96 test=0.95 (6.3s) → x
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=27  ✗ unsolved=151  → active=8  ⏳ pending=214  done=178/400  success=15.2%  time=140.3s (avg=0.8s/completed)  straggler_max=140.3s
+  → [187] STARTING  31aa019c
+  ~ [184/400] DONE      2281f1f4                     evals=  5.3k train=0.90 test=0.81 (3.8s) → x
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=27  ✗ unsolved=152  → active=8  ⏳ pending=213  done=179/400  success=15.1%  time=141.8s (avg=0.8s/completed)  straggler_max=141.8s
+  → [188] STARTING  3906de3d
+  ~ [183/400] DONE      22233c11                     evals=  5.3k train=0.97 test=0.94 (4.1s) → x
+  ┌ scoreboard [Epoch 1/5] ─ ✓ solved=27  ✗ unsolved=153  → active=8  ⏳ pending=212  done=180/400  success=15.0%  time=142.1s (avg=0.8s/completed)  straggler_max=142.1s

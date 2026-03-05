@@ -1,0 +1,84 @@
+
+🔍 AGI 'Sweet Spot' Optimization Experiment (PARALLEL)
+======================================================
+🔄 Sweeping 27 combinations in parallel...
+📊 Dataset: 5 ARC Tasks | 168 Primitives | 10 Workers
+
+Beam   | Offs   | Gen   | Solve   | MeanAcc  | Time     | ROC Score
+---------------------------------------------------------------------------
+  ┌ scoreboard ─ ✓ solved=0  ✗ unsolved=0  → active=1  ⏳ pending=4  done=0/5  success=0.0%
+  ┌ scoreboard ─ ✓ solved=0  ✗ unsolved=0  → active=1  ⏳ pending=4  done=0/5  success=0.0%
+  ┌ scoreboard ─ ✓ solved=0  ✗ unsolved=0  → active=1  ⏳ pending=4  done=0/5  success=0.0%
+  ┌ scoreboard ─ ✓ solved=0  ✗ unsolved=0  → active=1  ⏳ pending=4  done=0/5  success=0.0%
+  ┌ scoreboard ─ ✓ solved=0  ✗ unsolved=0  → active=1  ⏳ pending=4  done=0/5  success=0.0%
+  ┌ scoreboard ─ ✓ solved=0  ✗ unsolved=0  → active=1  ⏳ pending=4  done=0/5  success=0.0%
+  ┌ scoreboard ─ ✓ solved=0  ✗ unsolved=0  → active=1  ⏳ pending=4  done=0/5  success=0.0%
+  ┌ scoreboard ─ ✓ solved=0  ✗ unsolved=0  → active=1  ⏳ pending=4  done=0/5  success=0.0%
+  ┌ scoreboard ─ ✓ solved=0  ✗ unsolved=0  → active=1  ⏳ pending=4  done=0/5  success=0.0%
+  ┌ scoreboard ─ ✓ solved=0  ✗ unsolved=1  → active=1  ⏳ pending=3  done=1/5  success=0.0%
+  ┌ scoreboard ─ ✓ solved=0  ✗ unsolved=1  → active=1  ⏳ pending=3  done=1/5  success=0.0%
+  ┌ scoreboard ─ ✓ solved=0  ✗ unsolved=1  → active=1  ⏳ pending=3  done=1/5  success=0.0%
+  ┌ scoreboard ─ ✓ solved=0  ✗ unsolved=2  → active=1  ⏳ pending=2  done=2/5  success=0.0%
+  ┌ scoreboard ─ ✓ solved=0  ✗ unsolved=3  → active=1  ⏳ pending=1  done=3/5  success=0.0%
+  ┌ scoreboard ─ ✓ solved=0  ✗ unsolved=4  → active=1  ⏳ pending=0  done=4/5  success=0.0%
+  ┌ scoreboard ─ ✓ solved=0  ✗ unsolved=2  → active=1  ⏳ pending=2  done=2/5  success=0.0%
+  ┌ scoreboard ─ ✓ solved=1  ✗ unsolved=0  → active=1  ⏳ pending=3  done=1/5  success=100.0%
+  ┌ scoreboard ─ ✓ solved=0  ✗ unsolved=0  → active=1  ⏳ pending=4  done=0/5  success=0.0%
+5      | 10     | 25    | 0       | 0.774    | 6.3      | 0.00
+  ┌ scoreboard ─ ✓ solved=0  ✗ unsolved=3  → active=1  ⏳ pending=1  done=3/5  success=0.0%
+  ┌ scoreboard ─ ✓ solved=1  ✗ unsolved=0  → active=1  ⏳ pending=3  done=1/5  success=100.0%
+  ┌ scoreboard ─ ✓ solved=0  ✗ unsolved=4  → active=1  ⏳ pending=0  done=4/5  success=0.0%
+  ┌ scoreboard ─ ✓ solved=1  ✗ unsolved=0  → active=1  ⏳ pending=3  done=1/5  success=100.0%
+  ┌ scoreboard ─ ✓ solved=0  ✗ unsolved=2  → active=1  ⏳ pending=2  done=2/5  success=0.0%
+  ┌ scoreboard ─ ✓ solved=0  ✗ unsolved=3  → active=1  ⏳ pending=1  done=3/5  success=0.0%
+  ┌ scoreboard ─ ✓ solved=0  ✗ unsolved=0  → active=1  ⏳ pending=4  done=0/5  success=0.0%
+5      | 10     | 50    | 0       | 0.745    | 11.7     | 0.00
+  ┌ scoreboard ─ ✓ solved=1  ✗ unsolved=0  → active=1  ⏳ pending=3  done=1/5  success=100.0%
+  ┌ scoreboard ─ ✓ solved=0  ✗ unsolved=4  → active=1  ⏳ pending=0  done=4/5  success=0.0%
+  ┌ scoreboard ─ ✓ solved=1  ✗ unsolved=1  → active=1  ⏳ pending=2  done=2/5  success=50.0%
+  ┌ scoreboard ─ ✓ solved=1  ✗ unsolved=1  → active=1  ⏳ pending=2  done=2/5  success=50.0%
+  ┌ scoreboard ─ ✓ solved=1  ✗ unsolved=2  → active=1  ⏳ pending=1  done=3/5  success=33.3%
+  ┌ scoreboard ─ ✓ solved=1  ✗ unsolved=3  → active=1  ⏳ pending=0  done=4/5  success=25.0%
+  ┌ scoreboard ─ ✓ solved=1  ✗ unsolved=0  → active=1  ⏳ pending=3  done=1/5  success=100.0%
+  ┌ scoreboard ─ ✓ solved=1  ✗ unsolved=2  → active=1  ⏳ pending=1  done=3/5  success=33.3%
+  ┌ scoreboard ─ ✓ solved=0  ✗ unsolved=0  → active=1  ⏳ pending=4  done=0/5  success=0.0%
+5      | 20     | 25    | 0       | 0.774    | 18.1     | 0.00
+  ┌ scoreboard ─ ✓ solved=1  ✗ unsolved=3  → active=1  ⏳ pending=0  done=4/5  success=25.0%
+  ┌ scoreboard ─ ✓ solved=1  ✗ unsolved=1  → active=1  ⏳ pending=2  done=2/5  success=50.0%
+  ┌ scoreboard ─ ✓ solved=1  ✗ unsolved=2  → active=1  ⏳ pending=1  done=3/5  success=33.3%
+  ┌ scoreboard ─ ✓ solved=0  ✗ unsolved=0  → active=1  ⏳ pending=4  done=0/5  success=0.0%
+5      | 10     | 100   | 1       | 0.807    | 24.0     | 48.85
+  ┌ scoreboard ─ ✓ solved=1  ✗ unsolved=3  → active=1  ⏳ pending=0  done=4/5  success=25.0%
+  ┌ scoreboard ─ ✓ solved=1  ✗ unsolved=1  → active=1  ⏳ pending=2  done=2/5  success=50.0%
+  ┌ scoreboard ─ ✓ solved=0  ✗ unsolved=0  → active=1  ⏳ pending=4  done=0/5  success=0.0%
+5      | 40     | 25    | 1       | 0.920    | 29.2     | 40.26
+  ┌ scoreboard ─ ✓ solved=1  ✗ unsolved=0  → active=1  ⏳ pending=3  done=1/5  success=100.0%
+  ┌ scoreboard ─ ✓ solved=1  ✗ unsolved=0  → active=1  ⏳ pending=3  done=1/5  success=100.0%
+  ┌ scoreboard ─ ✓ solved=1  ✗ unsolved=2  → active=1  ⏳ pending=1  done=3/5  success=33.3%
+  ┌ scoreboard ─ ✓ solved=1  ✗ unsolved=1  → active=1  ⏳ pending=2  done=2/5  success=50.0%
+  ┌ scoreboard ─ ✓ solved=0  ✗ unsolved=0  → active=1  ⏳ pending=4  done=0/5  success=0.0%
+5      | 20     | 50    | 1       | 0.807    | 36.0     | 32.78
+  ┌ scoreboard ─ ✓ solved=1  ✗ unsolved=2  → active=1  ⏳ pending=1  done=3/5  success=33.3%
+  ┌ scoreboard ─ ✓ solved=1  ✗ unsolved=3  → active=1  ⏳ pending=0  done=4/5  success=25.0%
+  ┌ scoreboard ─ ✓ solved=1  ✗ unsolved=1  → active=1  ⏳ pending=2  done=2/5  success=50.0%
+  ┌ scoreboard ─ ✓ solved=1  ✗ unsolved=2  → active=1  ⏳ pending=1  done=3/5  success=33.3%
+  ┌ scoreboard ─ ✓ solved=1  ✗ unsolved=3  → active=1  ⏳ pending=0  done=4/5  success=25.0%
+  ┌ scoreboard ─ ✓ solved=1  ✗ unsolved=3  → active=1  ⏳ pending=0  done=4/5  success=25.0%
+  ┌ scoreboard ─ ✓ solved=0  ✗ unsolved=0  → active=1  ⏳ pending=4  done=0/5  success=0.0%
+10     | 20     | 25    | 1       | 0.937    | 26.5     | 44.34
+  ┌ scoreboard ─ ✓ solved=0  ✗ unsolved=0  → active=1  ⏳ pending=4  done=0/5  success=0.0%
+5      | 20     | 100   | 1       | 0.807    | 62.3     | 19.07
+  ┌ scoreboard ─ ✓ solved=1  ✗ unsolved=0  → active=1  ⏳ pending=3  done=1/5  success=100.0%
+  ┌ scoreboard ─ ✓ solved=0  ✗ unsolved=0  → active=1  ⏳ pending=4  done=0/5  success=0.0%
+5      | 40     | 50    | 1       | 0.920    | 64.6     | 18.40
+  ┌ scoreboard ─ ✓ solved=1  ✗ unsolved=1  → active=1  ⏳ pending=2  done=2/5  success=50.0%
+  ┌ scoreboard ─ ✓ solved=1  ✗ unsolved=2  → active=1  ⏳ pending=1  done=3/5  success=33.3%
+  ┌ scoreboard ─ ✓ solved=1  ✗ unsolved=3  → active=1  ⏳ pending=0  done=4/5  success=25.0%
+  ┌ scoreboard ─ ✓ solved=0  ✗ unsolved=0  → active=1  ⏳ pending=4  done=0/5  success=0.0%
+10     | 40     | 25    | 1       | 0.887    | 65.7     | 18.10
+  ┌ scoreboard ─ ✓ solved=1  ✗ unsolved=0  → active=1  ⏳ pending=3  done=1/5  success=100.0%
+  ┌ scoreboard ─ ✓ solved=1  ✗ unsolved=1  → active=1  ⏳ pending=2  done=2/5  success=50.0%
+  ┌ scoreboard ─ ✓ solved=1  ✗ unsolved=2  → active=1  ⏳ pending=1  done=3/5  success=33.3%
+  ┌ scoreboard ─ ✓ solved=1  ✗ unsolved=3  → active=1  ⏳ pending=0  done=4/5  success=25.0%
+  ┌ scoreboard ─ ✓ solved=0  ✗ unsolved=0  → active=1  ⏳ pending=4  done=0/5  success=0.0%
+20     | 10     | 25    | 1       | 0.937    | 54.8     | 21.68

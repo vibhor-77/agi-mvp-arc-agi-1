@@ -40,6 +40,7 @@ import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from dataclasses import dataclass, field
 import signal
+import multiprocessing as mp
 from typing import Any, Optional
 
 def _ignore_sigint_initializer():
@@ -144,6 +145,10 @@ class BenchmarkConfig:
         Print per-task start/finish lines and a live running scoreboard.
     baseline_only : bool
         Skip the expanded-DSL run (useful for quick checks).
+    timeout_s : float | None
+        Time limit per task in seconds.
+    max_evals : int | None
+        Maximum program evaluations per task. Primary deterministic limit.
     """
     beam_size: int = 10
     offspring: int = 20
@@ -154,6 +159,8 @@ class BenchmarkConfig:
     verbose: bool = True
     baseline_only: bool = False
     seed: int | None = None
+    timeout_s: float | None = 300.0  # Optional wall-clock safety
+    max_evals: int | None = 1000000  # 1M evaluations (Deterministic Pruning)
 
 
 # ---------------------------------------------------------------------------
@@ -304,6 +311,14 @@ class BenchmarkReport:
             pct = 100 * d["solved"] / d["total"] if d["total"] > 0 else 0
             lines.append(f"- **{cat}**: {d['solved']}/{d['total']} ({pct:.1f}%)")
             
+        lines.append(f"\n## Detailed Results (N={self.n_tasks})")
+        lines.append("| Task | Status | Evals | Time | Train | Test | Expression |")
+        lines.append("| :--- | :--- | :--- | :--- | :--- | :--- | :--- |")
+        for r in self.results:
+            status = "✅ SOLVED" if r.solved else ("⚠️ NEAR" if r.near_solved else "❌ FAIL")
+            expr = r.found_expr if len(r.found_expr) < 40 else r.found_expr[:37] + "..."
+            lines.append(f"| {r.task_name} | {status} | {r.n_evals/1000:5.1f}k | {r.elapsed_s:.1f}s | {r.train_acc:.2f} | {r.test_acc:.2f} | `{expr}` |")
+            
         lines.append(f"\n## Introspection Analysis (Failures by Category)")
         
         failed_by_cat = {}
@@ -324,6 +339,7 @@ class BenchmarkReport:
                 if r.best_tree:
                     ast_str = r.found_expr if len(r.found_expr) < 120 else r.found_expr[:117] + "..."
                     lines.append(f"  - **Best AST**: `{ast_str}`")
+                    lines.append(f"  - **Diagnostics**: {r.n_evals/1000:.1f}k evals | {r.elapsed_s:.1f}s search time")
                     lines.append(f"  - **Train Acc**: {r.train_acc:.2f} | **Test Acc**: {r.test_acc:.2f}")
                 
                 # If we have a trace, visualize it!
@@ -376,6 +392,8 @@ def _run_task_process(
         converge_threshold=1e-9,
         verbose=False,
         seed=idx * 7 + 42 if cfg.seed is None else cfg.seed + idx,
+        timeout_s=cfg.timeout_s,
+        max_evals=cfg.max_evals,
     )
 
     task_t0 = time.time()
@@ -474,6 +492,7 @@ def evaluate_tasks(
     lock = threading.Lock()
     counters: dict[str, int] = {"solved": 0, "near": 0, "done": 0}
     ordered_results: list[tuple[int, TaskResult]] = []
+    start_times: dict[int, float] = {}
 
     def _scoreboard() -> str:
         done  = counters["done"]
@@ -486,26 +505,39 @@ def evaluate_tasks(
         pct   = 100.0 * sol / done if done else 0.0
         unsol = done - sol
         
+        elapsed = time.time() - t0
+        avg     = elapsed / done if done > 0 else 0.0
+        
+        running = [time.time() - t for t in start_times.values()]
+        max_run = max(running) if running else 0.0
+        
         prefix = f" [{epoch_str}]" if epoch_str else ""
         return (
             f"  ┌ scoreboard{prefix} ─ "
             f"✓ solved={sol}  ✗ unsolved={unsol}  "
             f"→ active={act}  ⏳ pending={pend}  "
             f"done={done}/{n_total}  "
-            f"success={pct:.1f}%"
+            f"success={pct:.1f}%  "
+            f"time={elapsed:.1f}s (avg={avg:.1f}s/completed)  "
+            f"straggler_max={max_run:.1f}s"
         )
 
     def _handle_result(idx: int, tr: TaskResult, task: ARCTask) -> None:
         if cfg.verbose:
+            if idx in start_times:
+                del start_times[idx]
+            
             status = "✓" if tr.solved else ("~" if tr.near_solved else "✗")
             counters["done"]   += 1
             if tr.solved:
                 counters["solved"] += 1
             if tr.near_solved and not tr.solved:
                 counters["near"] += 1
+            
             print(
                 f"  {status} [{idx+1:3d}/{n_total}] DONE      "
                 f"{task.name[:28]:28s} "
+                f"evals={tr.n_evals/1000:5.1f}k "
                 f"train={tr.train_acc:.2f} test={tr.test_acc:.2f} "
                 f"({tr.elapsed_s:.1f}s) → {tr.found_expr[:50]}",
                 flush=True,
@@ -546,6 +578,8 @@ def evaluate_tasks(
                     print(f"    {'-'*40}")
             print(_scoreboard(), flush=True)
         else:
+            if idx in start_times:
+                del start_times[idx]
             counters["done"]   += 1
             if tr.solved:
                 counters["solved"] += 1
@@ -561,9 +595,15 @@ def evaluate_tasks(
     if cfg.task_workers > 1:
         exe = ProcessPoolExecutor(max_workers=cfg.task_workers, initializer=_ignore_sigint_initializer)
         try:
-            futures = {exe.submit(_run_task_process, i, t, cfg, op_subset, inner_workers, transition_matrix, learned_ops): i for i, t in enumerate(tasks)}
+            futures = {}
+            for i, t in enumerate(tasks):
+                f = exe.submit(_run_task_process, i, t, cfg, op_subset, inner_workers, transition_matrix, learned_ops)
+                futures[f] = i
+                start_times[i] = time.time()
+            
             for fut in as_completed(futures):
-                idx, tr = fut.result()
+                idx = futures[fut]
+                idx_again, tr = fut.result()
                 _handle_result(idx, tr, tasks[idx])
                 ordered_results.append((idx, tr))
         except KeyboardInterrupt:
@@ -581,6 +621,7 @@ def evaluate_tasks(
     else:
         try:
             for i, task in enumerate(tasks):
+                start_times[i] = time.time()
                 print(_scoreboard(), flush=True)
                 idx, tr = _run_task_process(i, task, cfg, op_subset, inner_workers, transition_matrix, learned_ops)
                 _handle_result(idx, tr, task)
