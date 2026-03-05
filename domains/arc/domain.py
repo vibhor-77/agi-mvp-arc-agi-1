@@ -290,7 +290,7 @@ class ARCDomain(Domain):
         mean_error = total_error / max(len(self.task.train_pairs), 1)
         return mean_error + self.lam * tree.size()
         
-    def solve(self, config: SearchConfig | None = None, transition_matrix: dict[str, dict[str, float]] | None = None) -> SearchResult:
+    def solve(self, config: SearchConfig | None = None, transition_matrix: dict[str, dict[str, float]] | None = None, on_step: Any | None = None) -> SearchResult:
         """
         Execute beam search to find the best generic expression tree
         that mapping inputs to outputs for this task.
@@ -313,7 +313,7 @@ class ARCDomain(Domain):
             fuzz_hash_fn=self.fuzz_hash,
             transition_matrix=transition_matrix,
         )
-        result = searcher.run()
+        result = searcher.run(on_step=on_step)
         self.on_result(result)
         return result
 

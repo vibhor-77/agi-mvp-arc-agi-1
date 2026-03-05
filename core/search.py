@@ -223,7 +223,7 @@ class BeamSearch:
         self.transition_matrix = transition_matrix
         self._rng = random.Random(self.config.seed)
 
-    def run(self) -> SearchResult:
+    def run(self, on_step: Any | None = None) -> SearchResult:
         """
         Execute the beam search.
 
@@ -400,6 +400,10 @@ class BeamSearch:
 
             # Track history
             elapsed = time.time() - t0
+            
+            if on_step:
+                on_step(n_evals_total, elapsed)
+                
             history.append({
                 "gen": gen,
                 "best_fitness": gen_best_score,

@@ -373,7 +373,8 @@ def _run_task_process(
     op_subset: list[str], 
     inner_workers: int,
     transition_matrix: dict[str, dict[str, float]] | None,
-    learned_ops: dict[str, dict] | None = None
+    learned_ops: dict[str, dict] | None = None,
+    active_evals: dict[int, tuple[int, float]] | None = None
 ) -> tuple[int, TaskResult]:
     """Execute the core logic for a single task inside an isolated multiprocessing worker."""
     if learned_ops:
@@ -400,7 +401,11 @@ def _run_task_process(
     domain = ARCDomain(task, lam=cfg.lam, primitive_subset=op_subset)
     domain.on_result = _suppress_on_result  # type: ignore[method-assign]
 
-    result = domain.solve(config=search_cfg, transition_matrix=transition_matrix)
+    def on_step(n_evals: int, elapsed: float) -> None:
+        if active_evals is not None:
+            active_evals[idx] = (n_evals, elapsed)
+
+    result = domain.solve(config=search_cfg, transition_matrix=transition_matrix, on_step=on_step)
 
     tree      = result.best_tree
     train_acc = domain.train_accuracy(tree)
@@ -496,6 +501,10 @@ def evaluate_tasks(
         "total_evals": 0, "solved_evals": 0, "near_evals": 0, "unsolved_evals": 0
     }
     ordered_results: list[tuple[int, TaskResult]] = []
+    
+    # Track straggler progress in real-time
+    manager = mp.Manager()
+    active_evals = manager.dict() # {idx: (n_evals, elapsed)}
     start_times: dict[int, float] = {}
 
     def _scoreboard() -> str:
@@ -508,10 +517,12 @@ def evaluate_tasks(
         act   = min(cfg.task_workers, n_total - done)
         pend  = n_total - done - act
         
-        pct   = 100.0 * sol / done if done else 0.0
-        
         elapsed = time.time() - t0
-        avg     = elapsed / done if done > 0 else 0.0
+        avg_throughput = elapsed / done if done > 0 else 0.0
+        
+        # Internal per-task average (sum of work done per task)
+        task_total_t = counters["solved_time"] + counters["near_time"] + counters["unsolved_time"]
+        avg_work_t   = task_total_t / done if done > 0 else 0.0
         
         s_avg_t = counters["solved_time"] / sol if sol else 0.0
         n_avg_t = counters["near_time"] / near if near else 0.0
@@ -521,11 +532,13 @@ def evaluate_tasks(
         s_avg_e     = counters["solved_evals"] / sol if sol else 0.0
         n_avg_e     = counters["near_evals"] / near if near else 0.0
         u_avg_e     = counters["unsolved_evals"] / unsol if unsol else 0.0
-        avg_e       = total_evals / done if done else 0.0
+        avg_work_e  = total_evals / done if done else 0.0
         evals_p_s   = total_evals / elapsed if elapsed > 0 else 0.0
 
+        # Straggler metrics
         running = [time.time() - t for t in start_times.values()]
-        max_run = max(running) if running else 0.0
+        max_run_t = max(running) if running else 0.0
+        max_run_e = max([v[0] for v in active_evals.values()]) if active_evals else 0
         
         prefix = f" [{epoch_str}]" if epoch_str else ""
         return (
@@ -535,14 +548,16 @@ def evaluate_tasks(
             f"  │ ✗ unsolved={unsol} (avg {u_avg_t:.1f}s, {u_avg_e/1000:.1f}k evals)\n"
             f"  │ → active={act}  ⏳ pending={pend}  done={done}/{n_total}  "
             f"success={pct:.1f}%\n"
-            f"  │ time={elapsed:.1f}s (avg={avg:.1f}s)  "
-            f"evals={total_evals/1000:.1f}k (avg={avg_e/1000:.1f}k, throughput={evals_p_s/1000:.1f}k/s)  "
-            f"straggler_max={max_run:.1f}s"
+            f"  │ TIME:  elapsed={elapsed:.1f}s (Throughput Avg {avg_throughput:.1f}s/task, Task Work Avg {avg_work_t:.1f}s/task)\n"
+            f"  │ EVALS: total={total_evals/1000:.1f}k (Throughput {evals_p_s/1000:.1f}k/s, Task Work Avg {avg_work_e/1000:.1f}k/task)\n"
+            f"  │ STRAGGLER MAX: {max_run_t:.1f}s ({max_run_e/1000:.1f}k evals)"
         )
 
     def _handle_result(idx: int, tr: TaskResult, task: ARCTask) -> None:
         if idx in start_times:
             del start_times[idx]
+        if idx in active_evals:
+            del active_evals[idx]
         
         counters["done"] += 1
         counters["total_evals"] += tr.n_evals
@@ -623,7 +638,7 @@ def evaluate_tasks(
         try:
             futures = {}
             for i, t in enumerate(tasks):
-                f = exe.submit(_run_task_process, i, t, cfg, op_subset, inner_workers, transition_matrix, learned_ops)
+                f = exe.submit(_run_task_process, i, t, cfg, op_subset, inner_workers, transition_matrix, learned_ops, active_evals)
                 futures[f] = i
                 start_times[i] = time.time()
             
@@ -644,6 +659,7 @@ def evaluate_tasks(
             os._exit(130)
         finally:
             exe.shutdown(wait=True)
+            manager.shutdown()
     else:
         try:
             for i, task in enumerate(tasks):
