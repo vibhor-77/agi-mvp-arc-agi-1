@@ -151,6 +151,15 @@ if __name__ == "__main__":
 
     try:
         tasks = load_tasks_from_dir(args.data)
+        
+        # Generative Curriculum Learning
+        # Sort by total pixel count across train_pairs, forcing the Search Engine 
+        # to establish fundamental abstractions on low dimensions first.
+        def _task_complexity(t):
+            return sum(len(inp) * len(inp[0]) for inp, out in t.train_pairs) + (len(t.train_pairs) * 10)
+            
+        tasks.sort(key=_task_complexity)
+
         if args.task_ids:
             # Filter specifically by task IDs
             target_ids = [t.strip() for t in args.task_ids.split(",")]
