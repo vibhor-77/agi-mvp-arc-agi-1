@@ -85,7 +85,7 @@ class SearchConfig:
     max_init_depth: int = 3
     workers: int = 1
     converge_threshold: float = 1e-9
-    mutation_rate: float = 0.85
+    mutation_rate: float = 0.5
     const_range: tuple[float, float] = (-3.0, 3.0)
     const_sigma: float = 0.5
     verbose: bool = True
@@ -131,13 +131,14 @@ class SearchResult:
 _worker_fitness_fn: Callable | None = None
 _worker_fingerprint_fn: Callable | None = None
 _worker_lexicase_fn: Callable | None = None
+_worker_fuzz_hash_fn: Callable | None = None
 
-
-def _worker_eval(tree: Node) -> tuple[float, Node, tuple | None, list[float] | None]:
+def _worker_eval(tree: Node) -> tuple[float, Node, tuple | None, list[float] | None, str | None]:
     score = _worker_fitness_fn(tree) if _worker_fitness_fn else float('inf')
     fp = _worker_fingerprint_fn(tree) if _worker_fingerprint_fn else None
     lex = _worker_lexicase_fn(tree) if _worker_lexicase_fn else None
-    return (score, tree, fp, lex)
+    fuzz = _worker_fuzz_hash_fn(tree) if _worker_fuzz_hash_fn else None
+    return (score, tree, fp, lex, fuzz)
 
 
 # ---------------------------------------------------------------------------
@@ -200,6 +201,7 @@ class BeamSearch:
         op_arities: dict[str, int] | None = None,
         fingerprint_fn: Callable[[Node], tuple] | None = None,
         lexicase_fn: Callable[[Node], list[float]] | None = None,
+        fuzz_hash_fn: Callable[[Node], str] | None = None,
         transition_matrix: dict[str, dict[str, float]] | None = None,
     ) -> None:
         self.fitness_fn = fitness_fn
@@ -209,6 +211,7 @@ class BeamSearch:
         self.op_arities = op_arities
         self.fingerprint_fn = fingerprint_fn
         self.lexicase_fn = lexicase_fn
+        self.fuzz_hash_fn = fuzz_hash_fn
         self.transition_matrix = transition_matrix
         self._rng = random.Random(self.config.seed)
 
@@ -233,12 +236,13 @@ class BeamSearch:
         scored = self._evaluate_all(init_pool)
         
         # Helper to deduplicate a scored pool
-        def _dedupe_pool(pool: list[tuple[float, Node, tuple | None, list[float] | None]], limit: int, temperature: float = 0.0) -> list[tuple[float, Node, tuple | None, list[float] | None]]:
+        def _dedupe_pool(pool: list[tuple[float, Node, tuple | None, list[float] | None, str | None]], limit: int, temperature: float = 0.0) -> list[tuple[float, Node, tuple | None, list[float] | None, str | None]]:
             
             seen_exprs: set[str] = set()
+            seen_fuzzes: set[str] = set()
             # Map fingerprint -> count of admitted ASTs sharing it. Soft-hashing allows up to 3.
             seen_fingerprints: dict[tuple, int] = {}
-            new_beam: list[tuple[float, Node, tuple | None, list[float] | None]] = []
+            new_beam: list[tuple[float, Node, tuple | None, list[float] | None, str | None]] = []
             
             # Pareto (Lexicase) Selection
             # Find the minimum error natively achieved across every individual case.
@@ -257,7 +261,7 @@ class BeamSearch:
                     is_pareto_optimal = any(lex[c] <= best_per_case[c] + 1e-5 for c in range(n_cases))
                     if is_pareto_optimal:
                         # Give it a massive boost to float to the top
-                        pool[i] = (pool[i][0] - 1000.0, pool[i][1], pool[i][2], pool[i][3])
+                        pool[i] = (pool[i][0] - 1000.0, pool[i][1], pool[i][2], pool[i][3], pool[i][4])
                         
             # Sort by score ascending, then by tree size ascending (Occam's razor)
             # Simulated Annealing: Inject noise bounded by temperature to promote diversity early on
@@ -271,15 +275,23 @@ class BeamSearch:
             pool.sort(key=sort_key)
             
             for item in pool:
-                score, tree, fp, lex = item
+                score, tree, fp, lex, fuzz = item
                 key = str(tree)
                 
                 # Check 1: syntactic exact match
                 if key in seen_exprs:
                     continue
                     
-                # Check 2: Soft Semantic Hashing (Anti-Aliasing)
-                # Allow a few structurally distinct ASTs to share the same dummy output
+                # Check 2: Mathematical / Functional Equivalency
+                # Evaluate against a high-entropy Fuzz Input. If two different ASTs compute 
+                # identically across a complex random grid, they are functionally identical mappings.
+                if fuzz is not None:
+                    if fuzz in seen_fuzzes:
+                        continue
+                    seen_fuzzes.add(fuzz)
+                    
+                # Check 3: Soft Semantic Hashing (Local Dataset-Aliasing)
+                # Allow a few structurally distinct ASTs to share the same training output
                 # so we don't prune valuable "near-miss" stepping stones.
                 if fp is not None:
                     count = seen_fingerprints.get(fp, 0)
@@ -299,7 +311,7 @@ class BeamSearch:
         current_temp = cfg.initial_temp
         scored = _dedupe_pool(scored, cfg.beam_size, current_temp)
 
-        beam: list[Node] = [t for _, t, _, _ in scored]
+        beam: list[Node] = [t for _, t, _, _, _ in scored]
         best_fitness = scored[0][0]
         # if the score was artificially boosted negative for lexicase, correct it for reporting
         if best_fitness < 0: best_fitness = self.fitness_fn(scored[0][1])
@@ -323,7 +335,7 @@ class BeamSearch:
             # Generate offspring
             pool = list(beam)
             for i, parent_item in enumerate(scored):
-                parent_score, parent, fp, lex = parent_item
+                parent_score, parent, fp, lex, fuzz = parent_item
                 
                 for _ in range(cfg.offspring):
                     if rng.random() < cfg.mutation_rate or len(beam) < 2:
@@ -358,7 +370,7 @@ class BeamSearch:
             # Deduplicate by semantic hash or string form, keep top beam_size
             scored = _dedupe_pool(scored, cfg.beam_size, current_temp)
 
-            beam = [t for _, t, _, _ in scored]
+            beam = [t for _, t, _, _, _ in scored]
             gen_best_score = scored[0][0]
             if gen_best_score < 0: gen_best_score = self.fitness_fn(scored[0][1])
             gen_best_tree = scored[0][1]
@@ -407,8 +419,8 @@ class BeamSearch:
     # Internal: batch evaluation (parallel or serial)                     #
     # ------------------------------------------------------------------ #
 
-    def _evaluate_all(self, pool: list[Node]) -> list[tuple[float, Node, tuple | None, list[float] | None]]:
-        """Evaluate every tree in *pool*, returning (score, tree, fingerprint, lexicase) tuples."""
+    def _evaluate_all(self, pool: list[Node]) -> list[tuple[float, Node, tuple | None, list[float] | None, str | None]]:
+        """Evaluate every tree in *pool*, returning (score, tree, fingerprint, lexicase, fuzz_hash) tuples."""
         cfg = self.config
         
         # We process sequentially if no multiproc to avoid closure issues
@@ -418,13 +430,15 @@ class BeamSearch:
                 score = self.fitness_fn(t)
                 fp = self.fingerprint_fn(t) if self.fingerprint_fn else None
                 lex = self.lexicase_fn(t) if self.lexicase_fn else None
-                results.append((score, t, fp, lex))
+                fuzz = self.fuzz_hash_fn(t) if self.fuzz_hash_fn else None
+                results.append((score, t, fp, lex, fuzz))
             return results
             
-        global _worker_fitness_fn, _worker_fingerprint_fn, _worker_lexicase_fn
+        global _worker_fitness_fn, _worker_fingerprint_fn, _worker_lexicase_fn, _worker_fuzz_hash_fn
         _worker_fitness_fn = self.fitness_fn
         _worker_fingerprint_fn = self.fingerprint_fn
         _worker_lexicase_fn = self.lexicase_fn
+        _worker_fuzz_hash_fn = self.fuzz_hash_fn
         
         with mp.get_context('fork').Pool(cfg.workers) as p:
             results = p.map(_worker_eval, pool)

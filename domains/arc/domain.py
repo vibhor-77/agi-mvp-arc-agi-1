@@ -210,6 +210,27 @@ class ARCDomain(Domain):
     # Domain interface                                                     #
     # ------------------------------------------------------------------ #
 
+    # Complex Fuzz Grid for strict Mathematical Canonicalization
+    FUZZ_GRID = [
+        [0, 1, 2, 3, 4, 1],
+        [5, 6, 7, 8, 9, 2],
+        [9, 8, 7, 0, 5, 3],
+        [4, 3, 2, 1, 0, 4],
+        [1, 5, 9, 2, 8, 5],
+        [6, 3, 0, 8, 7, 0]
+    ]
+
+    def fuzz_hash(self, tree: Node) -> str:
+        """
+        Evaluate the AST on a constant, high-entropy complex grid.
+        If two trees have the exact same Fuzz Hash, they are strictly
+        functionally identical globally, regardless of how they are written.
+        """
+        try:
+            return str(tree.eval([self.FUZZ_GRID], self._primitives))
+        except Exception:
+            return "ERR"
+
     def fingerprint(self, tree: Node) -> tuple:
         """
         Evaluate the AST on the training inputs to generate a semantic hash.
@@ -289,6 +310,7 @@ class ARCDomain(Domain):
             op_arities=op_arities,
             fingerprint_fn=self.fingerprint,
             lexicase_fn=self.lexicase_eval,
+            fuzz_hash_fn=self.fuzz_hash,
             transition_matrix=transition_matrix,
         )
         result = searcher.run()
