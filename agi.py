@@ -73,7 +73,10 @@ def cmd_train(args):
         
         # Sleep Phase
         successes = {r.task_name: r.best_tree for r in report.results if r.solved and r.best_tree}
-        lib.extract_from_tasks(successes, min_size=2)
+        # min_tasks=1: extract any composite sub-tree (not just ones shared across tasks).
+        # At small scale every solution tends to be unique, so min_tasks=2 yields 0 abstractions.
+        # min_size=3: require at least 3 AST nodes so trivial single-op wrappers aren't promoted.
+        lib.extract_from_tasks(successes, min_size=3, min_tasks=1)
         lib.register_all(domain="arc")
         lib.save()
         
