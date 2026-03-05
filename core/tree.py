@@ -99,6 +99,47 @@ class Node:
         if fn is None:
             raise KeyError(f"Unknown primitive '{self.op}'. Check your registry.")
 
+        # -------------------------------------------------------------
+        # TURING-COMPLETE CONTROL FLOW (LAZY EVALUATION)
+        # -------------------------------------------------------------
+        if self.op.endswith("_if") and len(self.children) == 3:
+            cond_val = self.children[0].eval(variables, primitives)
+            
+            def _is_truthy(v: Any) -> bool:
+                if isinstance(v, list) and len(v) > 0 and isinstance(v[0], list):
+                    return any(val != 0 for row in v for val in row)
+                if isinstance(v, (int, float)):
+                    return v != 0
+                return bool(v)
+                
+            if _is_truthy(cond_val):
+                return self.children[1].eval(variables, primitives)
+            else:
+                return self.children[2].eval(variables, primitives)
+
+        if self.op.endswith("_while") and len(self.children) == 2:
+            # Recurrent evaluate: body output becomes new state. Max 10 iters to prevent infinite loops.
+            vars_copy = list(variables)
+            
+            def _is_truthy(v: Any) -> bool:
+                if isinstance(v, list) and len(v) > 0 and isinstance(v[0], list):
+                    return any(val != 0 for row in v for val in row)
+                if isinstance(v, (int, float)):
+                    return v != 0
+                return bool(v)
+
+            iters = 0
+            while iters < 10:
+                cond_val = self.children[0].eval(vars_copy, primitives)
+                if not _is_truthy(cond_val):
+                    break
+                # Functional recurrent step: body applies to X, its output becomes the new X
+                new_state = self.children[1].eval(vars_copy, primitives)
+                vars_copy[0] = new_state
+                iters += 1
+            return vars_copy[0]
+
+        # Standard Strict Evaluation
         child_vals = [c.eval(variables, primitives) for c in self.children]
         return fn(*child_vals)
 
@@ -123,6 +164,47 @@ class Node:
             raise KeyError(f"Unknown primitive '{self.op}'.")
 
         traces = []
+        
+        # Helper to check truthiness
+        def _is_truthy(v: Any) -> bool:
+            if isinstance(v, list) and len(v) > 0 and isinstance(v[0], list):
+                return any(val != 0 for row in v for val in row)
+            if isinstance(v, (int, float)):
+                return v != 0
+            return bool(v)
+
+        if self.op.endswith("_if") and len(self.children) == 3:
+            c_val, c_trace = self.children[0].eval_trace(variables, primitives)
+            traces.extend(c_trace)
+            
+            if _is_truthy(c_val):
+                final_val, branch_trace = self.children[1].eval_trace(variables, primitives)
+            else:
+                final_val, branch_trace = self.children[2].eval_trace(variables, primitives)
+            traces.extend(branch_trace)
+            traces.append((f"{self.op}(evaluated logic branch)", final_val))
+            return final_val, traces
+            
+        if self.op.endswith("_while") and len(self.children) == 2:
+            vars_copy = list(variables)
+            iters = 0
+            final_val = vars_copy[0]
+            
+            while iters < 10:
+                cond_val, cond_trace = self.children[0].eval_trace(vars_copy, primitives)
+                traces.extend(cond_trace)
+                if not _is_truthy(cond_val):
+                    break
+                    
+                new_state, action_trace = self.children[1].eval_trace(vars_copy, primitives)
+                traces.extend(action_trace)
+                vars_copy[0] = new_state
+                final_val = new_state
+                iters += 1
+                
+            traces.append((f"{self.op}(iterated {iters} times)", final_val))
+            return final_val, traces
+
         child_vals = []
         for c in self.children:
             c_val, c_trace = c.eval_trace(variables, primitives)

@@ -1606,8 +1606,9 @@ def g_if(cond: Grid, true_branch: Grid, false_branch: Grid) -> Grid:
     return _clone(true_branch) if has_pixels else _clone(false_branch)
 
 _NEW_ARC_PRIMITIVES: dict[str, tuple[object, str]] = {
-    # LOGIC
+    # LOGIC (True Turing Completeness)
     "g_if":             (g_if, "If cond has any non-zero pixels, return true_branch; else return false_branch"),
+    "g_while":          (g_if, "Recurrent unrolled loop: repeatedly applies body_branch to x until cond(x) is False"),
     
     # More color swaps
     "gswap_04":         (gswap_04,         "Swap colors 0 and 4"),
@@ -1718,6 +1719,8 @@ _NEW_ARC_PRIMITIVES: dict[str, tuple[object, str]] = {
 for _name, (_fn, _desc) in _NEW_ARC_PRIMITIVES.items():
     if _name == "g_if":
         _arity = 3
+    elif _name == "g_while":
+        _arity = 2
     elif _name in ("g_overlay", "g_render_object", "g_filter_color"):
         _arity = 2
     else:
