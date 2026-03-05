@@ -180,6 +180,62 @@ class Node:
     # Deep copy                                                            #
     # ------------------------------------------------------------------ #
 
+    @classmethod
+    def parse(cls, expr: str) -> "Node":
+        """
+        Parse a string representation of an AST back into a Node.
+        E.g., "g_overlay(gmap_rot90(x), x)" -> Node(op="g_overlay", children=[...])
+        """
+        expr = expr.strip()
+        _NAMES = ["x", "y", "z", "w", "x0", "x1", "x2", "x3"]
+        
+        if expr in _NAMES:
+            return cls(var_idx=_NAMES.index(expr))
+            
+        if expr.startswith("v") and expr[1:].isdigit():
+            return cls(var_idx=int(expr[1:]))
+            
+        # Check if it's a number (constant)
+        try:
+            val = float(expr)
+            return cls(const=val)
+        except ValueError:
+            pass
+            
+        # It must be an operation: op(arg1, arg2, ...)
+        if "(" not in expr or not expr.endswith(")"):
+            raise ValueError(f"Invalid expression format: {expr}")
+            
+        op_idx = expr.index("(")
+        op_name = expr[:op_idx].strip()
+        args_str = expr[op_idx+1:-1].strip()
+        
+        if not args_str:
+            return cls(op=op_name, children=[])
+            
+        # Parse arguments, respecting nested parentheses
+        args = []
+        depth = 0
+        current_arg = ""
+        for char in args_str:
+            if char == "(":
+                depth += 1
+                current_arg += char
+            elif char == ")":
+                depth -= 1
+                current_arg += char
+            elif char == "," and depth == 0:
+                args.append(current_arg.strip())
+                current_arg = ""
+            else:
+                current_arg += char
+                
+        if current_arg:
+            args.append(current_arg.strip())
+            
+        children = [cls.parse(a) for a in args]
+        return cls(op=op_name, children=children)
+
     def clone(self) -> "Node":
         """Return an independent deep copy."""
         return copy.deepcopy(self)

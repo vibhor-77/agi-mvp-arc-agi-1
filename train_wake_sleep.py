@@ -20,10 +20,13 @@ from core.primitives import registry
 
 def run_wake_sleep(tasks: list[ARCTask], epochs: int, cfg: BenchmarkConfig, model_path: str, report_path: str) -> None:
     lib = PrimitiveLibrary(model_path)
+    lib.load()
     
     print(f"\n🚀 Starting Wake-Sleep Training over {len(tasks)} tasks for {epochs} epochs")
+    if lib.learned_ops:
+        print(f"Loaded {len(lib.learned_ops)} existing learned primitives from disk.")
     
-    # Pre-generate the empty model.json file so the user can verify its location immediately
+    # Pre-generate the current model.json file so the user can verify its location immediately
     lib.save()
     
     full_report = f"# Wake-Sleep Training Log\n\n**Total Epochs**: {epochs} | **Tasks**: {len(tasks)}\n\n---\n\n"

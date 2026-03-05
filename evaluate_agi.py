@@ -31,6 +31,7 @@ def run_evaluation(data_dir: str, num_tasks: int, cfg: BenchmarkConfig, model_pa
 
     # Load the matured library learned from the Training set
     lib = PrimitiveLibrary(model_path)
+    lib.load()
     print(f"Loaded {len(lib.learned_ops)} learned primitives from Sleep phase.")
     
     # Inject them into the active DSL registry

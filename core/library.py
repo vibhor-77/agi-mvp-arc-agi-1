@@ -147,15 +147,32 @@ class PrimitiveLibrary:
         with open(self.filepath, "w") as f:
             json.dump(data, f, indent=2)
 
-    def load(self, op_list: list[str]) -> None:
+    def load(self, op_list: list[str] = None) -> None:
         """
         Load library expressions from disk and re-construct the ASTs.
-        This requires parsing the string representations back into nodes.
-        Since we don't have a string parser yet, we'll keep this as a stub
-        for future work, or we can rely on in-memory persistence during the wake-sleep run.
+        If op_list is provided, only loads ops whose keys are in that list.
         """
         if not os.path.exists(self.filepath):
             return
-        # Currently a stub: without an AST parser, we rely on the continuous in-memory
-        # loop for the MVP. Will build string->Node inverse eval later if requested.
-        pass
+            
+        try:
+            with open(self.filepath, "r") as f:
+                data = json.load(f)
+        except Exception:
+            return
+            
+        if "library" in data:
+            for name, meta in data["library"].items():
+                if op_list is not None and name not in op_list:
+                    continue
+                node = Node.parse(meta["expr"])
+                self.learned_ops[name] = {
+                    "expr": meta["expr"],
+                    "arity": meta["arity"],
+                    "node": node
+                }
+                
+        if "transitions" in data:
+            for parent_op, v in data["transitions"].items():
+                for child_op, prob in v.items():
+                    self.transition_matrix[parent_op][child_op] = float(prob)
