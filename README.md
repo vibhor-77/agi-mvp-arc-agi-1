@@ -55,3 +55,16 @@ As of March 2026, the AGI Sandbox executes completely deterministically (no fuzz
 - **100% Integration Test Pass Rate (211/211 tests)**
 - **88.2% Total Line/Branch Coverage** spanning the Symbolic Tree Compilers, Multiprocessing Execution loops, and Lexicase fitness functions.
 - Fully regressed against `Float TypeError` mappings, Object Array `Dimension Mismatch` loopholes, and Zombie Multiprocessing threads.
+
+---
+
+## ⚡ Quick Start: Reproducing the "Sweet Spot"
+
+The search hyperparameters have been scientifically optimized via **Return on Compute (ROC_math)** analysis. To launch a full production training pass (400 tasks) with the most efficient parameters:
+
+```bash
+# Optimized Configuration: Beam 10 | Offspring 20 | Gen 25
+python3 train_wake_sleep.py --task-workers 8 --epochs 5
+```
+
+For more details on the hyperparameter selection, see **[Optimization Results](docs/hyperparameter_optimization_results.md)**.

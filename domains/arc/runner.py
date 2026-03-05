@@ -145,9 +145,9 @@ class BenchmarkConfig:
     baseline_only : bool
         Skip the expanded-DSL run (useful for quick checks).
     """
-    beam_size: int = 20
-    offspring: int = 50
-    generations: int = 100
+    beam_size: int = 10
+    offspring: int = 20
+    generations: int = 25
     workers: int = 1
     task_workers: int = field(default_factory=lambda: os.cpu_count() or 1)
     lam: float = 0.02

@@ -79,9 +79,9 @@ class SearchConfig:
     seed : int | None
         Random seed for reproducibility.
     """
-    beam_size: int = 20
-    offspring: int = 60
-    generations: int = 300
+    beam_size: int = 10
+    offspring: int = 20
+    generations: int = 25
     max_init_depth: int = 3
     workers: int = 1
     converge_threshold: float = 1e-9

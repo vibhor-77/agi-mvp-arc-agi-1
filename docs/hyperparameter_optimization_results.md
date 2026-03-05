@@ -31,7 +31,7 @@ To identify the most efficient hyperparameter configuration for the ARC-AGI solv
 For the 400-task full training pass, we use **Beam 10 | Offspring 20 | Generations 25**.
 This configuration provides the best balance of reasoning coverage and Iteration speed.
 
-**Full Pass Launch Command:**
+**Full Pass Launch Command (Uses codifed defaults):**
 ```bash
-python3 train_wake_sleep.py --beam-size 10 --offspring 20 --generations 25 --task-workers 8 --epochs 5
+python3 train_wake_sleep.py --task-workers 8 --epochs 5
 ```
