@@ -1594,8 +1594,21 @@ def g_replace_1_with_3(g: Grid) -> Grid:
     """Transforms all 1s into 3s."""
     return [[3 if c == 1 else c for c in row] for row in g]
 
+# ── Logical Branching ────────────────────────────────────────────────────────
+def g_if(cond: Grid, true_branch: Grid, false_branch: Grid) -> Grid:
+    """
+    Ternary logical branching.
+    If the cond grid contains ANY non-zero pixels (is 'truthy'), 
+    evaluates to the true_branch grid.
+    Otherwise (an empty grid or all 0s), evaluates to the false_branch grid.
+    """
+    has_pixels = any(val != 0 for row in cond for val in row)
+    return _clone(true_branch) if has_pixels else _clone(false_branch)
 
 _NEW_ARC_PRIMITIVES: dict[str, tuple[object, str]] = {
+    # LOGIC
+    "g_if":             (g_if, "If cond has any non-zero pixels, return true_branch; else return false_branch"),
+    
     # More color swaps
     "gswap_04":         (gswap_04,         "Swap colors 0 and 4"),
     "gswap_05":         (gswap_05,         "Swap colors 0 and 5"),
@@ -1703,5 +1716,10 @@ _NEW_ARC_PRIMITIVES: dict[str, tuple[object, str]] = {
 }
 
 for _name, (_fn, _desc) in _NEW_ARC_PRIMITIVES.items():
-    _arity = 2 if _name in ("g_overlay", "g_render_object", "g_filter_color") else 1
+    if _name == "g_if":
+        _arity = 3
+    elif _name in ("g_overlay", "g_render_object", "g_filter_color"):
+        _arity = 2
+    else:
+        _arity = 1
     registry.register(_name, _fn, domain="arc", description=_desc, arity=_arity)  # type: ignore[arg-type]
