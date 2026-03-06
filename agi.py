@@ -71,8 +71,12 @@ def cmd_train(args):
             report_callback=lambda r: r.save(report_path)
         )
         
-        # Sleep Phase
-        successes = {r.task_name: r.best_tree for r in report.results if r.solved and r.best_tree}
+        # Sleep Phase: Extract from both solved AND near-solved (>=90% accuracy)
+        successes = {
+            r.task_name: r.best_tree 
+            for r in report.results 
+            if (r.solved or r.test_acc >= 0.90) and r.best_tree
+        }
         # min_tasks=1: extract any composite sub-tree (not just ones shared across tasks).
         # At small scale every solution tends to be unique, so min_tasks=2 yields 0 abstractions.
         # min_size=3: require at least 3 AST nodes so trivial single-op wrappers aren't promoted.

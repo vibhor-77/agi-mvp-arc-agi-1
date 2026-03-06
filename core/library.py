@@ -108,7 +108,7 @@ class PrimitiveLibrary:
             "node": node
         }
         
-    def register_all(self, domain: str = "arc") -> None:
+    def register_all(self, domain: str = "arc", overwrite: bool = True) -> None:
         """Inject all learned primitives into the active environment registry."""
         for name, meta in self.learned_ops.items():
             if name not in registry:

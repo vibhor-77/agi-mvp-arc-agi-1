@@ -491,11 +491,12 @@ def _worker_wrapper(idx, task, cfg, op_subset, inner_workers, transition_matrix,
 
 class LiveScoreboard:
     """Encapsulates the status reporting logic for evaluate_tasks."""
-    def __init__(self, n_total: int, t0: float, task_workers: int, epoch_str: str = ""):
+    def __init__(self, n_total: int, t0: float, task_workers: int, epoch_str: str = "", global_stats: dict | None = None):
         self.n_total = n_total
         self.t0 = t0
         self.task_workers = task_workers
         self.epoch_str = epoch_str
+        self.global_stats = global_stats or {}
         self.counters = {
             "solved": 0, "near": 0, "done": 0,
             "solved_time": 0.0, "near_time": 0.0, "unsolved_time": 0.0,
@@ -547,7 +548,8 @@ class LiveScoreboard:
         max_run_e = max(self.shared_evals) if self.shared_evals else 0
 
         prefix = f" [{self.epoch_str}]" if self.epoch_str else ""
-        return (
+        
+        main_scoreboard = (
             f"  ┌ scoreboard{prefix} ─\n"
             f"  │ ✓ solved={sol} ({100*sol/max(done,1):.1f}%)  ⚠️ near={near}  ✗ unsolved={unsol}\n"
             f"  │ → active={act}  ⏳ pending={pend}  done={done}/{self.n_total}  success={pct:.1f}%\n"
@@ -555,6 +557,20 @@ class LiveScoreboard:
             f"  │ WORK:  speedup={speedup:.2f}x ({utilization:.1f}% core) | STRAGGLER: {max_run_t:.1f}s, {max_run_e/1000:.1f}k evals\n"
             f"  │ EVALS: total={total_evals/1000:.1f}k ({evals_p_s/1000:.2f}k/s | Per-Task Avg: {avg_work_e/1000:.1f}k)"
         )
+
+        if self.global_stats:
+            gs = self.global_stats
+            g_offset = gs.get("offset", 0)
+            g_total = gs.get("global_total", self.n_total)
+            g_solved = gs.get("global_solved", 0) + sol
+            g_near = gs.get("global_near", 0) + near
+            g_done = g_offset + done
+            g_pct = 100 * g_solved / max(g_done, 1)
+            
+            global_line = f"\n  │ GLOBAL: done={g_done}/{g_total} | solved={g_solved} ({g_pct:.1f}%) | near={g_near}"
+            main_scoreboard += global_line
+
+        return main_scoreboard
 
 def evaluate_tasks(
     tasks: list[ARCTask],
@@ -565,12 +581,13 @@ def evaluate_tasks(
     learned_ops: dict[str, dict] | None = None,
     epoch_str: str = "",
     report_callback=None,
+    global_stats: dict | None = None,
 ) -> BenchmarkReport:
     report = BenchmarkReport(label=label, n_ops=len(op_subset))
     t0 = time.time()
     inner_workers = 1 if cfg.task_workers > 1 else cfg.workers
 
-    scoreboard = LiveScoreboard(len(tasks), t0, cfg.task_workers, epoch_str)
+    scoreboard = LiveScoreboard(len(tasks), t0, cfg.task_workers, epoch_str, global_stats=global_stats)
     ordered_results: list[tuple[int, TaskResult]] = []
     last_report_t = 0.0
 

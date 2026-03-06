@@ -715,10 +715,10 @@ _ARC_BINARY_PRIMITIVES: dict[str, tuple[object, str]] = {
 # fmt: on
 
 for _name, (_fn, _desc) in _ARC_PRIMITIVES.items():
-    registry.register(_name, _fn, domain="arc", description=_desc, arity=1)  # type: ignore[arg-type]
+    registry.register(_name, _fn, domain="arc", description=_desc, arity=1, overwrite=True)  # type: ignore[arg-type]
 
 for _name, (_fn, _desc) in _ARC_BINARY_PRIMITIVES.items():
-    registry.register(_name, _fn, domain="arc", description=_desc, arity=2)  # type: ignore[arg-type]
+    registry.register(_name, _fn, domain="arc", description=_desc, arity=2, overwrite=True)  # type: ignore[arg-type]
 
 
 # ---------------------------------------------------------------------------
@@ -2129,7 +2129,7 @@ for _name, (_fn, _desc) in _NEW_ARC_PRIMITIVES.items():
         _arity = 2
     else:
         _arity = 1
-    registry.register(_name, _fn, domain="arc", description=_desc, arity=_arity)  # type: ignore[arg-type]
+    registry.register(_name, _fn, domain="arc", description=_desc, arity=_arity, overwrite=True)  # type: ignore[arg-type]
 
 
 # ---------------------------------------------------------------------------
@@ -2285,12 +2285,50 @@ def g_color_interior_by_area(g: Grid) -> Grid:
     return result
 
 
+def g_fractal_self(g: Grid) -> Grid:
+    """
+    Self-similar Kronecker product: each cell (r,c) in g is replaced by 
+    an entire copy of g if g[r][c] != 0. 
+    Matches 'Kronecker' tasks like 8e2edd66.
+    """
+    R, C = len(g), len(g[0])
+    # Protect against huge grids
+    if R * R > 30 or C * C > 30:
+        return _clone(g)
+    
+    out_rows, out_cols = R * R, C * C
+    res = [[0] * out_cols for _ in range(out_rows)]
+    for r in range(R):
+        for c in range(C):
+            if g[r][c] != 0:
+                # Paste the original pattern into this block
+                for i in range(R):
+                    for j in range(C):
+                        res[r * R + i][c * C + j] = g[i][j]
+    return res
+
+
+def g_tile_self(g: Grid) -> Grid:
+    """
+    Tile the entire current grid (g) to fill a 30x30 workspace.
+    """
+    rows, cols = _rows(g), _cols(g)
+    if rows == 0 or cols == 0: return g
+    res = [[0] * 30 for _ in range(30)]
+    for r in range(30):
+        for c in range(30):
+            res[r][c] = g[r % rows][c % cols]
+    return res
+
+
 _OBJECT_LEVEL_OPS = {
     "g_scale_by_color":      (g_scale_by_color,      "Scale each pixel to a block sized = color value"),
     "g_frame_each_pixel":    (g_frame_each_pixel,    "Draw 3x3 border of 1s around each isolated pixel"),
     "g_fill_rects_by_size":  (g_fill_rects_by_size,  "Fill rectangle interiors: 1=small, 2=large"),
     "g_color_interior_by_area": (g_color_interior_by_area, "Fill rect interiors: 7=smallest, 2=largest"),
+    "g_fractal_self":        (g_fractal_self,        "Self-similar Kronecker nesting (e.g. 3x3 -> 9x9)"),
+    "g_tile_self":           (g_tile_self,           "Tile grid to 30x30"),
 }
 
 for _name, (_fn, _desc) in _OBJECT_LEVEL_OPS.items():
-    registry.register(_name, _fn, domain="arc", description=_desc, arity=1)
+    registry.register(_name, _fn, domain="arc", description=_desc, arity=1, overwrite=True)

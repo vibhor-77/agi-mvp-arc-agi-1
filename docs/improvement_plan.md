@@ -2,6 +2,14 @@
 
 The current run is at **24.1% solve rate (34/141 tasks)** on Epoch 1. Our goal is to push past 30%+ on the next run by expanding DSL expressivity and search efficiency.
 
+### Category A: DSL Expressivity
+1. **Fractal & Kronecker Primitives** — **Success.** Added `g_fractal_self` and `g_tile_self` to handle self-similar scaling and nesting logic.
+2. **Object Discovery** — Current primitives like `g_extract_objects` are baseline. Future: multi-slot memory for object manipulation.
+
+### Category B: Search & Exploration
+1. **Soft-Success Learning** — **Success.** Sleep phase now extracts abstractions from both solved AND near-solved (>=90%) tasks.
+2. **Increased Budget** — Planned: Bump evaluation beam width for near-miss tasks.
+
 ### Category C: Library Learning
 1. **Wake-Sleep Marathon** — **Success.** COMPLETED a 400-task, 5-epoch training loop.
    - Initial solve rate: 9.25% (37/400 Tasks).
