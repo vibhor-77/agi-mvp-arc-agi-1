@@ -206,7 +206,7 @@ class ARCDomain(Domain):
         self._op_list = primitive_subset or registry.names(domain="arc")
         self._primitives = {name: registry.get(name) for name in self._op_list}
         if library:
-            self._primitives.update(library.primitives)
+            self._primitives.update(library.learned_ops)
             self._op_list = list(self._primitives.keys())
         self._discovery_eval_count = 0
         self._discovery_start_time = time.time()
