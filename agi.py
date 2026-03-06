@@ -132,7 +132,7 @@ def main():
     shared.add_argument("--offspring", type=int, default=20)
     shared.add_argument("--generations", type=int, default=25)
     shared.add_argument("--max-evals", type=int, default=1000000)
-    shared.add_argument("--timeout", type=float, default=300.0)
+    shared.add_argument("--timeout", type=float, default=60.0)
     shared.add_argument("--seed", type=int, default=None)
     shared.add_argument("--task-ids", type=str, default=None)
 

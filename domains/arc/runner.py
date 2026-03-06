@@ -475,6 +475,18 @@ def _run_task_process(
     )
     return idx, tr
 
+def _worker_wrapper(idx, task, cfg, op_subset, inner_workers, transition_matrix, learned_ops, slot, conn):
+    """Top-level wrapper for multiprocessing processes."""
+    try:
+        from domains.arc.runner import _run_task_process
+        _, tr = _run_task_process(idx, task, cfg, op_subset, inner_workers, transition_matrix, learned_ops, slot)
+        conn.send(tr)
+    except Exception as e:
+        # Avoid crashing the parent if worker fails
+        conn.send(None)
+    finally:
+        conn.close()
+
 class LiveScoreboard:
     """Encapsulates the status reporting logic for evaluate_tasks."""
     def __init__(self, n_total: int, t0: float, task_workers: int, epoch_str: str = ""):
@@ -583,33 +595,92 @@ def evaluate_tasks(
                 last_report_t = now
 
     if cfg.task_workers > 1:
-        from concurrent.futures import wait, FIRST_COMPLETED
-        exe = ProcessPoolExecutor(max_workers=cfg.task_workers, initializer=_ignore_sigint_initializer, initargs=(shared_evals,))
+        import multiprocessing as mp
+        active_processes = {} # {proc_idx: (process, task_idx, start_time)}
+        task_queue = list(enumerate(tasks))
+        free_slots = list(range(cfg.task_workers))
+
         try:
-            futures, active_worker_indices, free_worker_indices = {}, {}, list(range(cfg.task_workers))
-            for i, task in enumerate(tasks):
-                while len(futures) >= cfg.task_workers:
-                    d_set, _ = wait(futures, return_when=FIRST_COMPLETED)
-                    for f in d_set:
-                        idx, w_idx = futures.pop(f), active_worker_indices.pop(f)
-                        free_worker_indices.append(w_idx)
-                        shared_evals[w_idx] = 0
-                        _, tr = f.result()
-                        _on_done(idx, tr, tasks[idx])
-                w_idx = free_worker_indices.pop()
-                if cfg.verbose: print(f"  → [{i+1:3d}] STARTING  {task.name}", flush=True)
-                f = exe.submit(_run_task_process, i, task, cfg, op_subset, inner_workers, transition_matrix, learned_ops, w_idx)
-                futures[f], active_worker_indices[f] = i, w_idx
-                scoreboard.start_times[i] = time.time()
-            for f in as_completed(futures):
-                idx, (_, tr) = futures[f], f.result()
-                _on_done(idx, tr, tasks[idx])
+            while task_queue or active_processes:
+                # Start new tasks if slots available
+                while task_slots := [s for s in free_slots if task_queue]:
+                    slot = slot_idx = task_slots[0]
+                    free_slots.remove(slot)
+                    task_idx, task = task_queue.pop(0)
+
+                    if cfg.verbose: print(f"  → [{task_idx+1:3d}] STARTING  {task.name}", flush=True)
+                    
+                    # Create a pipe for the result
+                    parent_conn, child_conn = mp.Pipe()
+                    
+                    # We reuse _run_task_process but wrap it to send result through the pipe
+                    p = mp.Process(
+                        target=_worker_wrapper, 
+                        args=(task_idx, task, cfg, op_subset, inner_workers, transition_matrix, learned_ops, slot, child_conn)
+                    )
+                    p.start()
+                    active_processes[slot] = (p, task_idx, time.time(), parent_conn)
+                    scoreboard.start_times[task_idx] = time.time()
+
+                # Monitor active processes
+                finished_slots = []
+                for slot, (p, task_idx, start_t, conn) in list(active_processes.items()):
+                    now = time.time()
+                    elapsed = now - start_t
+                    timeout = cfg.timeout_s or 300.0
+
+                    # Check if finished
+                    if conn.poll():
+                        try:
+                            tr = conn.recv()
+                            if tr:
+                                _on_done(task_idx, tr, tasks[task_idx])
+                            else:
+                                # Worker crashed
+                                pass
+                        except EOFError:
+                            pass
+                        p.join()
+                        finished_slots.append(slot)
+                    elif not p.is_alive():
+                        # Process died unexpectedly
+                        p.join()
+                        finished_slots.append(slot)
+                    elif elapsed > timeout + 10: # Hard kill after 10s grace
+                        if cfg.verbose: print(f"  [!] Hard killing straggler {tasks[task_idx].name} ({elapsed:.1f}s > {timeout}s)")
+                        p.kill()
+                        p.join()
+                        finished_slots.append(slot)
+                        # On-done with empty result?
+                        from domains.arc.runner import TaskResult
+                        empty_tr = TaskResult(
+                            task_name=tasks[task_idx].name,
+                            category=tasks[task_idx].name.split("_")[0],
+                            true_op=tasks[task_idx].true_op,
+                            found_expr="TIMEOUT",
+                            train_acc=0.0,
+                            test_acc=0.0,
+                            solved=False,
+                            near_solved=False,
+                            n_nodes=0,
+                            elapsed_s=elapsed,
+                            n_evals=0,
+                            introspection="Hard timeout reached. Killed process."
+                        )
+                        _on_done(task_idx, empty_tr, tasks[task_idx])
+
+                for slot in finished_slots:
+                    del active_processes[slot]
+                    free_slots.append(slot)
+                    shared_evals[slot] = 0
+
+                time.sleep(0.1) # Avoid busy wait
+
         except KeyboardInterrupt:
-            for p in exe._processes.values(): p.kill()
-            exe.shutdown(wait=False, cancel_futures=True)
+            for slot, (p, _, _, _) in active_processes.items():
+                p.kill()
+                p.join()
             os._exit(130)
-        finally:
-            exe.shutdown(wait=True)
     else:
         for i, task in enumerate(tasks):
             scoreboard.start_times[i] = time.time()
