@@ -1,11 +1,16 @@
-# Universal ARC-AGI Solver 🧠🧩
 
-An exploratory general-purpose Artificial General Intelligence (AGI) solver framework based on the **Four Pillars of True General Learning**:
+An exploratory AGI solver for the Abstraction and Reasoning Corpus (ARC). Built on a robust symbolic reasoning engine that utilizes the **"Wake-Sleep" cycle** to meta-learn reusable library operators across training tasks.
 
-1.  **Feedback Loops**: Recursive wake-sleep iteration (Wake = Solving, Sleep = Learning).
-2.  **Abstraction & Composability**: Deep DSL expansion through sub-tree extraction.
-3.  **Exploration**: Multi-objective beam search with Lexicase selection.
-4.  **Approximability**: MDL-based complexity priors.
+---
+
+## 📖 Documentation & Research Logs
+
+| Category | Key Documents |
+| :--- | :--- |
+| **🚀 Results** | [Training Marathon (400 Tasks)](docs/training_marathon_results.md) • [Improvement Plan](docs/improvement_plan.md) |
+| **🏗️ Deep Dives** | [Architecture Overview](docs/architecture.md) • [Execution Guide](docs/execution_guide.md) |
+| **🧬 Methodology** | [Walkthrough](docs/walkthrough.md) • [Hyperparameter Optimization](docs/hyperparameter_optimization_report.md) |
+| **🔭 Vision** | [Project Strategy](docs/strategy.md) • [Research Theory](docs/theory.md) |
 
 ---
 
