@@ -35,14 +35,16 @@ The beam search will pick it up automatically the next time you call
 
 ARC color convention
 --------------------
-ARC uses integers 0–9.  0 is conventionally background.
+ARC uses integers 0–9. 0 is conventionally background.
 All primitives treat 0 as background unless stated otherwise.
 """
 from __future__ import annotations
 
 import copy
 from typing import Callable
-
+import numpy as np
+import numba
+from numba import njit
 from core.primitives import registry
 
 # Type alias for readability
@@ -65,162 +67,141 @@ def _cols(g: Grid) -> int:
     return len(g[0]) if g else 0
 
 
+# ---------------------------------------------------------------------------
+# JIT Optimization Infrastructure
+# ---------------------------------------------------------------------------
+
 def _safe_grid_op(fn: Callable) -> Callable:
     """
     Wrap a grid op so it returns an unchanged clone of the first argument 
-    on any error. Prevents a single bad candidate from crashing the search.
+    on any error. Optimized for native NumPy execution.
     """
     def _wrapped(*args, **kwargs):
         try:
+            # Native NumPy execution
             res = fn(*args, **kwargs)
-            if isinstance(res, list) and len(res) > 30:
-                raise ValueError("Grid rows exceed ARC 30x30 limit")
-            if isinstance(res, list) and res and isinstance(res[0], list) and len(res[0]) > 30:
-                raise ValueError("Grid cols exceed ARC 30x30 limit")
             return res
         except Exception:
-            return _clone(args[0]) if args else []
+            # Fallback to a clone of the original input
+            if args and isinstance(args[0], np.ndarray):
+                return args[0].copy()
+            return copy.deepcopy(args[0]) if args else []
     _wrapped.__name__ = fn.__name__
     return _wrapped
 
 
-
 # ---------------------------------------------------------------------------
-# GEOMETRIC
+# GEOMETRIC (JIT ACCELERATED)
 # ---------------------------------------------------------------------------
 
-def grot90(g: Grid) -> Grid:
+@_safe_grid_op
+def grot90(g: np.ndarray) -> np.ndarray:
     """Rotate 90° clockwise."""
-    return [list(row) for row in zip(*g[::-1])]
+    return np.rot90(g, k=-1)
 
-
-def grot180(g: Grid) -> Grid:
+@_safe_grid_op
+def grot180(g: np.ndarray) -> np.ndarray:
     """Rotate 180°."""
-    return [row[::-1] for row in g[::-1]]
+    return np.rot90(g, k=2)
 
+@_safe_grid_op
+def grot270(g: np.ndarray) -> np.ndarray:
+    """Rotate 270° clockwise."""
+    return np.rot90(g, k=1)
 
-def grot270(g: Grid) -> Grid:
-    """Rotate 270° clockwise (= 90° counter-clockwise)."""
-    return grot90(grot90(grot90(g)))
-
-
-def grefl_h(g: Grid) -> Grid:
+@_safe_grid_op
+def grefl_h(g: np.ndarray) -> np.ndarray:
     """Reflect horizontally (flip left-right)."""
-    return [row[::-1] for row in g]
+    return np.fliplr(g)
 
-
-def grefl_v(g: Grid) -> Grid:
+@_safe_grid_op
+def grefl_v(np_g: np.ndarray) -> np.ndarray:
     """Reflect vertically (flip top-bottom)."""
-    return g[::-1]
+    return np.flipud(np_g)
 
-
-def gtrsp(g: Grid) -> Grid:
+@_safe_grid_op
+def gtrsp(g: np.ndarray) -> np.ndarray:
     """Transpose (swap rows and columns)."""
-    if not g or not g[0]:
-        return _clone(g)
-    return [list(row) for row in zip(*g)]
+    return np.transpose(g)
 
-
-def ganti_trsp(g: Grid) -> Grid:
+@_safe_grid_op
+def ganti_trsp(g: np.ndarray) -> np.ndarray:
     """Anti-transpose (reflect across the anti-diagonal)."""
-    return grefl_h(gtrsp(grefl_h(g)))
+    return np.transpose(np.flipud(np.fliplr(g)))
 
 
 # ---------------------------------------------------------------------------
-# COLOR
+# COLOR (JIT ACCELERATED)
 # ---------------------------------------------------------------------------
 
-def ginv(g: Grid) -> Grid:
+@_safe_grid_op
+def ginv(g: np.ndarray) -> np.ndarray:
     """Invert colors: c → max_color - c."""
-    flat = [c for row in g for c in row]
-    if not flat:
-        return _clone(g)
-    m = max(flat)
-    return [[m - c for c in row] for row in g]
+    if g.size == 0: return g
+    m = np.max(g)
+    return m - g
 
+@_safe_grid_op
+def gswap(g: np.ndarray, c1: int, c2: int) -> np.ndarray:
+    """Helper for swapping two colors."""
+    res = g.copy()
+    mask1 = (g == c1)
+    mask2 = (g == c2)
+    res[mask1] = c2
+    res[mask2] = c1
+    return res
 
-def gswap_01(g: Grid) -> Grid:
-    """Swap colors 0 and 1."""
-    def s(c): return 1 if c == 0 else (0 if c == 1 else c)
-    return [[s(c) for c in row] for row in g]
+@_safe_grid_op
+def gswap_01(g: np.ndarray) -> np.ndarray: return gswap(g, 0, 1)
+@_safe_grid_op
+def gswap_12(g: np.ndarray) -> np.ndarray: return gswap(g, 1, 2)
+@_safe_grid_op
+def gswap_23(g: np.ndarray) -> np.ndarray: return gswap(g, 2, 3)
+@_safe_grid_op
+def gswap_03(g: np.ndarray) -> np.ndarray: return gswap(g, 0, 3)
+@_safe_grid_op
+def gswap_13(g: np.ndarray) -> np.ndarray: return gswap(g, 1, 3)
+@_safe_grid_op
+def gswap_02(g: np.ndarray) -> np.ndarray: return gswap(g, 0, 2)
 
-
-def gswap_12(g: Grid) -> Grid:
-    """Swap colors 1 and 2."""
-    def s(c): return 2 if c == 1 else (1 if c == 2 else c)
-    return [[s(c) for c in row] for row in g]
-
-
-def gswap_23(g: Grid) -> Grid:
-    """Swap colors 2 and 3."""
-    def s(c): return 3 if c == 2 else (2 if c == 3 else c)
-    return [[s(c) for c in row] for row in g]
-
-
-def gswap_03(g: Grid) -> Grid:
-    """Swap colors 0 and 3."""
-    def s(c): return 3 if c == 0 else (0 if c == 3 else c)
-    return [[s(c) for c in row] for row in g]
-
-
-def gswap_13(g: Grid) -> Grid:
-    """Swap colors 1 and 3."""
-    def s(c): return 3 if c == 1 else (1 if c == 3 else c)
-    return [[s(c) for c in row] for row in g]
-
-
-def gswap_02(g: Grid) -> Grid:
-    """Swap colors 0 and 2."""
-    def s(c): return 2 if c == 0 else (0 if c == 2 else c)
-    return [[s(c) for c in row] for row in g]
-
-
-def gfill_bg(g: Grid) -> Grid:
+@_safe_grid_op
+def gfill_bg(g: np.ndarray) -> np.ndarray:
     """Replace background (0) with color 5."""
-    return [[5 if c == 0 else c for c in row] for row in g]
+    res = g.copy()
+    res[g == 0] = 5
+    return res
 
-
-def gzero_bg(g: Grid) -> Grid:
+@_safe_grid_op
+def gzero_bg(g: np.ndarray) -> np.ndarray:
     """Replace background (0) with color 9."""
-    return [[9 if c == 0 else c for c in row] for row in g]
+    res = g.copy()
+    res[g == 0] = 9
+    return res
 
+@_safe_grid_op
+def gclear_nonbg(g: np.ndarray) -> np.ndarray:
+    """Set all non-zero cells to 0."""
+    return np.zeros_like(g)
 
-def gclear_nonbg(g: Grid) -> Grid:
-    """Set all non-zero cells to 0 (clear foreground, keep background)."""
-    return [[0 for _ in row] for row in g]
+@_safe_grid_op
+def gmod2(g: np.ndarray) -> np.ndarray: return g % 2
+@_safe_grid_op
+def gmod3(g: np.ndarray) -> np.ndarray: return g % 3
 
-
-def gmod2(g: Grid) -> Grid:
-    """Replace each color c with c % 2."""
-    return [[c % 2 for c in row] for row in g]
-
-
-def gmod3(g: Grid) -> Grid:
-    """Replace each color c with c % 3."""
-    return [[c % 3 for c in row] for row in g]
-
-
-def gmax_color(g: Grid) -> Grid:
+@_safe_grid_op
+def gmax_color(g: np.ndarray) -> np.ndarray:
     """Fill entire grid with the maximum color value present."""
-    flat = [c for row in g for c in row]
-    if not flat:
-        return _clone(g)
-    m = max(flat)
-    return [[m] * _cols(g) for _ in range(_rows(g))]
+    if g.size == 0: return g
+    return np.full_like(g, np.max(g))
 
-
-def gmin_color(g: Grid) -> Grid:
+@_safe_grid_op
+def gmin_color(g: np.ndarray) -> np.ndarray:
     """Fill entire grid with the minimum color value present."""
-    flat = [c for row in g for c in row]
-    if not flat:
-        return _clone(g)
-    m = min(flat)
-    return [[m] * _cols(g) for _ in range(_rows(g))]
+    if g.size == 0: return g
+    return np.full_like(g, np.min(g))
 
-
-def gid(g: Grid) -> Grid:
-    """Identity — return an unchanged copy (useful as a no-op in compositions)."""
-    return _clone(g)
+@_safe_grid_op
+def gid(g: np.ndarray) -> np.ndarray: return g.copy()
 
 
 # ---------------------------------------------------------------------------

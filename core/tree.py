@@ -141,6 +141,12 @@ class Node:
 
         # Standard Strict Evaluation
         child_vals = [c.eval(variables, primitives) for c in self.children]
+        
+        # Performance: If any input is a list (from Leaf), convert to numpy 
+        # to allow machine-speed primitive execution.
+        if child_vals and isinstance(child_vals[0], list):
+             child_vals[0] = np.array(child_vals[0])
+                
         return fn(*child_vals)
 
     def eval_trace(self, variables: list[Any], primitives: dict[str, Callable]) -> tuple[Any, list[tuple[str, Any]]]:

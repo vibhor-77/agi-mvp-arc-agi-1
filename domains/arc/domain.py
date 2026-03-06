@@ -109,17 +109,27 @@ class ARCTask:
 # Evaluation helpers
 # ---------------------------------------------------------------------------
 
+import numba
+from numba import njit
+import numpy as np
+import time
+
+@njit(cache=True)
+def _fast_cell_match(p: np.ndarray, t: np.ndarray) -> int:
+    """Numba-accelerated inner loop for pixel matching."""
+    matches = 0
+    rows, cols = p.shape
+    for r in range(rows):
+        for c in range(cols):
+            if p[r, c] == t[r, c]:
+                matches += 1
+    return matches
+
 def grid_cell_accuracy(pred: Grid, target: Grid) -> float:
     """
     Fraction of cells that match between *pred* and *target*.
-
-    Returns 0.0 if the grids have different shapes.
-    Returns 0.0 if either argument is not a valid grid (list-of-lists).
-    Returns 1.0 for a perfect match.
+    Uses Numba-accelerated JIT kernel for the inner pixel loop.
     """
-    # Guard: a candidate tree may accidentally return a scalar (e.g. a math
-    # primitive applied to a grid).  Treat that as zero accuracy rather than
-    # crashing with TypeError.
     if not isinstance(pred, list) or not isinstance(target, list):
         return 0.0
     if not pred or not target:
@@ -132,36 +142,25 @@ def grid_cell_accuracy(pred: Grid, target: Grid) -> float:
     r_target, c_target = len(target), len(target[0])
     r_pred, c_pred = len(pred), len(pred[0])
     
-    # Calculate dimensional penalty
     r_diff = abs(r_target - r_pred)
     c_diff = abs(c_target - c_pred)
-    
-    # Gradient reward: the closer the dimensions, the higher the baseline score.
-    # If dimensions match exactly, r_diff=0, c_diff=0, reward = MAX_HEURISTIC_BONUS
-    # If dimensions are wildly off, reward decays towards 0.0
     dim_penalty = (r_diff + c_diff) / (r_target + c_target)
     dimensional_reward = max(0.0, MAX_HEURISTIC_BONUS * (1.0 - dim_penalty))
     
-    # Exact dimension check for pixel mapping
-    if r_pred != r_target:
+    if r_pred != r_target or c_pred != c_target:
         return dimensional_reward
-    for r in range(r_target):
-        if len(pred[r]) != c_target:
-            return dimensional_reward
 
-    total = sum(len(row) for row in target)
-    if total == 0:
-        return 0.0
-    matches = sum(
-        1
-        for r in range(len(target))
-        for c in range(len(target[r]))
-        if pred[r][c] == target[r][c]
-    )
-    
-    pixel_accuracy = matches / total
-    # The actual score is the combination of the structural bonus (0.25) and the pixel accuracy (0.75)
-    return dimensional_reward + (pixel_accuracy * (1.0 - MAX_HEURISTIC_BONUS))
+    # High performance pixel matching
+    try:
+        p_np = pred if isinstance(pred, np.ndarray) else np.array(pred, dtype=np.int32)
+        t_np = target if isinstance(target, np.ndarray) else np.array(target, dtype=np.int32)
+        matches = _fast_cell_match(p_np, t_np)
+        pixel_accuracy = matches / (r_target * c_target)
+        # The actual score is the combination of the structural bonus (0.25) and the pixel accuracy (0.75)
+        return dimensional_reward + (pixel_accuracy * (1.0 - MAX_HEURISTIC_BONUS))
+    except:
+        # Fallback if Numba/Numpy conversion fails (e.g., malformed grid)
+        return dimensional_reward
 
 
 def is_exact_match(pred: Grid, target: Grid) -> bool:
@@ -200,11 +199,21 @@ class ARCDomain(Domain):
         task: ARCTask,
         lam: float = 0.02,
         primitive_subset: list[str] | None = None,
+        library: Any = None,
     ) -> None:
         self.task = task
         self.lam = lam
         self._op_list = primitive_subset or registry.names(domain="arc")
         self._primitives = {name: registry.get(name) for name in self._op_list}
+        if library:
+            self._primitives.update(library.primitives)
+            self._op_list = list(self._primitives.keys())
+        self._discovery_eval_count = 0
+        self._discovery_start_time = time.time()
+
+    def get_stats(self) -> str:
+        duration = max(0.1, time.time() - self._discovery_start_time)
+        return f"evals={self._discovery_eval_count} rate={self._discovery_eval_count/duration:.1f}/s"
 
     # ------------------------------------------------------------------ #
     # Domain interface                                                     #
@@ -248,12 +257,7 @@ class ARCDomain(Domain):
         return tuple(fp)
         
     def lexicase_eval(self, tree: Node) -> list[float]:
-        """
-        Evaluate the AST and return the [error_1, error_2, ...] array.
-        Used by the BeamSearch deduplication process to preserve trees
-        that perfectly solve individual edge-cases (error_i == 0.0), even
-        if their global average is poor.
-        """
+        self._discovery_eval_count += 1
         errors = []
         for inp, out in self.task.train_pairs:
             try:
@@ -272,13 +276,7 @@ class ARCDomain(Domain):
         return 1
 
     def fitness(self, tree: Node) -> float:
-        """
-        MDL fitness over training pairs.
-
-        fitness = mean_error + λ * tree.size()
-
-        where mean_error = mean(1 - cell_accuracy) over all training pairs.
-        """
+        self._discovery_eval_count += 1
         total_error = 0.0
         for inp, out in self.task.train_pairs:
             try:
