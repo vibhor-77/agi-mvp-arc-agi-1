@@ -35,7 +35,7 @@ import random
 import time
 import multiprocessing as mp
 from dataclasses import dataclass, field
-from typing import Callable
+from typing import Any, Callable
 
 from .tree import Node, random_tree, mutate, crossover
 
@@ -140,8 +140,12 @@ _worker_fitness_fn: Callable | None = None
 _worker_fingerprint_fn: Callable | None = None
 _worker_lexicase_fn: Callable | None = None
 _worker_fuzz_hash_fn: Callable | None = None
+_worker_evaluate_fn: Callable | None = None
 
 def _worker_eval(tree: Node) -> tuple[float, Node, tuple | None, list[float] | None, str | None]:
+    if _worker_evaluate_fn is not None:
+        score, fp, lex, fuzz = _worker_evaluate_fn(tree)
+        return (score, tree, fp, lex, fuzz)
     score = _worker_fitness_fn(tree) if _worker_fitness_fn else float('inf')
     fp = _worker_fingerprint_fn(tree) if _worker_fingerprint_fn else None
     lex = _worker_lexicase_fn(tree) if _worker_lexicase_fn else None
@@ -210,6 +214,7 @@ class BeamSearch:
         fingerprint_fn: Callable[[Node], tuple] | None = None,
         lexicase_fn: Callable[[Node], list[float]] | None = None,
         fuzz_hash_fn: Callable[[Node], str] | None = None,
+        evaluate_fn: Callable[[Node], tuple[float, tuple | None, list[float] | None, str | None]] | None = None,
         transition_matrix: dict[str, dict[str, float]] | None = None,
     ) -> None:
         self.fitness_fn = fitness_fn
@@ -220,6 +225,7 @@ class BeamSearch:
         self.fingerprint_fn = fingerprint_fn
         self.lexicase_fn = lexicase_fn
         self.fuzz_hash_fn = fuzz_hash_fn
+        self.evaluate_fn = evaluate_fn
         self.transition_matrix = transition_matrix
         self._rng = random.Random(self.config.seed)
 
@@ -466,18 +472,22 @@ class BeamSearch:
         if cfg.workers <= 1:
             results = []
             for t in pool:
-                score = self.fitness_fn(t)
-                fp = self.fingerprint_fn(t) if self.fingerprint_fn else None
-                lex = self.lexicase_fn(t) if self.lexicase_fn else None
-                fuzz = self.fuzz_hash_fn(t) if self.fuzz_hash_fn else None
+                if self.evaluate_fn is not None:
+                    score, fp, lex, fuzz = self.evaluate_fn(t)
+                else:
+                    score = self.fitness_fn(t)
+                    fp = self.fingerprint_fn(t) if self.fingerprint_fn else None
+                    lex = self.lexicase_fn(t) if self.lexicase_fn else None
+                    fuzz = self.fuzz_hash_fn(t) if self.fuzz_hash_fn else None
                 results.append((score, t, fp, lex, fuzz))
             return results
             
-        global _worker_fitness_fn, _worker_fingerprint_fn, _worker_lexicase_fn, _worker_fuzz_hash_fn
+        global _worker_fitness_fn, _worker_fingerprint_fn, _worker_lexicase_fn, _worker_fuzz_hash_fn, _worker_evaluate_fn
         _worker_fitness_fn = self.fitness_fn
         _worker_fingerprint_fn = self.fingerprint_fn
         _worker_lexicase_fn = self.lexicase_fn
         _worker_fuzz_hash_fn = self.fuzz_hash_fn
+        _worker_evaluate_fn = self.evaluate_fn
         
         with mp.get_context('fork').Pool(cfg.workers) as p:
             results = p.map(_worker_eval, pool)

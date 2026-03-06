@@ -111,8 +111,14 @@ class PrimitiveLibrary:
     def register_all(self, domain: str = "arc", overwrite: bool = True) -> None:
         """Inject all learned primitives into the active environment registry."""
         for name, meta in self.learned_ops.items():
+            node = meta.get("node")
+            if node is None and "expr" in meta:
+                node = Node.parse(meta["expr"])
+                meta["node"] = node
+            if node is None:
+                continue
             if name not in registry:
-                fn = self._make_callable(meta["node"])
+                fn = self._make_callable(node)
                 # We rename the function to debugging purposes
                 fn.__name__ = name
                 registry.register(

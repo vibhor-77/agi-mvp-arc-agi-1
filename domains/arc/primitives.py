@@ -41,10 +41,8 @@ All primitives treat 0 as background unless stated otherwise.
 from __future__ import annotations
 
 import copy
-from typing import Callable
+from typing import Any, Callable
 import numpy as np
-import numba
-from numba import njit
 from core.primitives import registry
 
 # Type alias for readability
@@ -71,22 +69,48 @@ def _cols(g: Grid) -> int:
 # JIT Optimization Infrastructure
 # ---------------------------------------------------------------------------
 
+def _to_numpy_grid(value: Any) -> Any:
+    """Convert Python list grids to compact ndarray; leave non-grids untouched."""
+    if isinstance(value, np.ndarray):
+        return value
+    if isinstance(value, list) and value and isinstance(value[0], list):
+        return np.asarray(value, dtype=np.int16)
+    return value
+
+
+def _to_python_grid(value: Any) -> Any:
+    """Convert ndarray outputs back to plain Python grids for stable APIs/tests."""
+    if isinstance(value, np.ndarray):
+        return value.tolist()
+    return value
+
+
 def _safe_grid_op(fn: Callable) -> Callable:
     """
     Wrap a grid op so it returns an unchanged clone of the first argument 
     on any error. Optimized for native NumPy execution.
     """
+    arg_annotations = list(getattr(fn, "__annotations__", {}).values())
+    wants_numpy = any("ndarray" in str(a) for a in arg_annotations)
+
     def _wrapped(*args, **kwargs):
+        normalized_args = tuple(_to_numpy_grid(a) for a in args) if wants_numpy else args
         try:
-            # Native NumPy execution
-            res = fn(*args, **kwargs)
-            return res
+            res = fn(*normalized_args, **kwargs)
+            return _to_python_grid(res)
         except Exception:
+            # Retry with original argument types for list-native implementations.
+            try:
+                res = fn(*args, **kwargs)
+                return _to_python_grid(res)
+            except Exception:
+                pass
             # Fallback to a clone of the original input
             if args and isinstance(args[0], np.ndarray):
-                return args[0].copy()
+                return args[0].tolist()
             return copy.deepcopy(args[0]) if args else []
     _wrapped.__name__ = fn.__name__
+    setattr(_wrapped, "_arc_numpy_safe", True)
     return _wrapped
 
 

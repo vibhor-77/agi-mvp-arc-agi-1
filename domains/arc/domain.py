@@ -33,7 +33,7 @@ from __future__ import annotations
 
 import copy
 from dataclasses import dataclass, field
-from typing import NamedTuple
+from typing import Any, NamedTuple
 
 from core.domain import Domain
 from core.tree import Node
@@ -105,42 +105,133 @@ class ARCTask:
         return cls(name=name, train_pairs=train, test_pairs=test)
 
 
+def select_primitives_for_task(task: "ARCTask", op_pool: list[str], max_ops: int = 80) -> list[str]:
+    """
+    Score and select a compact primitive subset for a specific task.
+    Keeps core operators always, then task-shape/color relevant operators.
+    """
+    if max_ops <= 0 or len(op_pool) <= max_ops:
+        return list(op_pool)
+
+    core = {
+        "gid", "grot90", "grot180", "grot270", "grefl_h", "grefl_v", "gtrsp",
+        "ginv", "gmirror_h", "gmirror_v", "ghstack", "gvstack", "goverlay",
+        "gmask", "gframe1", "gframe2", "gframe5", "gframe8", "gframe9",
+        "gpad1", "gcrop_border", "gscale2x", "gcheckerboard", "gstripe_h2", "gstripe_v2",
+        "gcountbar", "gmajority", "gkeep_rows2", "gkeep_rows3", "gkeep_rows4",
+    }
+
+    grow_tokens = ("scale", "pad", "repeat", "stack", "fractal", "inflate")
+    shrink_tokens = ("crop", "downscale")
+    color_tokens = ("swap", "mod", "replace", "fill", "color", "invert", "majority")
+    geom_tokens = ("rot", "refl", "trsp", "mirror", "diag", "align")
+    object_tokens = ("obj", "cc", "extract", "keep_largest", "render")
+
+    # Measure shape trends across train examples
+    grows = shrinks = same = 0
+    color_change = 0
+    for inp, out in task.train_pairs:
+        ri, ci = len(inp), len(inp[0]) if inp else 0
+        ro, co = len(out), len(out[0]) if out else 0
+        ai, ao = ri * ci, ro * co
+        if ao > ai:
+            grows += 1
+        elif ao < ai:
+            shrinks += 1
+        else:
+            same += 1
+        # Coarse color-change signal
+        in_colors = {v for row in inp for v in row}
+        out_colors = {v for row in out for v in row}
+        if in_colors != out_colors:
+            color_change += 1
+
+    scored: list[tuple[int, str]] = []
+    for op in op_pool:
+        s = 0
+        if op in core:
+            s += 10
+        if op.startswith("lib_op_"):
+            s += 8
+        low = op.lower()
+        if any(t in low for t in geom_tokens):
+            s += 2
+        if color_change > 0 and any(t in low for t in color_tokens):
+            s += 3
+        if grows > 0 and any(t in low for t in grow_tokens):
+            s += 3
+        if shrinks > 0 and any(t in low for t in shrink_tokens):
+            s += 3
+        if same > 0 and ("hstack" in low or "vstack" in low):
+            s -= 2
+        if any(t in low for t in object_tokens):
+            s += 2
+        scored.append((s, op))
+
+    scored.sort(key=lambda x: (-x[0], x[1]))
+    selected = [op for score, op in scored if score > 0][:max_ops]
+
+    # Safety: always keep at least a robust core.
+    if len(selected) < 20:
+        core_present = [op for op in op_pool if op in core]
+        filler = [op for _, op in scored if op not in core_present]
+        selected = (core_present + filler)[:max_ops]
+    return selected
+
+
 # ---------------------------------------------------------------------------
 # Evaluation helpers
 # ---------------------------------------------------------------------------
 
-import numba
-from numba import njit
 import numpy as np
 import time
+try:
+    from numba import njit
+except Exception:  # pragma: no cover - optional dependency fallback
+    njit = None
 
-@njit(cache=True)
-def _fast_cell_match(p: np.ndarray, t: np.ndarray) -> int:
-    """Numba-accelerated inner loop for pixel matching."""
-    matches = 0
-    rows, cols = p.shape
-    for r in range(rows):
-        for c in range(cols):
-            if p[r, c] == t[r, c]:
-                matches += 1
-    return matches
+
+if njit is not None:
+    @njit(cache=True)
+    def _fast_cell_match_numba(p: np.ndarray, t: np.ndarray) -> int:
+        matches = 0
+        rows, cols = p.shape
+        for r in range(rows):
+            for c in range(cols):
+                if p[r, c] == t[r, c]:
+                    matches += 1
+        return matches
+else:
+    _fast_cell_match_numba = None
+
+def _to_np_grid(g: Grid | np.ndarray) -> np.ndarray | None:
+    """Normalize grid-like values to a 2D NumPy array."""
+    if isinstance(g, np.ndarray):
+        return g if g.ndim == 2 else None
+    if not isinstance(g, list):
+        return None
+    if not g or not isinstance(g[0], list):
+        return None
+    try:
+        arr = np.asarray(g, dtype=np.int16)
+    except Exception:
+        return None
+    return arr if arr.ndim == 2 else None
 
 def grid_cell_accuracy(pred: Grid, target: Grid) -> float:
     """
     Fraction of cells that match between *pred* and *target*.
     Uses Numba-accelerated JIT kernel for the inner pixel loop.
     """
-    if not isinstance(pred, list) or not isinstance(target, list):
-        return 0.0
-    if not pred or not target:
-        return 0.0
-    if not isinstance(pred[0], list) or not isinstance(target[0], list):
+    p_np = _to_np_grid(pred)
+    t_np = _to_np_grid(target)
+    if p_np is None or t_np is None:
         return 0.0
     
     # Dimensional Gravity Heuristic
     MAX_HEURISTIC_BONUS = 0.25
-    r_target, c_target = len(target), len(target[0])
-    r_pred, c_pred = len(pred), len(pred[0])
+    r_target, c_target = t_np.shape
+    r_pred, c_pred = p_np.shape
     
     r_diff = abs(r_target - r_pred)
     c_diff = abs(c_target - c_pred)
@@ -150,17 +241,13 @@ def grid_cell_accuracy(pred: Grid, target: Grid) -> float:
     if r_pred != r_target or c_pred != c_target:
         return dimensional_reward
 
-    # High performance pixel matching
-    try:
-        p_np = pred if isinstance(pred, np.ndarray) else np.array(pred, dtype=np.int32)
-        t_np = target if isinstance(target, np.ndarray) else np.array(target, dtype=np.int32)
-        matches = _fast_cell_match(p_np, t_np)
-        pixel_accuracy = matches / (r_target * c_target)
-        # The actual score is the combination of the structural bonus (0.25) and the pixel accuracy (0.75)
-        return dimensional_reward + (pixel_accuracy * (1.0 - MAX_HEURISTIC_BONUS))
-    except:
-        # Fallback if Numba/Numpy conversion fails (e.g., malformed grid)
-        return dimensional_reward
+    if _fast_cell_match_numba is not None:
+        matches = int(_fast_cell_match_numba(p_np, t_np))
+    else:
+        matches = int(np.count_nonzero(p_np == t_np))
+    pixel_accuracy = matches / (r_target * c_target)
+    # The actual score is the combination of the structural bonus (0.25) and the pixel accuracy (0.75)
+    return dimensional_reward + (pixel_accuracy * (1.0 - MAX_HEURISTIC_BONUS))
 
 
 def is_exact_match(pred: Grid, target: Grid) -> bool:
@@ -210,6 +297,8 @@ class ARCDomain(Domain):
             self._op_list = list(self._primitives.keys())
         self._discovery_eval_count = 0
         self._discovery_start_time = time.time()
+        # Cache immutable targets as NumPy once to avoid per-eval conversion overhead.
+        self._train_targets_np = [_to_np_grid(out) for _, out in self.task.train_pairs]
 
     def get_stats(self) -> str:
         duration = max(0.1, time.time() - self._discovery_start_time)
@@ -240,33 +329,37 @@ class ARCDomain(Domain):
         except Exception:
             return "ERR"
 
-    def fingerprint(self, tree: Node) -> tuple:
+    def evaluate_candidate(self, tree: Node) -> tuple[float, tuple[str, ...], list[float], str]:
         """
-        Evaluate the AST on the training inputs to generate a semantic hash.
-        Used to deduplicate functionally equivalent trees during search.
-        We return tuple(str(output)) to ensure it's hashable.
+        Single-pass evaluation for search.
+        Returns (fitness, fingerprint, lexicase_errors, fuzz_hash).
         """
-        fp = []
-        for inp, out in self.task.train_pairs:
-            try:
-                # evaluate tree on the single input variable (the grid)
-                res = tree.eval([inp], self._primitives)
-                fp.append(str(res))
-            except Exception:
-                fp.append("ERR")
-        return tuple(fp)
-        
-    def lexicase_eval(self, tree: Node) -> list[float]:
         self._discovery_eval_count += 1
-        errors = []
-        for inp, out in self.task.train_pairs:
+        errors: list[float] = []
+        fp: list[str] = []
+
+        for idx, (inp, _out) in enumerate(self.task.train_pairs):
             try:
                 pred = tree.eval([inp], self._primitives)
-                err = 1.0 - grid_cell_accuracy(pred, out)
+                pred_np = _to_np_grid(pred)
+                target_np = self._train_targets_np[idx]
+                if pred_np is None or target_np is None:
+                    acc = 0.0
+                else:
+                    acc = grid_cell_accuracy(pred_np, target_np)
+                errors.append(1.0 - acc)
+                fp.append(str(pred))
             except Exception:
-                err = 1.0
-            errors.append(err)
-        return errors
+                errors.append(1.0)
+                fp.append("ERR")
+
+        mean_error = sum(errors) / max(len(errors), 1)
+        return (
+            mean_error + self.lam * tree.size(),
+            tuple(fp),
+            errors,
+            self.fuzz_hash(tree),
+        )
 
     def primitive_names(self) -> list[str]:
         return self._op_list
@@ -276,17 +369,8 @@ class ARCDomain(Domain):
         return 1
 
     def fitness(self, tree: Node) -> float:
-        self._discovery_eval_count += 1
-        total_error = 0.0
-        for inp, out in self.task.train_pairs:
-            try:
-                pred = tree.eval([inp], self._primitives)
-                error = 1.0 - grid_cell_accuracy(pred, out)
-            except Exception:
-                error = 1.0
-            total_error += error
-        mean_error = total_error / max(len(self.task.train_pairs), 1)
-        return mean_error + self.lam * tree.size()
+        score, _, _, _ = self.evaluate_candidate(tree)
+        return score
         
     def solve(self, config: SearchConfig | None = None, transition_matrix: dict[str, dict[str, float]] | None = None, on_step: Any | None = None) -> SearchResult:
         """
@@ -306,9 +390,7 @@ class ARCDomain(Domain):
             n_vars=self.n_vars(),
             config=config or SearchConfig(),
             op_arities=op_arities,
-            fingerprint_fn=self.fingerprint,
-            lexicase_fn=self.lexicase_eval,
-            fuzz_hash_fn=self.fuzz_hash,
+            evaluate_fn=self.evaluate_candidate,
             transition_matrix=transition_matrix,
         )
         result = searcher.run(on_step=on_step)

@@ -53,11 +53,23 @@ def cmd_train(args):
     tasks = setup_tasks(args.data, args.tasks, args.task_ids)
     lib = PrimitiveLibrary(model_path)
     lib.load()
+    compact_learned_ops = {
+        name: {"expr": meta.get("expr", ""), "arity": int(meta.get("arity", 1))}
+        for name, meta in lib.learned_ops.items()
+        if meta.get("expr")
+    }
     
     cfg = BenchmarkConfig(
         beam_size=args.beam_size, offspring=args.offspring, generations=args.generations,
-        task_workers=args.task_workers, workers=args.workers, timeout_s=args.timeout, max_evals=args.max_evals,
-        baseline_only=True, seed=args.seed
+        task_workers=args.task_workers, workers=args.workers, timeout_s=(None if args.timeout <= 0 else args.timeout), max_evals=args.max_evals,
+        baseline_only=True, seed=args.seed,
+        mem_per_task_worker_gb=args.mem_per_task_worker_gb,
+        reserve_mem_gb=args.reserve_mem_gb,
+        cpu_reserve=args.cpu_reserve,
+        capture_traces=args.capture_traces,
+        stall_kill_s=(None if args.stall_kill_s <= 0 else args.stall_kill_s),
+        adaptive_primitive_subset=(not args.no_adaptive_primitive_subset),
+        primitive_cap=args.primitive_cap,
     )
 
     print(f"\n{'='*65}\n  WAKE-SLEEP TRAINING: {len(tasks)} tasks | {args.epochs} epochs\n{'='*65}")
@@ -66,7 +78,7 @@ def cmd_train(args):
         ops = registry.names(domain="arc")
         report = evaluate_tasks(
             tasks, ops, cfg, label=f"Epoch {epoch}", 
-            transition_matrix=lib.transition_matrix, learned_ops=lib.learned_ops,
+            transition_matrix=lib.transition_matrix, learned_ops=compact_learned_ops,
             epoch_str=f"Epoch {epoch}/{args.epochs}",
             report_callback=lambda r: r.save(report_path)
         )
@@ -108,18 +120,30 @@ def cmd_eval(args):
     lib = PrimitiveLibrary(model_path)
     lib.load()
     lib.register_all(domain="arc")
+    compact_learned_ops = {
+        name: {"expr": meta.get("expr", ""), "arity": int(meta.get("arity", 1))}
+        for name, meta in lib.learned_ops.items()
+        if meta.get("expr")
+    }
     
     cfg = BenchmarkConfig(
         beam_size=args.beam_size, offspring=args.offspring, generations=args.generations,
-        task_workers=args.task_workers, workers=args.workers, timeout_s=args.timeout, max_evals=args.max_evals,
-        baseline_only=True, seed=args.seed
+        task_workers=args.task_workers, workers=args.workers, timeout_s=(None if args.timeout <= 0 else args.timeout), max_evals=args.max_evals,
+        baseline_only=True, seed=args.seed,
+        mem_per_task_worker_gb=args.mem_per_task_worker_gb,
+        reserve_mem_gb=args.reserve_mem_gb,
+        cpu_reserve=args.cpu_reserve,
+        capture_traces=args.capture_traces,
+        stall_kill_s=(None if args.stall_kill_s <= 0 else args.stall_kill_s),
+        adaptive_primitive_subset=(not args.no_adaptive_primitive_subset),
+        primitive_cap=args.primitive_cap,
     )
 
     print(f"\n{'='*65}\n  AGI EVALUATION: {len(tasks)} tasks | Model: {os.path.basename(model_path)}\n{'='*65}")
     
     report = evaluate_tasks(
         tasks, registry.names(domain="arc"), cfg, label="Evaluation",
-        transition_matrix=lib.transition_matrix, learned_ops=lib.learned_ops,
+        transition_matrix=lib.transition_matrix, learned_ops=compact_learned_ops,
         report_callback=lambda r: r.save(report_path)
     )
     print(f"\n✅ Evaluation Complete. Report: {report_path}")
@@ -130,7 +154,7 @@ def main():
 
     shared = argparse.ArgumentParser(add_help=False)
     shared.add_argument("--tasks", type=int, default=400)
-    shared.add_argument("--task-workers", type=int, default=8)
+    shared.add_argument("--task-workers", type=int, default=0, help="Parallel tasks. 0 = auto resource-safe mode.")
     shared.add_argument("--workers", type=int, default=1)
     shared.add_argument("--beam-size", type=int, default=10)
     shared.add_argument("--offspring", type=int, default=20)
@@ -139,6 +163,13 @@ def main():
     shared.add_argument("--timeout", type=float, default=60.0)
     shared.add_argument("--seed", type=int, default=None)
     shared.add_argument("--task-ids", type=str, default=None)
+    shared.add_argument("--mem-per-task-worker-gb", type=float, default=3.0)
+    shared.add_argument("--reserve-mem-gb", type=float, default=10.0)
+    shared.add_argument("--cpu-reserve", type=int, default=2)
+    shared.add_argument("--capture-traces", action="store_true", help="Capture eval traces for unsolved tasks (high memory).")
+    shared.add_argument("--stall-kill-s", type=float, default=0.0, help="Kill worker only if no eval progress for N seconds (0=off).")
+    shared.add_argument("--no-adaptive-primitive-subset", action="store_true")
+    shared.add_argument("--primitive-cap", type=int, default=80)
 
     p_train = subparsers.add_parser("train", parents=[shared])
     p_train.add_argument("--data", type=str, default="arc_data/data/training")

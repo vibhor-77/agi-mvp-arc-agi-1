@@ -32,8 +32,10 @@ Usage (programmatic)
 from __future__ import annotations
 
 import json
+import math
 import os
 import pathlib
+import subprocess
 import sys
 import threading
 import time
@@ -161,6 +163,13 @@ class BenchmarkConfig:
     seed: int | None = None
     timeout_s: float | None = 300.0  # Optional wall-clock safety
     max_evals: int | None = 1000000  # 1M evaluations (Deterministic Pruning)
+    mem_per_task_worker_gb: float = 3.0
+    reserve_mem_gb: float = 10.0
+    cpu_reserve: int = 2
+    capture_traces: bool = False
+    stall_kill_s: float | None = None
+    adaptive_primitive_subset: bool = True
+    primitive_cap: int = 80
 
 
 # ---------------------------------------------------------------------------
@@ -234,6 +243,17 @@ class BenchmarkReport:
             return 0.0
         return sum(r.test_acc for r in self.results) / len(self.results)
 
+    @property
+    def total_evals(self) -> int:
+        return sum(int(r.n_evals) for r in self.results)
+
+    @property
+    def solved_per_million_evals(self) -> float:
+        te = self.total_evals
+        if te <= 0:
+            return 0.0
+        return (self.n_solved * 1_000_000.0) / te
+
     def by_category(self) -> dict[str, dict]:
         cats: dict[str, dict] = {}
         for r in self.results:
@@ -253,6 +273,8 @@ class BenchmarkReport:
             f"  Solved (exact):   {self.n_solved}/{self.n_tasks}  ({self.pct_solved:.1f}%)",
             f"  Near-solved ≥80%: {self.n_near}/{self.n_tasks}",
             f"  Mean test acc:    {self.mean_test_acc:.3f}",
+            f"  Total evals:      {self.total_evals/1000:.1f}k",
+            f"  Solves / 1M eval: {self.solved_per_million_evals:.2f}",
             f"  Total time:       {self.total_elapsed_s:.0f}s",
             "",
             "  Per-category:",
@@ -303,6 +325,8 @@ class BenchmarkReport:
         lines.append(f"- **Solved**: {self.n_solved} ({self.pct_solved:.1f}%)")
         lines.append(f"- **Near-solved (≥80%)**: {self.n_near}")
         lines.append(f"- **Mean Test Accuracy**: {self.mean_test_acc:.3f}")
+        lines.append(f"- **Total Evals**: {self.total_evals}")
+        lines.append(f"- **Solves per 1M Evals**: {self.solved_per_million_evals:.2f}")
         lines.append(f"- **Total Time**: {self.total_elapsed_s:.1f}s")
         
         lines.append(f"\n## Performance by Category")
@@ -373,6 +397,41 @@ class BenchmarkReport:
 _worker_shared_evals = None
 _worker_idx = None
 
+
+def _detect_total_memory_gb() -> float:
+    """Best-effort RAM detection without external dependencies."""
+    try:
+        out = subprocess.check_output(
+            ["sysctl", "-n", "hw.memsize"],
+            text=True,
+            stderr=subprocess.DEVNULL,
+        ).strip()
+        return int(out) / (1024**3)
+    except Exception:
+        pass
+    try:
+        pages = os.sysconf("SC_PHYS_PAGES")
+        page_size = os.sysconf("SC_PAGE_SIZE")
+        return float(pages * page_size) / (1024**3)
+    except Exception:
+        return 16.0
+
+
+def _recommend_task_workers(requested: int, cfg: BenchmarkConfig) -> int:
+    """
+    Choose a safe task-worker count that stays out of swap while using CPU well.
+    """
+    if requested <= 0:
+        requested = os.cpu_count() or 1
+    cpu_total = os.cpu_count() or 1
+    cpu_cap = max(1, cpu_total - max(cfg.cpu_reserve, 0))
+
+    total_mem_gb = _detect_total_memory_gb()
+    mem_budget_gb = max(1.0, total_mem_gb - max(cfg.reserve_mem_gb, 0.0))
+    mem_cap = max(1, int(math.floor(mem_budget_gb / max(cfg.mem_per_task_worker_gb, 0.25))))
+
+    return max(1, min(requested, cpu_cap, mem_cap))
+
 def _ignore_sigint_initializer(evals_arr: Any = None):
     global _worker_shared_evals
     import signal
@@ -395,8 +454,17 @@ def _run_task_process(
     
     if learned_ops:
         from core.library import PrimitiveLibrary
+        from core.tree import Node
         lib = PrimitiveLibrary()
-        lib.learned_ops = learned_ops
+        lib.learned_ops = {
+            name: {
+                "expr": meta.get("expr", ""),
+                "arity": int(meta.get("arity", 1)),
+                "node": Node.parse(meta["expr"]) if meta.get("expr") else None,
+            }
+            for name, meta in learned_ops.items()
+            if meta.get("expr")
+        }
         lib.register_all(domain="arc")
     
     def on_step(n_evals, elapsed):
@@ -416,7 +484,14 @@ def _run_task_process(
     )
 
     task_t0 = time.time()
-    domain = ARCDomain(task, lam=cfg.lam, primitive_subset=op_subset)
+    selected_ops = op_subset
+    if cfg.adaptive_primitive_subset:
+        try:
+            from domains.arc.domain import select_primitives_for_task
+            selected_ops = select_primitives_for_task(task, op_subset, max_ops=cfg.primitive_cap)
+        except Exception:
+            selected_ops = op_subset
+    domain = ARCDomain(task, lam=cfg.lam, primitive_subset=selected_ops)
     domain.on_result = lambda x: None  # type: ignore[method-assign]
     
     result = domain.solve(config=search_cfg, transition_matrix=transition_matrix, on_step=on_step)
@@ -435,7 +510,11 @@ def _run_task_process(
             pair = task.train_pairs[0]
             if len(pair) == 2:
                 inp, expected = pair[0], pair[1]
-                actual, trace = tree.eval_trace([inp], domain._primitives)
+                if cfg.capture_traces:
+                    actual, trace = tree.eval_trace([inp], domain._primitives)
+                else:
+                    actual = tree.eval([inp], domain._primitives)
+                    trace = None
                 
                 if isinstance(actual, list) and len(actual) > 0 and isinstance(actual[0], list):
                     if len(expected) != len(actual) or len(expected[0]) != len(actual[0]):
@@ -585,6 +664,15 @@ def evaluate_tasks(
 ) -> BenchmarkReport:
     report = BenchmarkReport(label=label, n_ops=len(op_subset))
     t0 = time.time()
+    effective_task_workers = _recommend_task_workers(cfg.task_workers, cfg)
+    if cfg.verbose and effective_task_workers != cfg.task_workers:
+        total_mem = _detect_total_memory_gb()
+        print(
+            f"  [ResourceGuard] task-workers adjusted {cfg.task_workers} -> {effective_task_workers} "
+            f"(cpu={os.cpu_count() or 1}, ram={total_mem:.1f}GB, reserve={cfg.reserve_mem_gb:.1f}GB, "
+            f"per-worker={cfg.mem_per_task_worker_gb:.1f}GB)"
+        )
+    cfg.task_workers = effective_task_workers
     inner_workers = 1 if cfg.task_workers > 1 else cfg.workers
 
     scoreboard = LiveScoreboard(len(tasks), t0, cfg.task_workers, epoch_str, global_stats=global_stats)
@@ -615,7 +703,8 @@ def evaluate_tasks(
 
     if cfg.task_workers > 1:
         import multiprocessing as mp
-        active_processes = {} # {proc_idx: (process, task_idx, start_time)}
+        # {slot: (process, task_idx, start_time, pipe_conn, last_eval, last_progress_t)}
+        active_processes = {}
         task_queue = list(enumerate(tasks))
         free_slots = list(range(cfg.task_workers))
 
@@ -638,15 +727,21 @@ def evaluate_tasks(
                         args=(task_idx, task, cfg, op_subset, inner_workers, transition_matrix, learned_ops, slot, child_conn, shared_evals)
                     )
                     p.start()
-                    active_processes[slot] = (p, task_idx, time.time(), parent_conn)
+                    now = time.time()
+                    active_processes[slot] = (p, task_idx, now, parent_conn, 0, now)
                     scoreboard.start_times[task_idx] = time.time()
 
                 # Monitor active processes
                 finished_slots = []
-                for slot, (p, task_idx, start_t, conn) in list(active_processes.items()):
+                for slot, (p, task_idx, start_t, conn, last_eval, last_progress_t) in list(active_processes.items()):
                     now = time.time()
                     elapsed = now - start_t
                     timeout = cfg.timeout_s or 300.0
+                    current_eval = int(shared_evals[slot]) if slot < len(shared_evals) else 0
+                    if current_eval > last_eval:
+                        last_eval = current_eval
+                        last_progress_t = now
+                        active_processes[slot] = (p, task_idx, start_t, conn, last_eval, last_progress_t)
 
                     # Check if finished
                     if conn.poll():
@@ -665,8 +760,13 @@ def evaluate_tasks(
                         # Process died unexpectedly
                         p.join()
                         finished_slots.append(slot)
-                    elif elapsed > timeout + 10: # Hard kill after 10s grace
-                        if cfg.verbose: print(f"  [!] Hard killing straggler {tasks[task_idx].name} ({elapsed:.1f}s > {timeout}s)")
+                    elif cfg.stall_kill_s is not None and (now - last_progress_t) > cfg.stall_kill_s:
+                        stalled_for = now - last_progress_t
+                        if cfg.verbose:
+                            print(
+                                f"  [!] Hard killing straggler {tasks[task_idx].name} "
+                                f"(stalled={stalled_for:.1f}s, elapsed={elapsed:.1f}s, evals={current_eval})"
+                            )
                         p.kill()
                         p.join()
                         finished_slots.append(slot)
@@ -827,9 +927,24 @@ if __name__ == "__main__":
     parser.add_argument("--workers",      type=int, default=1,
                         help="Beam-search candidate workers per task (default 1). "
                              "Auto-forced to 1 when --task-workers > 1.")
-    parser.add_argument("--task-workers", type=int, default=os.cpu_count() or 1,
-                        help="Tasks to run in parallel (default: os.cpu_count()). "
-                             "Forces inner --workers to 1 on macOS.")
+    parser.add_argument("--task-workers", type=int, default=0,
+                        help="Tasks to run in parallel. 0 = auto resource-safe mode.")
+    parser.add_argument("--mem-per-task-worker-gb", type=float, default=3.0,
+                        help="Estimated RAM consumed per task worker (used for auto-capping).")
+    parser.add_argument("--reserve-mem-gb", type=float, default=10.0,
+                        help="RAM reserve to keep free to avoid swap.")
+    parser.add_argument("--cpu-reserve", type=int, default=2,
+                        help="Number of CPU threads to keep free.")
+    parser.add_argument("--capture-traces", action="store_true",
+                        help="Capture AST execution traces in results (increases memory use).")
+    parser.add_argument("--stall-kill-s", type=float, default=None,
+                        help="Optional watchdog: kill a task worker if eval count makes no progress for this many seconds.")
+    parser.add_argument("--adaptive-primitive-subset", action="store_true",
+                        help="Enable per-task primitive subset selection (default on).")
+    parser.add_argument("--no-adaptive-primitive-subset", action="store_true",
+                        help="Disable per-task primitive subset selection.")
+    parser.add_argument("--primitive-cap", type=int, default=80,
+                        help="Max primitive count per task when adaptive subset is enabled.")
     parser.add_argument("--generations",  type=int, default=100, help="Override generations")
     parser.add_argument("--tasks",        type=int, default=None, help="Limit number of tasks")
     parser.add_argument("--save",         type=str, default="results.json", help="Output JSON path")
@@ -844,6 +959,13 @@ if __name__ == "__main__":
         verbose      = True,
         baseline_only = args.baseline_only,
         seed         = None,
+        mem_per_task_worker_gb=args.mem_per_task_worker_gb,
+        reserve_mem_gb=args.reserve_mem_gb,
+        cpu_reserve=args.cpu_reserve,
+        capture_traces=args.capture_traces,
+        stall_kill_s=args.stall_kill_s,
+        adaptive_primitive_subset=False if args.no_adaptive_primitive_subset else True,
+        primitive_cap=args.primitive_cap,
     )
 
     if args.data:

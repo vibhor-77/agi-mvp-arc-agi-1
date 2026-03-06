@@ -58,14 +58,33 @@ To launch a full training pass on the ARC-AGI dataset:
 pytest -q
 
 # 2. Start Training (Wake-Sleep)
-python agi.py train --epochs 5 --task-workers 8
+python agi.py train --epochs 5 --task-workers 0
 
 # 3. Run Evaluation on separate set
 python agi.py eval --model models/latest_model.json
 
 # 3. Or run the full pipeline in one go
-python agi.py pipeline --train-tasks 100 --eval-tasks 100
+python agi.py pipeline --train-tasks 100 --eval-tasks 100 --task-workers 0
 ```
+
+---
+
+## 🛡️ Resource Guard
+
+Use auto worker selection to maximize throughput while avoiding swap:
+
+```bash
+python agi.py train \
+  --task-workers 0 \
+  --reserve-mem-gb 12 \
+  --mem-per-task-worker-gb 3 \
+  --cpu-reserve 2
+```
+
+Notes:
+* `--task-workers 0` enables CPU+RAM-aware worker capping.
+* `--capture-traces` is off by default because traces are memory-heavy.
+* Tune `--reserve-mem-gb` upward if your system starts swapping.
 
 ---
 
