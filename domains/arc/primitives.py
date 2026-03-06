@@ -2131,3 +2131,166 @@ for _name, (_fn, _desc) in _NEW_ARC_PRIMITIVES.items():
         _arity = 1
     registry.register(_name, _fn, domain="arc", description=_desc, arity=_arity)  # type: ignore[arg-type]
 
+
+# ---------------------------------------------------------------------------
+# OBJECT-LEVEL PRIMITIVES  (batch 3 — targeting observed failure modes)
+# ---------------------------------------------------------------------------
+
+def g_scale_by_color(g: Grid) -> Grid:
+    """
+    Scale each pixel into a block whose size equals its color value.
+    Each cell at (r, c) with value v creates a v×v filled block placed at
+    pixel position (r * max_v, c * max_v), so blocks never overlap.
+    Zero cells leave their region empty.
+    """
+    flat = [v for row in g for v in row if v != 0]
+    if not flat:
+        return _clone(g)
+    max_v = max(flat)
+    if max_v == 0:
+        return _clone(g)
+    rows, cols = _rows(g), _cols(g)
+    out_rows, out_cols = rows * max_v, cols * max_v
+    if out_rows > 30 or out_cols > 30:
+        return _clone(g)
+    result = [[0] * out_cols for _ in range(out_rows)]
+    for r in range(rows):
+        for c in range(cols):
+            v = g[r][c]
+            if v == 0:
+                continue
+            for dr in range(v):
+                for dc in range(v):
+                    result[r * max_v + dr][c * max_v + dc] = v
+    return result
+
+
+def g_frame_each_pixel(g: Grid) -> Grid:
+    """
+    For each isolated non-zero pixel, draw a 3x3 box of color 1 around it,
+    keeping the original pixel at center with its original color.
+    """
+    rows, cols = _rows(g), _cols(g)
+    result = [[0] * cols for _ in range(rows)]
+    for r in range(rows):
+        for c in range(cols):
+            if g[r][c] != 0:
+                # Draw 3x3 border of 1s
+                for dr in range(-1, 2):
+                    for dc in range(-1, 2):
+                        nr, nc = r + dr, c + dc
+                        if 0 <= nr < rows and 0 <= nc < cols:
+                            result[nr][nc] = 1
+                # Place original pixel on top
+                result[r][c] = g[r][c]
+    return result
+
+
+def _find_connected_components(g: Grid, fg_only: bool = True) -> list[list[tuple[int,int]]]:
+    """BFS flood-fill connected components of non-zero cells."""
+    rows, cols = len(g), len(g[0])
+    visited = [[False] * cols for _ in range(rows)]
+    components = []
+    for sr in range(rows):
+        for sc in range(cols):
+            if visited[sr][sc]:
+                continue
+            if fg_only and g[sr][sc] == 0:
+                continue
+            # BFS
+            component = []
+            queue = [(sr, sc)]
+            visited[sr][sc] = True
+            while queue:
+                r, c = queue.pop(0)
+                component.append((r, c))
+                for dr, dc in [(-1,0),(1,0),(0,-1),(0,1)]:
+                    nr, nc = r+dr, c+dc
+                    if 0 <= nr < rows and 0 <= nc < cols and not visited[nr][nc]:
+                        if not fg_only or g[nr][nc] != 0:
+                            visited[nr][nc] = True
+                            queue.append((nr, nc))
+            components.append(component)
+    return components
+
+
+def g_fill_rects_by_size(g: Grid) -> Grid:
+    """
+    Find hollow rectangles (frames) in the grid. Fill each rectangle's interior
+    with a color based on interior pixel count: 1 if small (<= lower median), 2 if large.
+    Keeps the frame color intact.
+    """
+    result = _clone(g)
+    comps = _find_connected_components(g)
+    if not comps:
+        return result
+
+    # Collect all interior sizes
+    interior_sizes = []
+    for comp in comps:
+        rs = [r for r, c in comp]; cs = [c for r, c in comp]
+        interior_h = max(rs) - min(rs) - 1
+        interior_w = max(cs) - min(cs) - 1
+        if interior_h > 0 and interior_w > 0:
+            interior_sizes.append(interior_h * interior_w)
+
+    if not interior_sizes:
+        return result
+
+    # Lower median: size <= median_size gets color 1, strictly > gets color 2
+    sorted_sizes = sorted(interior_sizes)
+    median_size = sorted_sizes[(len(sorted_sizes) - 1) // 2]
+
+    for comp in comps:
+        rs = [r for r, c in comp]; cs = [c for r, c in comp]
+        min_r, max_r = min(rs), max(rs)
+        min_c, max_c = min(cs), max(cs)
+        interior_h = max_r - min_r - 1
+        interior_w = max_c - min_c - 1
+        if interior_h <= 0 or interior_w <= 0:
+            continue
+        fill_color = 1 if interior_h * interior_w <= median_size else 2
+        for r in range(min_r + 1, max_r):
+            for c in range(min_c + 1, max_c):
+                result[r][c] = fill_color
+
+    return result
+
+
+def g_color_interior_by_area(g: Grid) -> Grid:
+    """
+    Fill rectangle interiors based on interior side parity.
+    Odd interior side length (1,3,5,...) → color 7.
+    Even interior side length (2,4,6,...) → color 2.
+    For non-square interiors, use the smaller dimension.
+    Matches ARC tasks where interior color encodes square size parity.
+    """
+    result = _clone(g)
+    comps = _find_connected_components(g)
+    for comp in comps:
+        rs = [r for r, c in comp]
+        cs = [c for r, c in comp]
+        min_r, max_r = min(rs), max(rs)
+        min_c, max_c = min(cs), max(cs)
+        interior_h = max_r - min_r - 1
+        interior_w = max_c - min_c - 1
+        if interior_h <= 0 or interior_w <= 0:
+            continue
+        # Use the smaller side dimension to determine parity
+        side = min(interior_h, interior_w)
+        fill_color = 7 if side % 2 == 1 else 2
+        for r in range(min_r + 1, max_r):
+            for c in range(min_c + 1, max_c):
+                result[r][c] = fill_color
+    return result
+
+
+_OBJECT_LEVEL_OPS = {
+    "g_scale_by_color":      (g_scale_by_color,      "Scale each pixel to a block sized = color value"),
+    "g_frame_each_pixel":    (g_frame_each_pixel,    "Draw 3x3 border of 1s around each isolated pixel"),
+    "g_fill_rects_by_size":  (g_fill_rects_by_size,  "Fill rectangle interiors: 1=small, 2=large"),
+    "g_color_interior_by_area": (g_color_interior_by_area, "Fill rect interiors: 7=smallest, 2=largest"),
+}
+
+for _name, (_fn, _desc) in _OBJECT_LEVEL_OPS.items():
+    registry.register(_name, _fn, domain="arc", description=_desc, arity=1)

@@ -1,0 +1,849 @@
+
+=================================================================
+  WAKE-SLEEP TRAINING: 30 tasks | 3 epochs
+=================================================================
+  → [  1] STARTING  4522001f
+  → [  2] STARTING  6150a2bd
+  → [  3] STARTING  8d5021e8
+  → [  4] STARTING  9172f3a0
+  → [  5] STARTING  49d1d64f
+  → [  6] STARTING  46442a0e
+  → [  7] STARTING  e9afcf9a
+  → [  8] STARTING  feca6190
+  ✓ [  2/30] DONE 6150a2bd                      10.6k evals (1.3s)
+  ┌ scoreboard [Epoch 1/3] ─
+  │ ✓ solved=1 (100.0%)  ⚠️ near=0  ✗ unsolved=0
+  │ → active=8  ⏳ pending=21  done=1/30  success=3.3%
+  │ TIME:  elapsed=1.4s (Throughput: 1.44s/task | Latency Avg: 1.3s)
+  │ WORK:  speedup=0.93x (11.6% core) | STRAGGLER: 1.4s, 9.3k evals
+  │ EVALS: total=10.6k (7.32k/s | Per-Task Avg: 10.6k)
+  → [  9] STARTING  5582e5ca
+  ✗ [  7/30] DONE e9afcf9a                      10.6k evals (1.7s)
+  ┌ scoreboard [Epoch 1/3] ─
+  │ ✓ solved=1 (50.0%)  ⚠️ near=0  ✗ unsolved=1
+  │ → active=8  ⏳ pending=20  done=2/30  success=3.3%
+  │ TIME:  elapsed=1.8s (Throughput: 0.90s/task | Latency Avg: 1.5s)
+  │ WORK:  speedup=1.68x (21.0% core) | STRAGGLER: 1.8s, 5.7k evals
+  │ EVALS: total=21.1k (11.72k/s | Per-Task Avg: 10.6k)
+  → [ 10] STARTING  62c24649
+  ~ [  5/30] DONE 49d1d64f                      10.6k evals (3.6s)
+  ┌ scoreboard [Epoch 1/3] ─
+  │ ✓ solved=1 (33.3%)  ⚠️ near=1  ✗ unsolved=2
+  │ → active=8  ⏳ pending=19  done=3/30  success=3.3%
+  │ TIME:  elapsed=3.7s (Throughput: 1.23s/task | Latency Avg: 3.4s)
+  │ WORK:  speedup=2.76x (34.5% core) | STRAGGLER: 3.7s, 9.7k evals
+  │ EVALS: total=31.6k (8.58k/s | Per-Task Avg: 10.6k)
+  → [ 11] STARTING  7fe24cdd
+  ✓ [  9/30] DONE 5582e5ca                      10.6k evals (2.5s)
+  ┌ scoreboard [Epoch 1/3] ─
+  │ ✓ solved=2 (50.0%)  ⚠️ near=1  ✗ unsolved=2
+  │ → active=8  ⏳ pending=18  done=4/30  success=6.7%
+  │ TIME:  elapsed=3.9s (Throughput: 0.98s/task | Latency Avg: 3.2s)
+  │ WORK:  speedup=3.24x (40.5% core) | STRAGGLER: 3.9s, 8.0k evals
+  │ EVALS: total=42.2k (10.81k/s | Per-Task Avg: 10.6k)
+  → [ 12] STARTING  8be77c9e
+  ✓ [  4/30] DONE 9172f3a0                      10.6k evals (5.3s)
+  ┌ scoreboard [Epoch 1/3] ─
+  │ ✓ solved=3 (60.0%)  ⚠️ near=1  ✗ unsolved=2
+  │ → active=8  ⏳ pending=17  done=5/30  success=10.0%
+  │ TIME:  elapsed=5.4s (Throughput: 1.09s/task | Latency Avg: 3.6s)
+  │ WORK:  speedup=3.31x (41.4% core) | STRAGGLER: 5.4s, 7.2k evals
+  │ EVALS: total=52.8k (9.71k/s | Per-Task Avg: 10.6k)
+  → [ 13] STARTING  ac0a08a4
+  ✓ [ 12/30] DONE 8be77c9e                      10.6k evals (3.3s)
+  ┌ scoreboard [Epoch 1/3] ─
+  │ ✓ solved=4 (66.7%)  ⚠️ near=1  ✗ unsolved=2
+  │ → active=8  ⏳ pending=16  done=6/30  success=13.3%
+  │ TIME:  elapsed=7.2s (Throughput: 1.21s/task | Latency Avg: 3.6s)
+  │ WORK:  speedup=2.95x (36.8% core) | STRAGGLER: 7.2s, 8.7k evals
+  │ EVALS: total=63.3k (8.75k/s | Per-Task Avg: 10.6k)
+  → [ 14] STARTING  c3e719e8
+  ✗ [  6/30] DONE 46442a0e                      10.6k evals (8.8s)
+  ┌ scoreboard [Epoch 1/3] ─
+  │ ✓ solved=4 (57.1%)  ⚠️ near=1  ✗ unsolved=3
+  │ → active=8  ⏳ pending=15  done=7/30  success=13.3%
+  │ TIME:  elapsed=8.9s (Throughput: 1.28s/task | Latency Avg: 4.3s)
+  │ WORK:  speedup=3.37x (42.2% core) | STRAGGLER: 8.9s, 9.3k evals
+  │ EVALS: total=73.8k (8.26k/s | Per-Task Avg: 10.6k)
+  → [ 15] STARTING  c9e6f938
+  ✓ [  3/30] DONE 8d5021e8                      10.6k evals (9.8s)
+  ┌ scoreboard [Epoch 1/3] ─
+  │ ✓ solved=5 (62.5%)  ⚠️ near=1  ✗ unsolved=3
+  │ → active=8  ⏳ pending=14  done=8/30  success=16.7%
+  │ TIME:  elapsed=9.9s (Throughput: 1.24s/task | Latency Avg: 5.0s)
+  │ WORK:  speedup=4.03x (50.4% core) | STRAGGLER: 9.9s, 9.7k evals
+  │ EVALS: total=84.4k (8.51k/s | Per-Task Avg: 10.6k)
+  → [ 16] STARTING  cce03e0d
+  ✗ [  8/30] DONE feca6190                      10.6k evals (10.6s)
+  ┌ scoreboard [Epoch 1/3] ─
+  │ ✓ solved=5 (55.6%)  ⚠️ near=1  ✗ unsolved=4
+  │ → active=8  ⏳ pending=13  done=9/30  success=16.7%
+  │ TIME:  elapsed=10.7s (Throughput: 1.19s/task | Latency Avg: 5.6s)
+  │ WORK:  speedup=4.73x (59.1% core) | STRAGGLER: 10.7s, 10.1k evals
+  │ EVALS: total=95.0k (8.88k/s | Per-Task Avg: 10.6k)
+  → [ 17] STARTING  d037b0a7
+  ✗ [ 10/30] DONE 62c24649                      10.6k evals (9.4s)
+  ┌ scoreboard [Epoch 1/3] ─
+  │ ✓ solved=5 (50.0%)  ⚠️ near=1  ✗ unsolved=5
+  │ → active=8  ⏳ pending=12  done=10/30  success=16.7%
+  │ TIME:  elapsed=11.2s (Throughput: 1.12s/task | Latency Avg: 6.0s)
+  │ WORK:  speedup=5.34x (66.8% core) | STRAGGLER: 11.2s, 9.5k evals
+  │ EVALS: total=105.5k (9.40k/s | Per-Task Avg: 10.6k)
+  → [ 18] STARTING  d13f3404
+  ✓ [ 15/30] DONE c9e6f938                      10.6k evals (2.6s)
+  ┌ scoreboard [Epoch 1/3] ─
+  │ ✓ solved=6 (54.5%)  ⚠️ near=1  ✗ unsolved=5
+  │ → active=8  ⏳ pending=11  done=11/30  success=20.0%
+  │ TIME:  elapsed=11.6s (Throughput: 1.05s/task | Latency Avg: 5.7s)
+  │ WORK:  speedup=5.41x (67.7% core) | STRAGGLER: 11.5s, 9.7k evals
+  │ EVALS: total=116.0k (10.05k/s | Per-Task Avg: 10.6k)
+  → [ 19] STARTING  c59eb873
+  ✗ [  1/30] DONE 4522001f                      10.6k evals (12.4s)
+  ┌ scoreboard [Epoch 1/3] ─
+  │ ✓ solved=6 (50.0%)  ⚠️ near=1  ✗ unsolved=6
+  │ → active=8  ⏳ pending=10  done=12/30  success=20.0%
+  │ TIME:  elapsed=12.5s (Throughput: 1.05s/task | Latency Avg: 6.2s)
+  │ WORK:  speedup=5.98x (74.7% core) | STRAGGLER: 8.9s, 9.9k evals
+  │ EVALS: total=126.6k (10.09k/s | Per-Task Avg: 10.6k)
+  → [ 20] STARTING  0d3d703e
+  ✗ [ 11/30] DONE 7fe24cdd                      10.6k evals (9.8s)
+  ┌ scoreboard [Epoch 1/3] ─
+  │ ✓ solved=6 (46.2%)  ⚠️ near=1  ✗ unsolved=7
+  │ → active=8  ⏳ pending=9  done=13/30  success=20.0%
+  │ TIME:  elapsed=13.5s (Throughput: 1.04s/task | Latency Avg: 6.5s)
+  │ WORK:  speedup=6.27x (78.3% core) | STRAGGLER: 8.1s, 6.8k evals
+  │ EVALS: total=137.2k (10.13k/s | Per-Task Avg: 10.6k)
+  → [ 21] STARTING  25d8a9c8
+  ✓ [ 17/30] DONE d037b0a7                      10.6k evals (4.9s)
+  ┌ scoreboard [Epoch 1/3] ─
+  │ ✓ solved=7 (50.0%)  ⚠️ near=1  ✗ unsolved=7
+  │ → active=8  ⏳ pending=8  done=14/30  success=23.3%
+  │ TIME:  elapsed=15.6s (Throughput: 1.11s/task | Latency Avg: 6.4s)
+  │ WORK:  speedup=5.76x (72.0% core) | STRAGGLER: 10.1s, 8.7k evals
+  │ EVALS: total=147.7k (9.49k/s | Per-Task Avg: 10.6k)
+  → [ 22] STARTING  25ff71a9
+  ✓ [ 20/30] DONE 0d3d703e                      10.6k evals (3.8s)
+  ┌ scoreboard [Epoch 1/3] ─
+  │ ✓ solved=8 (53.3%)  ⚠️ near=1  ✗ unsolved=7
+  │ → active=8  ⏳ pending=7  done=15/30  success=26.7%
+  │ TIME:  elapsed=16.3s (Throughput: 1.09s/task | Latency Avg: 6.2s)
+  │ WORK:  speedup=5.72x (71.5% core) | STRAGGLER: 10.9s, 6.6k evals
+  │ EVALS: total=158.2k (9.68k/s | Per-Task Avg: 10.6k)
+  → [ 23] STARTING  3af2c5a8
+  ✓ [ 22/30] DONE 25ff71a9                      10.6k evals (2.7s)
+  ┌ scoreboard [Epoch 1/3] ─
+  │ ✓ solved=9 (56.2%)  ⚠️ near=1  ✗ unsolved=7
+  │ → active=8  ⏳ pending=6  done=16/30  success=30.0%
+  │ TIME:  elapsed=18.3s (Throughput: 1.14s/task | Latency Avg: 6.0s)
+  │ WORK:  speedup=5.26x (65.8% core) | STRAGGLER: 12.9s, 9.1k evals
+  │ EVALS: total=168.8k (9.23k/s | Per-Task Avg: 10.6k)
+  → [ 24] STARTING  3c9b0459
+  ✗ [ 21/30] DONE 25d8a9c8                      10.6k evals (5.8s)
+  ┌ scoreboard [Epoch 1/3] ─
+  │ ✓ solved=9 (52.9%)  ⚠️ near=1  ✗ unsolved=8
+  │ → active=8  ⏳ pending=5  done=17/30  success=30.0%
+  │ TIME:  elapsed=19.4s (Throughput: 1.14s/task | Latency Avg: 6.0s)
+  │ WORK:  speedup=5.27x (65.9% core) | STRAGGLER: 13.9s, 8.7k evals
+  │ EVALS: total=179.3k (9.26k/s | Per-Task Avg: 10.6k)
+  → [ 25] STARTING  67e8384a
+  ✗ [ 23/30] DONE 3af2c5a8                      10.6k evals (5.2s)
+  ┌ scoreboard [Epoch 1/3] ─
+  │ ✓ solved=9 (50.0%)  ⚠️ near=1  ✗ unsolved=9
+  │ → active=8  ⏳ pending=4  done=18/30  success=30.0%
+  │ TIME:  elapsed=21.5s (Throughput: 1.20s/task | Latency Avg: 6.0s)
+  │ WORK:  speedup=4.98x (62.3% core) | STRAGGLER: 16.1s, 10.1k evals
+  │ EVALS: total=189.9k (8.82k/s | Per-Task Avg: 10.6k)
+  → [ 26] STARTING  6d0aefbc
+  ✓ [ 24/30] DONE 3c9b0459                      10.6k evals (3.4s)
+  ┌ scoreboard [Epoch 1/3] ─
+  │ ✓ solved=10 (52.6%)  ⚠️ near=1  ✗ unsolved=9
+  │ → active=8  ⏳ pending=3  done=19/30  success=33.3%
+  │ TIME:  elapsed=21.7s (Throughput: 1.14s/task | Latency Avg: 5.8s)
+  │ WORK:  speedup=5.10x (63.7% core) | STRAGGLER: 16.3s, 9.9k evals
+  │ EVALS: total=200.4k (9.24k/s | Per-Task Avg: 10.6k)
+  → [ 27] STARTING  6fa7a44f
+  ✗ [ 18/30] DONE d13f3404                      10.6k evals (11.2s)
+  ┌ scoreboard [Epoch 1/3] ─
+  │ ✓ solved=10 (50.0%)  ⚠️ near=1  ✗ unsolved=10
+  │ → active=8  ⏳ pending=2  done=20/30  success=33.3%
+  │ TIME:  elapsed=22.4s (Throughput: 1.12s/task | Latency Avg: 6.1s)
+  │ WORK:  speedup=5.44x (68.0% core) | STRAGGLER: 17.0s, 9.9k evals
+  │ EVALS: total=211.0k (9.42k/s | Per-Task Avg: 10.6k)
+  → [ 28] STARTING  74dd1130
+  ~ [ 16/30] DONE cce03e0d                      10.6k evals (12.9s)
+  ┌ scoreboard [Epoch 1/3] ─
+  │ ✓ solved=10 (47.6%)  ⚠️ near=2  ✗ unsolved=11
+  │ → active=8  ⏳ pending=1  done=21/30  success=33.3%
+  │ TIME:  elapsed=22.8s (Throughput: 1.09s/task | Latency Avg: 7.0s)
+  │ WORK:  speedup=6.47x (80.9% core) | STRAGGLER: 17.4s, 9.5k evals
+  │ EVALS: total=221.6k (9.71k/s | Per-Task Avg: 10.6k)
+  → [ 29] STARTING  91413438
+  ✓ [ 26/30] DONE 6d0aefbc                      10.6k evals (3.3s)
+  ┌ scoreboard [Epoch 1/3] ─
+  │ ✓ solved=11 (50.0%)  ⚠️ near=2  ✗ unsolved=11
+  │ → active=8  ⏳ pending=0  done=22/30  success=36.7%
+  │ TIME:  elapsed=24.8s (Throughput: 1.13s/task | Latency Avg: 6.9s)
+  │ WORK:  speedup=6.08x (76.0% core) | STRAGGLER: 19.4s, 10.3k evals
+  │ EVALS: total=232.1k (9.35k/s | Per-Task Avg: 10.6k)
+  → [ 30] STARTING  9565186b
+  ✗ [ 14/30] DONE c3e719e8                      10.6k evals (17.8s)
+  ┌ scoreboard [Epoch 1/3] ─
+  │ ✓ solved=11 (47.8%)  ⚠️ near=2  ✗ unsolved=12
+  │ → active=7  ⏳ pending=0  done=23/30  success=36.7%
+  │ TIME:  elapsed=25.0s (Throughput: 1.09s/task | Latency Avg: 7.3s)
+  │ WORK:  speedup=6.75x (84.4% core) | STRAGGLER: 19.6s, 10.6k evals
+  │ EVALS: total=242.7k (9.71k/s | Per-Task Avg: 10.6k)
+  ✓ [ 25/30] DONE 67e8384a                      10.6k evals (5.8s)
+  ┌ scoreboard [Epoch 1/3] ─
+  │ ✓ solved=12 (50.0%)  ⚠️ near=2  ✗ unsolved=12
+  │ → active=6  ⏳ pending=0  done=24/30  success=40.0%
+  │ TIME:  elapsed=25.1s (Throughput: 1.05s/task | Latency Avg: 7.3s)
+  │ WORK:  speedup=6.94x (86.8% core) | STRAGGLER: 19.7s, 10.6k evals
+  │ EVALS: total=253.2k (10.07k/s | Per-Task Avg: 10.6k)
+  ✓ [ 27/30] DONE 6fa7a44f                      10.6k evals (4.1s)
+  ┌ scoreboard [Epoch 1/3] ─
+  │ ✓ solved=13 (52.0%)  ⚠️ near=2  ✗ unsolved=12
+  │ → active=5  ⏳ pending=0  done=25/30  success=43.3%
+  │ TIME:  elapsed=25.8s (Throughput: 1.03s/task | Latency Avg: 7.1s)
+  │ WORK:  speedup=6.93x (86.6% core) | STRAGGLER: 20.3s, 10.6k evals
+  │ EVALS: total=263.8k (10.24k/s | Per-Task Avg: 10.6k)
+  ✓ [ 28/30] DONE 74dd1130                      10.6k evals (4.6s)
+  ┌ scoreboard [Epoch 1/3] ─
+  │ ✓ solved=14 (53.8%)  ⚠️ near=2  ✗ unsolved=12
+  │ → active=4  ⏳ pending=0  done=26/30  success=46.7%
+  │ TIME:  elapsed=27.0s (Throughput: 1.04s/task | Latency Avg: 7.0s)
+  │ WORK:  speedup=6.78x (84.7% core) | STRAGGLER: 21.6s, 10.6k evals
+  │ EVALS: total=274.3k (10.15k/s | Per-Task Avg: 10.6k)
+  ✓ [ 30/30] DONE 9565186b                      10.6k evals (4.4s)
+  ┌ scoreboard [Epoch 1/3] ─
+  │ ✓ solved=15 (55.6%)  ⚠️ near=2  ✗ unsolved=12
+  │ → active=3  ⏳ pending=0  done=27/30  success=50.0%
+  │ TIME:  elapsed=29.2s (Throughput: 1.08s/task | Latency Avg: 6.9s)
+  │ WORK:  speedup=6.42x (80.2% core) | STRAGGLER: 23.8s, 10.6k evals
+  │ EVALS: total=284.9k (9.75k/s | Per-Task Avg: 10.6k)
+  ✗ [ 29/30] DONE 91413438                      10.6k evals (16.6s)
+  ┌ scoreboard [Epoch 1/3] ─
+  │ ✓ solved=15 (53.6%)  ⚠️ near=2  ✗ unsolved=13
+  │ → active=2  ⏳ pending=0  done=28/30  success=50.0%
+  │ TIME:  elapsed=39.4s (Throughput: 1.41s/task | Latency Avg: 7.3s)
+  │ WORK:  speedup=5.18x (64.8% core) | STRAGGLER: 33.9s, 10.6k evals
+  │ EVALS: total=295.4k (7.50k/s | Per-Task Avg: 10.6k)
+  ✗ [ 13/30] DONE ac0a08a4                       4.0k evals (300.4s)
+  ┌ scoreboard [Epoch 1/3] ─
+  │ ✓ solved=15 (51.7%)  ⚠️ near=2  ✗ unsolved=14
+  │ → active=1  ⏳ pending=0  done=29/30  success=50.0%
+  │ TIME:  elapsed=305.8s (Throughput: 10.55s/task | Latency Avg: 17.4s)
+  │ WORK:  speedup=1.65x (20.6% core) | STRAGGLER: 294.3s, 10.6k evals
+  │ EVALS: total=299.4k (0.98k/s | Per-Task Avg: 10.3k)
+  ✓ [ 19/30] DONE c59eb873                       9.9k evals (347.6s)
+  ┌ scoreboard [Epoch 1/3] ─
+  │ ✓ solved=16 (53.3%)  ⚠️ near=2  ✗ unsolved=14
+  │ → active=0  ⏳ pending=0  done=30/30  success=53.3%
+  │ TIME:  elapsed=359.2s (Throughput: 11.97s/task | Latency Avg: 28.4s)
+  │ WORK:  speedup=2.37x (29.7% core) | STRAGGLER: 0.0s, 10.6k evals
+  │ EVALS: total=309.4k (0.86k/s | Per-Task Avg: 10.3k)
+
+=================================================================
+  Epoch 1  (168 ops, 30 tasks)
+=================================================================
+  Solved (exact):   16/30  (53.3%)
+  Near-solved ≥80%: 18/30
+  Mean test acc:    0.813
+  Total time:       359s
+
+  Per-category:
+    0d3d703e: █  1/1 (100%)
+    25d8a9c8: ░  0/1 (0%)
+    25ff71a9: █  1/1 (100%)
+    3af2c5a8: ░  0/1 (0%)
+    3c9b0459: █  1/1 (100%)
+    4522001f: ░  0/1 (0%)
+    46442a0e: ░  0/1 (0%)
+    49d1d64f: ░  0/1 (0%)
+    5582e5ca: █  1/1 (100%)
+    6150a2bd: █  1/1 (100%)
+    62c24649: ░  0/1 (0%)
+    67e8384a: █  1/1 (100%)
+    6d0aefbc: █  1/1 (100%)
+    6fa7a44f: █  1/1 (100%)
+    74dd1130: █  1/1 (100%)
+    7fe24cdd: ░  0/1 (0%)
+    8be77c9e: █  1/1 (100%)
+    8d5021e8: █  1/1 (100%)
+    91413438: ░  0/1 (0%)
+    9172f3a0: █  1/1 (100%)
+    9565186b: █  1/1 (100%)
+    ac0a08a4: ░  0/1 (0%)
+    c3e719e8: ░  0/1 (0%)
+    c59eb873: █  1/1 (100%)
+    c9e6f938: █  1/1 (100%)
+    cce03e0d: ░  0/1 (0%)
+    d037b0a7: █  1/1 (100%)
+    d13f3404: ░  0/1 (0%)
+    e9afcf9a: ░  0/1 (0%)
+    feca6190: ░  0/1 (0%)
+  [Analysis] Epoch 1: 16 solved | 24 abstractions | 0 used learned ops.
+  → [  1] STARTING  4522001f
+  → [  2] STARTING  6150a2bd
+  → [  3] STARTING  8d5021e8
+  → [  4] STARTING  9172f3a0
+  → [  5] STARTING  49d1d64f
+  → [  6] STARTING  46442a0e
+  → [  7] STARTING  e9afcf9a
+  → [  8] STARTING  feca6190
+  ✓ [  2/30] DONE 6150a2bd                      10.6k evals (2.5s)
+  ┌ scoreboard [Epoch 2/3] ─
+  │ ✓ solved=1 (100.0%)  ⚠️ near=0  ✗ unsolved=0
+  │ → active=8  ⏳ pending=21  done=1/30  success=3.3%
+  │ TIME:  elapsed=2.6s (Throughput: 2.59s/task | Latency Avg: 2.5s)
+  │ WORK:  speedup=0.97x (12.1% core) | STRAGGLER: 2.6s, 9.7k evals
+  │ EVALS: total=10.6k (4.07k/s | Per-Task Avg: 10.6k)
+  → [  9] STARTING  5582e5ca
+  ~ [  7/30] DONE e9afcf9a                      10.6k evals (4.2s)
+  ┌ scoreboard [Epoch 2/3] ─
+  │ ✓ solved=1 (50.0%)  ⚠️ near=1  ✗ unsolved=1
+  │ → active=8  ⏳ pending=20  done=2/30  success=3.3%
+  │ TIME:  elapsed=4.3s (Throughput: 2.15s/task | Latency Avg: 5.5s)
+  │ WORK:  speedup=2.54x (31.8% core) | STRAGGLER: 4.3s, 9.5k evals
+  │ EVALS: total=21.1k (4.91k/s | Per-Task Avg: 10.6k)
+  → [ 10] STARTING  62c24649
+  ✓ [  4/30] DONE 9172f3a0                      10.6k evals (4.6s)
+  ┌ scoreboard [Epoch 2/3] ─
+  │ ✓ solved=2 (66.7%)  ⚠️ near=1  ✗ unsolved=1
+  │ → active=8  ⏳ pending=19  done=3/30  success=6.7%
+  │ TIME:  elapsed=4.7s (Throughput: 1.57s/task | Latency Avg: 5.2s)
+  │ WORK:  speedup=3.31x (41.3% core) | STRAGGLER: 4.7s, 7.0k evals
+  │ EVALS: total=31.6k (6.73k/s | Per-Task Avg: 10.6k)
+  → [ 11] STARTING  7fe24cdd
+  ~ [  5/30] DONE 49d1d64f                      10.6k evals (7.9s)
+  ┌ scoreboard [Epoch 2/3] ─
+  │ ✓ solved=2 (50.0%)  ⚠️ near=2  ✗ unsolved=2
+  │ → active=8  ⏳ pending=18  done=4/30  success=6.7%
+  │ TIME:  elapsed=8.0s (Throughput: 2.00s/task | Latency Avg: 7.8s)
+  │ WORK:  speedup=3.92x (49.0% core) | STRAGGLER: 8.0s, 10.3k evals
+  │ EVALS: total=42.2k (5.28k/s | Per-Task Avg: 10.6k)
+  → [ 12] STARTING  8be77c9e
+  ✗ [  8/30] DONE feca6190                      10.6k evals (8.0s)
+  ┌ scoreboard [Epoch 2/3] ─
+  │ ✓ solved=2 (40.0%)  ⚠️ near=2  ✗ unsolved=3
+  │ → active=8  ⏳ pending=17  done=5/30  success=6.7%
+  │ TIME:  elapsed=8.1s (Throughput: 1.62s/task | Latency Avg: 7.9s)
+  │ WORK:  speedup=4.86x (60.8% core) | STRAGGLER: 8.1s, 10.1k evals
+  │ EVALS: total=52.8k (6.51k/s | Per-Task Avg: 10.6k)
+  → [ 13] STARTING  ac0a08a4
+  ✓ [  3/30] DONE 8d5021e8                      10.6k evals (8.2s)
+  ┌ scoreboard [Epoch 2/3] ─
+  │ ✓ solved=3 (50.0%)  ⚠️ near=2  ✗ unsolved=3
+  │ → active=8  ⏳ pending=16  done=6/30  success=10.0%
+  │ TIME:  elapsed=8.3s (Throughput: 1.39s/task | Latency Avg: 7.9s)
+  │ WORK:  speedup=5.72x (71.5% core) | STRAGGLER: 8.3s, 8.4k evals
+  │ EVALS: total=63.3k (7.60k/s | Per-Task Avg: 10.6k)
+  → [ 14] STARTING  c3e719e8
+  ~ [  6/30] DONE 46442a0e                      10.6k evals (10.0s)
+  ┌ scoreboard [Epoch 2/3] ─
+  │ ✓ solved=3 (42.9%)  ⚠️ near=3  ✗ unsolved=4
+  │ → active=8  ⏳ pending=15  done=7/30  success=10.0%
+  │ TIME:  elapsed=10.1s (Throughput: 1.44s/task | Latency Avg: 9.7s)
+  │ WORK:  speedup=6.71x (83.8% core) | STRAGGLER: 10.1s, 9.5k evals
+  │ EVALS: total=73.8k (7.32k/s | Per-Task Avg: 10.6k)
+  → [ 15] STARTING  c9e6f938
+  ✓ [  9/30] DONE 5582e5ca                      10.6k evals (8.3s)
+  ┌ scoreboard [Epoch 2/3] ─
+  │ ✓ solved=4 (50.0%)  ⚠️ near=3  ✗ unsolved=4
+  │ → active=8  ⏳ pending=14  done=8/30  success=13.3%
+  │ TIME:  elapsed=10.9s (Throughput: 1.36s/task | Latency Avg: 9.5s)
+  │ WORK:  speedup=6.98x (87.2% core) | STRAGGLER: 10.9s, 7.0k evals
+  │ EVALS: total=84.4k (7.76k/s | Per-Task Avg: 10.6k)
+  → [ 16] STARTING  cce03e0d
+  ✓ [ 12/30] DONE 8be77c9e                      10.6k evals (6.7s)
+  ┌ scoreboard [Epoch 2/3] ─
+  │ ✓ solved=5 (55.6%)  ⚠️ near=3  ✗ unsolved=4
+  │ → active=8  ⏳ pending=13  done=9/30  success=16.7%
+  │ TIME:  elapsed=14.7s (Throughput: 1.63s/task | Latency Avg: 9.2s)
+  │ WORK:  speedup=5.62x (70.2% core) | STRAGGLER: 14.7s, 10.3k evals
+  │ EVALS: total=95.0k (6.46k/s | Per-Task Avg: 10.6k)
+  → [ 17] STARTING  d037b0a7
+  ✓ [ 10/30] DONE 62c24649                      10.6k evals (10.6s)
+  ┌ scoreboard [Epoch 2/3] ─
+  │ ✓ solved=6 (60.0%)  ⚠️ near=3  ✗ unsolved=4
+  │ → active=8  ⏳ pending=12  done=10/30  success=20.0%
+  │ TIME:  elapsed=14.9s (Throughput: 1.49s/task | Latency Avg: 9.3s)
+  │ WORK:  speedup=6.25x (78.1% core) | STRAGGLER: 14.9s, 10.3k evals
+  │ EVALS: total=105.5k (7.07k/s | Per-Task Avg: 10.6k)
+  → [ 18] STARTING  d13f3404
+  ~ [ 11/30] DONE 7fe24cdd                      10.6k evals (10.3s)
+  ┌ scoreboard [Epoch 2/3] ─
+  │ ✓ solved=6 (54.5%)  ⚠️ near=4  ✗ unsolved=5
+  │ → active=8  ⏳ pending=11  done=11/30  success=20.0%
+  │ TIME:  elapsed=15.0s (Throughput: 1.37s/task | Latency Avg: 10.4s)
+  │ WORK:  speedup=7.58x (94.7% core) | STRAGGLER: 15.0s, 9.3k evals
+  │ EVALS: total=116.0k (7.72k/s | Per-Task Avg: 10.6k)
+  → [ 19] STARTING  c59eb873
+  ✗ [ 13/30] DONE ac0a08a4                      10.6k evals (7.5s)
+  ┌ scoreboard [Epoch 2/3] ─
+  │ ✓ solved=6 (50.0%)  ⚠️ near=4  ✗ unsolved=6
+  │ → active=8  ⏳ pending=10  done=12/30  success=20.0%
+  │ TIME:  elapsed=15.6s (Throughput: 1.30s/task | Latency Avg: 10.1s)
+  │ WORK:  speedup=7.76x (97.0% core) | STRAGGLER: 15.6s, 10.1k evals
+  │ EVALS: total=126.6k (8.10k/s | Per-Task Avg: 10.6k)
+  → [ 20] STARTING  0d3d703e
+  ✓ [ 15/30] DONE c9e6f938                      10.6k evals (5.8s)
+  ┌ scoreboard [Epoch 2/3] ─
+  │ ✓ solved=7 (53.8%)  ⚠️ near=4  ✗ unsolved=6
+  │ → active=8  ⏳ pending=9  done=13/30  success=23.3%
+  │ TIME:  elapsed=15.9s (Throughput: 1.22s/task | Latency Avg: 9.8s)
+  │ WORK:  speedup=8.02x (100.3% core) | STRAGGLER: 15.9s, 8.7k evals
+  │ EVALS: total=137.2k (8.65k/s | Per-Task Avg: 10.6k)
+  → [ 21] STARTING  25d8a9c8
+  ✗ [  1/30] DONE 4522001f                      10.6k evals (19.2s)
+  ┌ scoreboard [Epoch 2/3] ─
+  │ ✓ solved=7 (50.0%)  ⚠️ near=4  ✗ unsolved=7
+  │ → active=8  ⏳ pending=8  done=14/30  success=23.3%
+  │ TIME:  elapsed=19.3s (Throughput: 1.38s/task | Latency Avg: 10.5s)
+  │ WORK:  speedup=7.58x (94.7% core) | STRAGGLER: 11.0s, 7.0k evals
+  │ EVALS: total=147.7k (7.64k/s | Per-Task Avg: 10.6k)
+  → [ 22] STARTING  25ff71a9
+  ✓ [ 20/30] DONE 0d3d703e                      10.6k evals (5.9s)
+  ┌ scoreboard [Epoch 2/3] ─
+  │ ✓ solved=8 (53.3%)  ⚠️ near=4  ✗ unsolved=7
+  │ → active=8  ⏳ pending=7  done=15/30  success=26.7%
+  │ TIME:  elapsed=21.6s (Throughput: 1.44s/task | Latency Avg: 10.2s)
+  │ WORK:  speedup=7.07x (88.3% core) | STRAGGLER: 13.2s, 9.5k evals
+  │ EVALS: total=158.2k (7.34k/s | Per-Task Avg: 10.6k)
+  → [ 23] STARTING  3af2c5a8
+  ✗ [ 21/30] DONE 25d8a9c8                      10.6k evals (6.4s)
+  ┌ scoreboard [Epoch 2/3] ─
+  │ ✓ solved=8 (50.0%)  ⚠️ near=4  ✗ unsolved=8
+  │ → active=8  ⏳ pending=6  done=16/30  success=26.7%
+  │ TIME:  elapsed=22.2s (Throughput: 1.39s/task | Latency Avg: 9.9s)
+  │ WORK:  speedup=7.14x (89.2% core) | STRAGGLER: 13.9s, 9.9k evals
+  │ EVALS: total=168.8k (7.59k/s | Per-Task Avg: 10.6k)
+  → [ 24] STARTING  3c9b0459
+  ✓ [ 22/30] DONE 25ff71a9                      10.6k evals (3.1s)
+  ┌ scoreboard [Epoch 2/3] ─
+  │ ✓ solved=9 (52.9%)  ⚠️ near=4  ✗ unsolved=8
+  │ → active=8  ⏳ pending=5  done=17/30  success=30.0%
+  │ TIME:  elapsed=22.4s (Throughput: 1.32s/task | Latency Avg: 9.5s)
+  │ WORK:  speedup=7.22x (90.3% core) | STRAGGLER: 14.1s, 9.1k evals
+  │ EVALS: total=179.3k (8.00k/s | Per-Task Avg: 10.6k)
+  → [ 25] STARTING  67e8384a
+  ✓ [ 17/30] DONE d037b0a7                      10.6k evals (8.8s)
+  ┌ scoreboard [Epoch 2/3] ─
+  │ ✓ solved=10 (55.6%)  ⚠️ near=4  ✗ unsolved=8
+  │ → active=8  ⏳ pending=4  done=18/30  success=33.3%
+  │ TIME:  elapsed=23.5s (Throughput: 1.31s/task | Latency Avg: 9.5s)
+  │ WORK:  speedup=7.25x (90.6% core) | STRAGGLER: 15.2s, 9.3k evals
+  │ EVALS: total=189.9k (8.07k/s | Per-Task Avg: 10.6k)
+  → [ 26] STARTING  6d0aefbc
+  ✗ [ 18/30] DONE d13f3404                      10.6k evals (9.7s)
+  ┌ scoreboard [Epoch 2/3] ─
+  │ ✓ solved=10 (52.6%)  ⚠️ near=4  ✗ unsolved=9
+  │ → active=8  ⏳ pending=3  done=19/30  success=33.3%
+  │ TIME:  elapsed=24.6s (Throughput: 1.30s/task | Latency Avg: 9.5s)
+  │ WORK:  speedup=7.32x (91.5% core) | STRAGGLER: 16.3s, 10.1k evals
+  │ EVALS: total=200.4k (8.14k/s | Per-Task Avg: 10.6k)
+  → [ 27] STARTING  6fa7a44f
+  ✗ [ 16/30] DONE cce03e0d                      10.6k evals (14.0s)
+  ┌ scoreboard [Epoch 2/3] ─
+  │ ✓ solved=10 (50.0%)  ⚠️ near=4  ✗ unsolved=10
+  │ → active=8  ⏳ pending=2  done=20/30  success=33.3%
+  │ TIME:  elapsed=24.9s (Throughput: 1.24s/task | Latency Avg: 9.7s)
+  │ WORK:  speedup=7.81x (97.6% core) | STRAGGLER: 16.6s, 9.5k evals
+  │ EVALS: total=211.0k (8.48k/s | Per-Task Avg: 10.6k)
+  → [ 28] STARTING  74dd1130
+  ✓ [ 24/30] DONE 3c9b0459                      10.6k evals (3.0s)
+  ┌ scoreboard [Epoch 2/3] ─
+  │ ✓ solved=11 (52.4%)  ⚠️ near=4  ✗ unsolved=10
+  │ → active=8  ⏳ pending=1  done=21/30  success=36.7%
+  │ TIME:  elapsed=25.2s (Throughput: 1.20s/task | Latency Avg: 9.4s)
+  │ WORK:  speedup=7.83x (97.9% core) | STRAGGLER: 16.9s, 5.3k evals
+  │ EVALS: total=221.6k (8.79k/s | Per-Task Avg: 10.6k)
+  → [ 29] STARTING  91413438
+  ~ [ 28/30] DONE 74dd1130                      10.6k evals (4.4s)
+  ┌ scoreboard [Epoch 2/3] ─
+  │ ✓ solved=11 (50.0%)  ⚠️ near=5  ✗ unsolved=11
+  │ → active=8  ⏳ pending=0  done=22/30  success=36.7%
+  │ TIME:  elapsed=29.3s (Throughput: 1.33s/task | Latency Avg: 9.4s)
+  │ WORK:  speedup=7.03x (87.9% core) | STRAGGLER: 21.0s, 9.3k evals
+  │ EVALS: total=232.1k (7.92k/s | Per-Task Avg: 10.6k)
+  → [ 30] STARTING  9565186b
+  ✓ [ 26/30] DONE 6d0aefbc                      10.6k evals (7.6s)
+  ┌ scoreboard [Epoch 2/3] ─
+  │ ✓ solved=12 (52.2%)  ⚠️ near=5  ✗ unsolved=11
+  │ → active=7  ⏳ pending=0  done=23/30  success=40.0%
+  │ TIME:  elapsed=31.1s (Throughput: 1.35s/task | Latency Avg: 9.3s)
+  │ WORK:  speedup=6.86x (85.8% core) | STRAGGLER: 22.8s, 10.6k evals
+  │ EVALS: total=242.7k (7.79k/s | Per-Task Avg: 10.6k)
+  ✗ [ 23/30] DONE 3af2c5a8                      10.6k evals (12.8s)
+  ┌ scoreboard [Epoch 2/3] ─
+  │ ✓ solved=12 (50.0%)  ⚠️ near=5  ✗ unsolved=12
+  │ → active=6  ⏳ pending=0  done=24/30  success=40.0%
+  │ TIME:  elapsed=34.4s (Throughput: 1.43s/task | Latency Avg: 9.4s)
+  │ WORK:  speedup=6.59x (82.3% core) | STRAGGLER: 26.1s, 10.6k evals
+  │ EVALS: total=253.2k (7.36k/s | Per-Task Avg: 10.6k)
+  ✓ [ 30/30] DONE 9565186b                      10.6k evals (6.5s)
+  ┌ scoreboard [Epoch 2/3] ─
+  │ ✓ solved=13 (52.0%)  ⚠️ near=5  ✗ unsolved=12
+  │ → active=5  ⏳ pending=0  done=25/30  success=43.3%
+  │ TIME:  elapsed=35.8s (Throughput: 1.43s/task | Latency Avg: 9.3s)
+  │ WORK:  speedup=6.50x (81.3% core) | STRAGGLER: 27.5s, 10.6k evals
+  │ EVALS: total=263.8k (7.36k/s | Per-Task Avg: 10.6k)
+  ✓ [ 27/30] DONE 6fa7a44f                      10.6k evals (12.0s)
+  ┌ scoreboard [Epoch 2/3] ─
+  │ ✓ solved=14 (53.8%)  ⚠️ near=5  ✗ unsolved=12
+  │ → active=4  ⏳ pending=0  done=26/30  success=46.7%
+  │ TIME:  elapsed=36.6s (Throughput: 1.41s/task | Latency Avg: 9.4s)
+  │ WORK:  speedup=6.69x (83.7% core) | STRAGGLER: 28.3s, 10.6k evals
+  │ EVALS: total=274.3k (7.49k/s | Per-Task Avg: 10.6k)
+  ✓ [ 25/30] DONE 67e8384a                      10.6k evals (18.9s)
+  ┌ scoreboard [Epoch 2/3] ─
+  │ ✓ solved=15 (55.6%)  ⚠️ near=5  ✗ unsolved=12
+  │ → active=3  ⏳ pending=0  done=27/30  success=50.0%
+  │ TIME:  elapsed=41.4s (Throughput: 1.53s/task | Latency Avg: 9.8s)
+  │ WORK:  speedup=6.39x (79.8% core) | STRAGGLER: 33.0s, 10.6k evals
+  │ EVALS: total=284.9k (6.89k/s | Per-Task Avg: 10.6k)
+  ✗ [ 29/30] DONE 91413438                      10.6k evals (25.8s)
+  ┌ scoreboard [Epoch 2/3] ─
+  │ ✓ solved=15 (53.6%)  ⚠️ near=5  ✗ unsolved=13
+  │ → active=2  ⏳ pending=0  done=28/30  success=50.0%
+  │ TIME:  elapsed=51.0s (Throughput: 1.82s/task | Latency Avg: 10.4s)
+  │ WORK:  speedup=5.69x (71.1% core) | STRAGGLER: 42.6s, 10.6k evals
+  │ EVALS: total=295.4k (5.80k/s | Per-Task Avg: 10.6k)
+  ✓ [ 19/30] DONE c59eb873                      10.6k evals (99.7s)
+  ┌ scoreboard [Epoch 2/3] ─
+  │ ✓ solved=16 (55.2%)  ⚠️ near=5  ✗ unsolved=13
+  │ → active=1  ⏳ pending=0  done=29/30  success=53.3%
+  │ TIME:  elapsed=114.7s (Throughput: 3.95s/task | Latency Avg: 13.4s)
+  │ WORK:  speedup=3.40x (42.5% core) | STRAGGLER: 106.4s, 10.6k evals
+  │ EVALS: total=305.9k (2.67k/s | Per-Task Avg: 10.6k)
+  ✗ [ 14/30] DONE c3e719e8                      10.6k evals (207.5s)
+  ┌ scoreboard [Epoch 2/3] ─
+  │ ✓ solved=16 (53.3%)  ⚠️ near=5  ✗ unsolved=14
+  │ → active=0  ⏳ pending=0  done=30/30  success=53.3%
+  │ TIME:  elapsed=215.8s (Throughput: 7.19s/task | Latency Avg: 19.9s)
+  │ WORK:  speedup=2.77x (34.6% core) | STRAGGLER: 0.0s, 10.6k evals
+  │ EVALS: total=316.5k (1.47k/s | Per-Task Avg: 10.6k)
+
+=================================================================
+  Epoch 2  (192 ops, 30 tasks)
+=================================================================
+  Solved (exact):   16/30  (53.3%)
+  Near-solved ≥80%: 21/30
+  Mean test acc:    0.820
+  Total time:       216s
+
+  Per-category:
+    0d3d703e: █  1/1 (100%)
+    25d8a9c8: ░  0/1 (0%)
+    25ff71a9: █  1/1 (100%)
+    3af2c5a8: ░  0/1 (0%)
+    3c9b0459: █  1/1 (100%)
+    4522001f: ░  0/1 (0%)
+    46442a0e: ░  0/1 (0%)
+    49d1d64f: ░  0/1 (0%)
+    5582e5ca: █  1/1 (100%)
+    6150a2bd: █  1/1 (100%)
+    62c24649: █  1/1 (100%)
+    67e8384a: █  1/1 (100%)
+    6d0aefbc: █  1/1 (100%)
+    6fa7a44f: █  1/1 (100%)
+    74dd1130: ░  0/1 (0%)
+    7fe24cdd: ░  0/1 (0%)
+    8be77c9e: █  1/1 (100%)
+    8d5021e8: █  1/1 (100%)
+    91413438: ░  0/1 (0%)
+    9172f3a0: █  1/1 (100%)
+    9565186b: █  1/1 (100%)
+    ac0a08a4: ░  0/1 (0%)
+    c3e719e8: ░  0/1 (0%)
+    c59eb873: █  1/1 (100%)
+    c9e6f938: █  1/1 (100%)
+    cce03e0d: ░  0/1 (0%)
+    d037b0a7: █  1/1 (100%)
+    d13f3404: ░  0/1 (0%)
+    e9afcf9a: ░  0/1 (0%)
+    feca6190: ░  0/1 (0%)
+  [Analysis] Epoch 2: 16 solved | 31 abstractions | 10 used learned ops.
+  → [  1] STARTING  4522001f
+  → [  2] STARTING  6150a2bd
+  → [  3] STARTING  8d5021e8
+  → [  4] STARTING  9172f3a0
+  → [  5] STARTING  49d1d64f
+  → [  6] STARTING  46442a0e
+  → [  7] STARTING  e9afcf9a
+  → [  8] STARTING  feca6190
+  ✗ [  7/30] DONE e9afcf9a                      10.6k evals (2.0s)
+  ┌ scoreboard [Epoch 3/3] ─
+  │ ✓ solved=0 (0.0%)  ⚠️ near=0  ✗ unsolved=1
+  │ → active=8  ⏳ pending=21  done=1/30  success=0.0%
+  │ TIME:  elapsed=2.1s (Throughput: 2.05s/task | Latency Avg: 2.0s)
+  │ WORK:  speedup=0.96x (12.0% core) | STRAGGLER: 2.0s, 10.3k evals
+  │ EVALS: total=10.6k (5.14k/s | Per-Task Avg: 10.6k)
+  → [  9] STARTING  5582e5ca
+  ✓ [  2/30] DONE 6150a2bd                      10.6k evals (2.0s)
+  ┌ scoreboard [Epoch 3/3] ─
+  │ ✓ solved=1 (50.0%)  ⚠️ near=0  ✗ unsolved=1
+  │ → active=8  ⏳ pending=20  done=2/30  success=3.3%
+  │ TIME:  elapsed=2.1s (Throughput: 1.04s/task | Latency Avg: 2.0s)
+  │ WORK:  speedup=1.91x (23.8% core) | STRAGGLER: 2.1s, 5.7k evals
+  │ EVALS: total=21.1k (10.16k/s | Per-Task Avg: 10.6k)
+  → [ 10] STARTING  62c24649
+  ~ [  5/30] DONE 49d1d64f                      10.6k evals (4.8s)
+  ┌ scoreboard [Epoch 3/3] ─
+  │ ✓ solved=1 (33.3%)  ⚠️ near=1  ✗ unsolved=2
+  │ → active=8  ⏳ pending=19  done=3/30  success=3.3%
+  │ TIME:  elapsed=4.9s (Throughput: 1.63s/task | Latency Avg: 4.5s)
+  │ WORK:  speedup=2.77x (34.7% core) | STRAGGLER: 4.9s, 6.8k evals
+  │ EVALS: total=31.6k (6.46k/s | Per-Task Avg: 10.6k)
+  → [ 11] STARTING  7fe24cdd
+  ✓ [  4/30] DONE 9172f3a0                      10.6k evals (8.1s)
+  ┌ scoreboard [Epoch 3/3] ─
+  │ ✓ solved=2 (50.0%)  ⚠️ near=1  ✗ unsolved=2
+  │ → active=8  ⏳ pending=18  done=4/30  success=6.7%
+  │ TIME:  elapsed=8.2s (Throughput: 2.05s/task | Latency Avg: 5.4s)
+  │ WORK:  speedup=2.65x (33.1% core) | STRAGGLER: 8.2s, 7.8k evals
+  │ EVALS: total=42.2k (5.15k/s | Per-Task Avg: 10.6k)
+  → [ 12] STARTING  8be77c9e
+  ~ [  6/30] DONE 46442a0e                      10.6k evals (10.4s)
+  ┌ scoreboard [Epoch 3/3] ─
+  │ ✓ solved=2 (40.0%)  ⚠️ near=2  ✗ unsolved=3
+  │ → active=8  ⏳ pending=17  done=5/30  success=6.7%
+  │ TIME:  elapsed=10.5s (Throughput: 2.09s/task | Latency Avg: 8.5s)
+  │ WORK:  speedup=4.06x (50.8% core) | STRAGGLER: 10.5s, 9.9k evals
+  │ EVALS: total=52.8k (5.05k/s | Per-Task Avg: 10.6k)
+  → [ 13] STARTING  ac0a08a4
+  ✓ [ 10/30] DONE 62c24649                      10.6k evals (9.0s)
+  ┌ scoreboard [Epoch 3/3] ─
+  │ ✓ solved=3 (50.0%)  ⚠️ near=2  ✗ unsolved=3
+  │ → active=8  ⏳ pending=16  done=6/30  success=10.0%
+  │ TIME:  elapsed=11.1s (Throughput: 1.85s/task | Latency Avg: 8.6s)
+  │ WORK:  speedup=4.64x (58.1% core) | STRAGGLER: 11.1s, 9.9k evals
+  │ EVALS: total=63.3k (5.72k/s | Per-Task Avg: 10.6k)
+  → [ 14] STARTING  c3e719e8
+  ✓ [  9/30] DONE 5582e5ca                      10.6k evals (9.3s)
+  ┌ scoreboard [Epoch 3/3] ─
+  │ ✓ solved=4 (57.1%)  ⚠️ near=2  ✗ unsolved=3
+  │ → active=8  ⏳ pending=15  done=7/30  success=13.3%
+  │ TIME:  elapsed=11.4s (Throughput: 1.62s/task | Latency Avg: 8.7s)
+  │ WORK:  speedup=5.35x (66.8% core) | STRAGGLER: 11.4s, 9.7k evals
+  │ EVALS: total=73.8k (6.50k/s | Per-Task Avg: 10.6k)
+  → [ 15] STARTING  c9e6f938
+  ✓ [  3/30] DONE 8d5021e8                      10.6k evals (11.8s)
+  ┌ scoreboard [Epoch 3/3] ─
+  │ ✓ solved=5 (62.5%)  ⚠️ near=2  ✗ unsolved=3
+  │ → active=8  ⏳ pending=14  done=8/30  success=16.7%
+  │ TIME:  elapsed=11.9s (Throughput: 1.49s/task | Latency Avg: 9.1s)
+  │ WORK:  speedup=6.11x (76.3% core) | STRAGGLER: 11.9s, 8.7k evals
+  │ EVALS: total=84.4k (7.10k/s | Per-Task Avg: 10.6k)
+  → [ 16] STARTING  cce03e0d
+  ~ [ 11/30] DONE 7fe24cdd                      10.6k evals (9.0s)
+  ┌ scoreboard [Epoch 3/3] ─
+  │ ✓ solved=5 (55.6%)  ⚠️ near=3  ✗ unsolved=4
+  │ → active=8  ⏳ pending=13  done=9/30  success=16.7%
+  │ TIME:  elapsed=13.9s (Throughput: 1.54s/task | Latency Avg: 10.1s)
+  │ WORK:  speedup=6.51x (81.4% core) | STRAGGLER: 13.9s, 8.9k evals
+  │ EVALS: total=95.0k (6.83k/s | Per-Task Avg: 10.6k)
+  → [ 17] STARTING  d037b0a7
+  ✓ [ 15/30] DONE c9e6f938                      10.6k evals (4.6s)
+  ┌ scoreboard [Epoch 3/3] ─
+  │ ✓ solved=6 (60.0%)  ⚠️ near=3  ✗ unsolved=4
+  │ → active=8  ⏳ pending=12  done=10/30  success=20.0%
+  │ TIME:  elapsed=16.0s (Throughput: 1.60s/task | Latency Avg: 9.5s)
+  │ WORK:  speedup=5.95x (74.4% core) | STRAGGLER: 16.0s, 9.7k evals
+  │ EVALS: total=105.5k (6.60k/s | Per-Task Avg: 10.6k)
+  → [ 18] STARTING  d13f3404
+  ✓ [ 12/30] DONE 8be77c9e                      10.6k evals (8.5s)
+  ┌ scoreboard [Epoch 3/3] ─
+  │ ✓ solved=7 (63.6%)  ⚠️ near=3  ✗ unsolved=4
+  │ → active=8  ⏳ pending=11  done=11/30  success=23.3%
+  │ TIME:  elapsed=16.7s (Throughput: 1.51s/task | Latency Avg: 9.4s)
+  │ WORK:  speedup=6.22x (77.8% core) | STRAGGLER: 16.6s, 9.9k evals
+  │ EVALS: total=116.0k (6.97k/s | Per-Task Avg: 10.6k)
+  → [ 19] STARTING  c59eb873
+  ✗ [  8/30] DONE feca6190                      10.6k evals (18.1s)
+  ┌ scoreboard [Epoch 3/3] ─
+  │ ✓ solved=7 (58.3%)  ⚠️ near=3  ✗ unsolved=5
+  │ → active=8  ⏳ pending=10  done=12/30  success=23.3%
+  │ TIME:  elapsed=18.2s (Throughput: 1.52s/task | Latency Avg: 10.1s)
+  │ WORK:  speedup=6.69x (83.6% core) | STRAGGLER: 18.2s, 7.8k evals
+  │ EVALS: total=126.6k (6.96k/s | Per-Task Avg: 10.6k)
+  → [ 20] STARTING  0d3d703e
+  ✓ [ 17/30] DONE d037b0a7                      10.6k evals (8.3s)
+  ┌ scoreboard [Epoch 3/3] ─
+  │ ✓ solved=8 (61.5%)  ⚠️ near=3  ✗ unsolved=5
+  │ → active=8  ⏳ pending=9  done=13/30  success=26.7%
+  │ TIME:  elapsed=22.2s (Throughput: 1.71s/task | Latency Avg: 10.0s)
+  │ WORK:  speedup=5.85x (73.2% core) | STRAGGLER: 22.2s, 9.5k evals
+  │ EVALS: total=137.2k (6.17k/s | Per-Task Avg: 10.6k)
+  → [ 21] STARTING  25d8a9c8
+  ✗ [ 13/30] DONE ac0a08a4                      10.6k evals (13.8s)
+  ┌ scoreboard [Epoch 3/3] ─
+  │ ✓ solved=8 (57.1%)  ⚠️ near=3  ✗ unsolved=6
+  │ → active=8  ⏳ pending=8  done=14/30  success=26.7%
+  │ TIME:  elapsed=24.3s (Throughput: 1.74s/task | Latency Avg: 10.3s)
+  │ WORK:  speedup=5.92x (74.0% core) | STRAGGLER: 24.3s, 8.9k evals
+  │ EVALS: total=147.7k (6.08k/s | Per-Task Avg: 10.6k)
+  → [ 22] STARTING  25ff71a9
+  ✓ [ 20/30] DONE 0d3d703e                      10.6k evals (8.6s)
+  ┌ scoreboard [Epoch 3/3] ─
+  │ ✓ solved=9 (60.0%)  ⚠️ near=3  ✗ unsolved=6
+  │ → active=8  ⏳ pending=7  done=15/30  success=30.0%
+  │ TIME:  elapsed=26.8s (Throughput: 1.79s/task | Latency Avg: 10.2s)
+  │ WORK:  speedup=5.69x (71.2% core) | STRAGGLER: 26.8s, 9.3k evals
+  │ EVALS: total=158.2k (5.91k/s | Per-Task Avg: 10.6k)
+  → [ 23] STARTING  3af2c5a8
+  ✓ [ 22/30] DONE 25ff71a9                      10.6k evals (4.0s)
+  ┌ scoreboard [Epoch 3/3] ─
+  │ ✓ solved=10 (62.5%)  ⚠️ near=3  ✗ unsolved=6
+  │ → active=8  ⏳ pending=6  done=16/30  success=33.3%
+  │ TIME:  elapsed=28.3s (Throughput: 1.77s/task | Latency Avg: 9.8s)
+  │ WORK:  speedup=5.53x (69.1% core) | STRAGGLER: 28.3s, 9.5k evals
+  │ EVALS: total=168.8k (5.96k/s | Per-Task Avg: 10.6k)
+  → [ 24] STARTING  3c9b0459
+  ✗ [ 21/30] DONE 25d8a9c8                      10.6k evals (7.4s)
+  ┌ scoreboard [Epoch 3/3] ─
+  │ ✓ solved=10 (58.8%)  ⚠️ near=3  ✗ unsolved=7
+  │ → active=8  ⏳ pending=5  done=17/30  success=33.3%
+  │ TIME:  elapsed=29.7s (Throughput: 1.74s/task | Latency Avg: 9.6s)
+  │ WORK:  speedup=5.53x (69.1% core) | STRAGGLER: 29.7s, 9.7k evals
+  │ EVALS: total=179.3k (6.05k/s | Per-Task Avg: 10.6k)
+  → [ 25] STARTING  67e8384a
+  ~ [ 16/30] DONE cce03e0d                      10.6k evals (20.5s)
+  ┌ scoreboard [Epoch 3/3] ─
+  │ ✓ solved=10 (55.6%)  ⚠️ near=4  ✗ unsolved=8
+  │ → active=8  ⏳ pending=4  done=18/30  success=33.3%
+  │ TIME:  elapsed=32.4s (Throughput: 1.80s/task | Latency Avg: 11.4s)
+  │ WORK:  speedup=6.33x (79.1% core) | STRAGGLER: 32.4s, 10.3k evals
+  │ EVALS: total=189.9k (5.86k/s | Per-Task Avg: 10.6k)
+  → [ 26] STARTING  6d0aefbc
+  ✗ [  1/30] DONE 4522001f                      10.6k evals (33.6s)
+  ┌ scoreboard [Epoch 3/3] ─
+  │ ✓ solved=10 (52.6%)  ⚠️ near=4  ✗ unsolved=9
+  │ → active=8  ⏳ pending=3  done=19/30  success=33.3%
+  │ TIME:  elapsed=33.6s (Throughput: 1.77s/task | Latency Avg: 12.6s)
+  │ WORK:  speedup=7.09x (88.6% core) | STRAGGLER: 22.6s, 8.7k evals
+  │ EVALS: total=200.4k (5.96k/s | Per-Task Avg: 10.6k)
+  → [ 27] STARTING  6fa7a44f
+  ✓ [ 23/30] DONE 3af2c5a8                      10.6k evals (8.5s)
+  ┌ scoreboard [Epoch 3/3] ─
+  │ ✓ solved=11 (55.0%)  ⚠️ near=4  ✗ unsolved=9
+  │ → active=8  ⏳ pending=2  done=20/30  success=36.7%
+  │ TIME:  elapsed=35.3s (Throughput: 1.77s/task | Latency Avg: 12.4s)
+  │ WORK:  speedup=6.99x (87.4% core) | STRAGGLER: 24.3s, 9.5k evals
+  │ EVALS: total=211.0k (5.97k/s | Per-Task Avg: 10.6k)
+  → [ 28] STARTING  74dd1130
+  ✓ [ 24/30] DONE 3c9b0459                      10.6k evals (7.7s)
+  ┌ scoreboard [Epoch 3/3] ─
+  │ ✓ solved=12 (57.1%)  ⚠️ near=4  ✗ unsolved=9
+  │ → active=8  ⏳ pending=1  done=21/30  success=40.0%
+  │ TIME:  elapsed=36.1s (Throughput: 1.72s/task | Latency Avg: 12.1s)
+  │ WORK:  speedup=7.06x (88.3% core) | STRAGGLER: 25.0s, 8.2k evals
+  │ EVALS: total=221.6k (6.14k/s | Per-Task Avg: 10.6k)
+  → [ 29] STARTING  91413438
+  ✓ [ 26/30] DONE 6d0aefbc                      10.6k evals (9.7s)
+  ┌ scoreboard [Epoch 3/3] ─
+  │ ✓ solved=13 (59.1%)  ⚠️ near=4  ✗ unsolved=9
+  │ → active=8  ⏳ pending=0  done=22/30  success=43.3%
+  │ TIME:  elapsed=42.1s (Throughput: 1.91s/task | Latency Avg: 12.0s)
+  │ WORK:  speedup=6.28x (78.5% core) | STRAGGLER: 31.0s, 10.3k evals
+  │ EVALS: total=232.1k (5.51k/s | Per-Task Avg: 10.6k)
+  → [ 30] STARTING  9565186b
+  ✓ [ 28/30] DONE 74dd1130                      10.6k evals (6.9s)
+  ┌ scoreboard [Epoch 3/3] ─
+  │ ✓ solved=14 (60.9%)  ⚠️ near=4  ✗ unsolved=9
+  │ → active=7  ⏳ pending=0  done=23/30  success=46.7%
+  │ TIME:  elapsed=42.3s (Throughput: 1.84s/task | Latency Avg: 11.8s)
+  │ WORK:  speedup=6.42x (80.3% core) | STRAGGLER: 31.2s, 10.6k evals
+  │ EVALS: total=242.7k (5.74k/s | Per-Task Avg: 10.6k)
+  ✗ [ 14/30] DONE c3e719e8                      10.6k evals (32.0s)
+  ┌ scoreboard [Epoch 3/3] ─
+  │ ✓ solved=14 (58.3%)  ⚠️ near=4  ✗ unsolved=10
+  │ → active=6  ⏳ pending=0  done=24/30  success=46.7%
+  │ TIME:  elapsed=43.1s (Throughput: 1.80s/task | Latency Avg: 12.6s)
+  │ WORK:  speedup=7.04x (88.0% core) | STRAGGLER: 27.1s, 10.6k evals
+  │ EVALS: total=253.2k (5.88k/s | Per-Task Avg: 10.6k)
+  ✓ [ 27/30] DONE 6fa7a44f                      10.6k evals (12.2s)
+  ┌ scoreboard [Epoch 3/3] ─
+  │ ✓ solved=15 (60.0%)  ⚠️ near=4  ✗ unsolved=10
+  │ → active=5  ⏳ pending=0  done=25/30  success=50.0%
+  │ TIME:  elapsed=45.8s (Throughput: 1.83s/task | Latency Avg: 12.6s)
+  │ WORK:  speedup=6.89x (86.1% core) | STRAGGLER: 29.8s, 10.6k evals
+  │ EVALS: total=263.8k (5.75k/s | Per-Task Avg: 10.6k)
+  ✓ [ 25/30] DONE 67e8384a                      10.6k evals (17.7s)
+  ┌ scoreboard [Epoch 3/3] ─
+  │ ✓ solved=16 (61.5%)  ⚠️ near=4  ✗ unsolved=10
+  │ → active=4  ⏳ pending=0  done=26/30  success=53.3%
+  │ TIME:  elapsed=47.4s (Throughput: 1.82s/task | Latency Avg: 12.8s)
+  │ WORK:  speedup=7.04x (88.0% core) | STRAGGLER: 31.4s, 10.6k evals
+  │ EVALS: total=274.3k (5.79k/s | Per-Task Avg: 10.6k)
+  ✓ [ 30/30] DONE 9565186b                      10.6k evals (7.2s)
+  ┌ scoreboard [Epoch 3/3] ─
+  │ ✓ solved=17 (63.0%)  ⚠️ near=4  ✗ unsolved=10
+  │ → active=3  ⏳ pending=0  done=27/30  success=56.7%
+  │ TIME:  elapsed=49.3s (Throughput: 1.83s/task | Latency Avg: 12.6s)
+  │ WORK:  speedup=6.90x (86.3% core) | STRAGGLER: 33.3s, 10.6k evals
+  │ EVALS: total=284.9k (5.77k/s | Per-Task Avg: 10.6k)
+  ✗ [ 29/30] DONE 91413438                      10.6k evals (21.0s)
+  ┌ scoreboard [Epoch 3/3] ─
+  │ ✓ solved=17 (60.7%)  ⚠️ near=4  ✗ unsolved=11
+  │ → active=2  ⏳ pending=0  done=28/30  success=56.7%
+  │ TIME:  elapsed=57.1s (Throughput: 2.04s/task | Latency Avg: 12.9s)
+  │ WORK:  speedup=6.34x (79.2% core) | STRAGGLER: 41.1s, 10.6k evals
+  │ EVALS: total=295.4k (5.18k/s | Per-Task Avg: 10.6k)
+  ✓ [ 19/30] DONE c59eb873                      10.6k evals (42.2s)
+  ┌ scoreboard [Epoch 3/3] ─
+  │ ✓ solved=18 (62.1%)  ⚠️ near=4  ✗ unsolved=11
+  │ → active=1  ⏳ pending=0  done=29/30  success=60.0%
+  │ TIME:  elapsed=58.8s (Throughput: 2.03s/task | Latency Avg: 13.9s)
+  │ WORK:  speedup=6.87x (85.8% core) | STRAGGLER: 42.8s, 10.6k evals
+  │ EVALS: total=305.9k (5.20k/s | Per-Task Avg: 10.6k)
+  ~ [ 18/30] DONE d13f3404                      10.6k evals (74.6s)
+  ┌ scoreboard [Epoch 3/3] ─
+  │ ✓ solved=18 (60.0%)  ⚠️ near=5  ✗ unsolved=12
+  │ → active=0  ⏳ pending=0  done=30/30  success=60.0%
+  │ TIME:  elapsed=90.6s (Throughput: 3.02s/task | Latency Avg: 18.4s)
+  │ WORK:  speedup=6.10x (76.3% core) | STRAGGLER: 0.0s, 10.6k evals
+  │ EVALS: total=316.5k (3.49k/s | Per-Task Avg: 10.6k)
+
+=================================================================
+  Epoch 3  (199 ops, 30 tasks)
+=================================================================
+  Solved (exact):   18/30  (60.0%)
+  Near-solved ≥80%: 23/30
+  Mean test acc:    0.846
+  Total time:       91s
+
+  Per-category:
+    0d3d703e: █  1/1 (100%)
+    25d8a9c8: ░  0/1 (0%)
+    25ff71a9: █  1/1 (100%)
+    3af2c5a8: █  1/1 (100%)
+    3c9b0459: █  1/1 (100%)
+    4522001f: ░  0/1 (0%)
+    46442a0e: ░  0/1 (0%)
+    49d1d64f: ░  0/1 (0%)
+    5582e5ca: █  1/1 (100%)
+    6150a2bd: █  1/1 (100%)
+    62c24649: █  1/1 (100%)
+    67e8384a: █  1/1 (100%)
+    6d0aefbc: █  1/1 (100%)
+    6fa7a44f: █  1/1 (100%)
+    74dd1130: █  1/1 (100%)
+    7fe24cdd: ░  0/1 (0%)
+    8be77c9e: █  1/1 (100%)
+    8d5021e8: █  1/1 (100%)
+    91413438: ░  0/1 (0%)
+    9172f3a0: █  1/1 (100%)
+    9565186b: █  1/1 (100%)
+    ac0a08a4: ░  0/1 (0%)
+    c3e719e8: ░  0/1 (0%)
+    c59eb873: █  1/1 (100%)
+    c9e6f938: █  1/1 (100%)
+    cce03e0d: ░  0/1 (0%)
+    d037b0a7: █  1/1 (100%)
+    d13f3404: ░  0/1 (0%)
+    e9afcf9a: ░  0/1 (0%)
+    feca6190: ░  0/1 (0%)
+  [Analysis] Epoch 3: 18 solved | 39 abstractions | 12 used learned ops.
+
+✅ Training Complete. Model: models/scale_test.json
