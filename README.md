@@ -19,10 +19,13 @@ An exploratory AGI solver for the Abstraction and Reasoning Corpus (ARC). Built 
 To launch a full training pass on the ARC-AGI dataset:
 
 ```bash
-# 1. Start Training (Wake-Sleep)
+# 1. Verify Installation (pytest)
+pytest -q
+
+# 2. Start Training (Wake-Sleep)
 python agi.py train --epochs 5 --task-workers 8
 
-# 2. Run Evaluation on separate set
+# 3. Run Evaluation on separate set
 python agi.py eval --model models/latest_model.json
 
 # 3. Or run the full pipeline in one go
