@@ -41,3 +41,10 @@ Thumbs.db
 arc_data/
 arc2_data/
 .agi-mvp-no-noise
+
+# Logs
+logs/
+*.log
+
+# Docs results
+docs/*.json

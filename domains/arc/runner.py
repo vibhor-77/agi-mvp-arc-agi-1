@@ -475,8 +475,10 @@ def _run_task_process(
     )
     return idx, tr
 
-def _worker_wrapper(idx, task, cfg, op_subset, inner_workers, transition_matrix, learned_ops, slot, conn):
+def _worker_wrapper(idx, task, cfg, op_subset, inner_workers, transition_matrix, learned_ops, slot, conn, shared_evals):
     """Top-level wrapper for multiprocessing processes."""
+    global _worker_shared_evals
+    _worker_shared_evals = shared_evals
     try:
         from domains.arc.runner import _run_task_process
         _, tr = _run_task_process(idx, task, cfg, op_subset, inner_workers, transition_matrix, learned_ops, slot)
@@ -616,7 +618,7 @@ def evaluate_tasks(
                     # We reuse _run_task_process but wrap it to send result through the pipe
                     p = mp.Process(
                         target=_worker_wrapper, 
-                        args=(task_idx, task, cfg, op_subset, inner_workers, transition_matrix, learned_ops, slot, child_conn)
+                        args=(task_idx, task, cfg, op_subset, inner_workers, transition_matrix, learned_ops, slot, child_conn, shared_evals)
                     )
                     p.start()
                     active_processes[slot] = (p, task_idx, time.time(), parent_conn)
