@@ -29,7 +29,7 @@ def test_while():
             out[0][0] -= 1
         return out
         
-    registry.register("test_dec", dec_first, domain="arc", arity=1)
+    registry.register("test_dec", dec_first, domain="arc", arity=1, overwrite=True)
     prims = {n: registry.get(n) for n in registry.names()}
     
     grid = [[5]]
