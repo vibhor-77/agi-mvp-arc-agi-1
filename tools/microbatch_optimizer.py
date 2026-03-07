@@ -19,7 +19,8 @@ def run_experiment(batch_size, task_limit=100):
     # We use a reduced budget to speed up the scientific comparison
     cfg = BenchmarkConfig(
         beam_size=8, generations=20, max_evals=50000, 
-        task_workers=8, timeout_s=30.0, baseline_only=True
+        task_workers=8, timeout_s=30.0, baseline_only=True,
+        fail_on_timeout=False
     )
     
     t0 = time.time()

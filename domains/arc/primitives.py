@@ -914,12 +914,9 @@ def g_crop_to_content(g: np.ndarray) -> np.ndarray:
     c_min, c_max = np.min(coords[1]), np.max(coords[1])
     return g[r_min:r_max+1, c_min:c_max+1].copy()
 
-# Register Spatial Ops
-registry.register("g_get_r", _safe_grid_op(g_get_r), domain="arc", description="Min Row of color (Scalar)", arity=2, overwrite=True)
-registry.register("g_get_c", _safe_grid_op(g_get_c), domain="arc", description="Min Col of color (Scalar)", arity=2, overwrite=True)
-registry.register("g_place", _safe_grid_op(g_place_like), domain="arc", description="Place object on Like canvas", arity=4, overwrite=True)
-registry.register("g_paste", _safe_grid_op(g_paste), domain="arc", description="Paste object onto canvas", arity=4, overwrite=True)
-registry.register("g_crop", _safe_grid_op(g_crop_to_content), domain="arc", description="Crop to content", overwrite=True)
+# ---------------------------------------------------------------------------
+# DSL Registration (Summary & Primitives)
+# ---------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------
 # Registration
@@ -1478,8 +1475,8 @@ gkeep_color9 = _make_gkeep_color(9)
 
 def _get_all_objects(g: Grid) -> list[tuple[int, int, list[list[int]], list[tuple[int, int]]]]:
     """Helper to extract all objects with their bounding box offsets using Numba & NumPy."""
-    g_np = _to_np_grid(g)
-    if g_np is None: return []
+    if g is None: return []
+    g_np = np.asarray(g, dtype=np.int16)
     
     # 1. Use Numba-accelerated labeler
     labels = _njit_label_same_color(g_np)
@@ -2687,23 +2684,53 @@ def g_stack_objects_v(g: Grid) -> Grid:
     
     for (min_r, min_c, box, cells) in objs:
         curr_r = min_r
-        # Try to move down as far as possible
+        # Gravity loop
         while curr_r + len(box) < R:
-            can_move = True
-            for br in range(len(box)):
-                for bc in range(len(box[0])):
-                    if box[br][bc] != 0:
-                        if out[curr_r + br + 1][min_c + bc] != 0:
-                            can_move = False
+            collides = False
+            for r_off in range(len(box)):
+                for c_off in range(len(box[0])):
+                    if box[r_off][c_off] != 0:
+                        tr, tc = curr_r + r_off + 1, min_c + c_off
+                        if out[tr][tc] != 0:
+                            collides = True
                             break
-                if not can_move: break
-            if not can_move: break
+                if collides: break
+            if collides: break
             curr_r += 1
-        # Place at final curr_r
-        for br in range(len(box)):
-            for bc in range(len(box[0])):
-                if box[br][bc] != 0:
-                    out[curr_r + br][min_c + bc] = box[br][bc]
+        # Place at final resting spot
+        for r_off in range(len(box)):
+            for c_off in range(len(box[0])):
+                if box[r_off][c_off] != 0:
+                    out[curr_r + r_off][min_c + c_off] = box[r_off][c_off]
+    return out
+
+def g_stack_objects_h(g: Grid) -> Grid:
+    """Horizontal gravity: slide objects to the right until blocked."""
+    objs = _get_all_objects(g)
+    if not objs: return _clone(g)
+    R, C = len(g), len(g[0])
+    out = [[0]*C for _ in range(R)]
+    # Sort by original rightmost col so we stack from right to left
+    objs.sort(key=lambda x: x[1] + len(x[2][0]), reverse=True)
+    
+    for (min_r, min_c, box, cells) in objs:
+        curr_c = min_c
+        while curr_c + len(box[0]) < C:
+            collides = False
+            for r_off in range(len(box)):
+                for c_off in range(len(box[0])):
+                    if box[r_off][c_off] != 0:
+                        tr, tc = min_r + r_off, curr_c + c_off + 1
+                        if out[tr][tc] != 0:
+                            collides = True
+                            break
+                if collides: break
+            if collides: break
+            curr_c += 1
+        for r_off in range(len(box)):
+            for c_off in range(len(box[0])):
+                if box[r_off][c_off] != 0:
+                    out[min_r + r_off][curr_c + c_off] = box[r_off][c_off]
     return out
 
 def g_sort_objects_h(g: Grid) -> Grid:
@@ -2738,16 +2765,73 @@ def g_find_largest_object(g: Grid) -> Grid:
         out[r][c] = g[r][c]
     return out
 
+def g_project_lines(g: Grid) -> Grid:
+    """For each isolated pixel, extends a line in 4 directions until it hits another object."""
+    objs = _get_all_objects(g)
+    if not objs: return _clone(g)
+    
+    R, C = len(g), len(g[0])
+    out = [row[:] for row in g]
+    
+    # Define isolated as 1-pixel objects
+    isolated = [o for o in objs if len(o[3]) == 1]
+    targets  = [o for o in objs if len(o[3]) > 1]
+    
+    if not isolated or not targets:
+        return out
+        
+    # Set of target coordinates for fast hit-testing
+    target_cells = set()
+    for o in targets:
+        for r, c in o[3]:
+            target_cells.add((r, c))
+            
+    for (r, c, _, cells) in isolated:
+        color = g[r][c]
+        for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+            curr_r, curr_c = r + dr, c + dc
+            path = []
+            hit = False
+            while 0 <= curr_r < R and 0 <= curr_c < C:
+                if (curr_r, curr_c) in target_cells:
+                    hit = True
+                    break
+                # Don't overwrite other things unless they are background
+                if g[curr_r][curr_c] != 0:
+                    break
+                path.append((curr_r, curr_c))
+                curr_r += dr
+                curr_c += dc
+            
+            if hit:
+                # Color the seed pixel and the path
+                # out[r][c] = color # Already there
+                for pr, pc in path:
+                    out[pr][pc] = color
+    return out
+
 # Register Collective Ops
 _COLLECTIVE_OPS = {
-    "g_rainbow": (g_rainbow_objects, "Recolor objects 1,2,3..."),
-    "g_stack_v": (g_stack_objects_v, "Rigid body gravity stack"),
-    "g_sort_h":  (g_sort_objects_h,  "Order objects by size (L->R)"),
-    "g_max_obj": (g_find_largest_object, "Isolate the largest object"),
+    "g_rainbow":  (g_rainbow_objects,    "Recolor objects 1,2,3..."),
+    "g_stack_v":  (g_stack_objects_v,    "Rigid body gravity stack"),
+    "g_stack_h":  (g_stack_objects_h,    "Horizontal gravity stack"),
+    "g_sort_h":   (g_sort_objects_h,     "Order objects by size (L->R)"),
+    "g_max_obj":  (g_find_largest_object,  "Isolate the largest object"),
+    "g_project":  (g_project_lines,       "Ray-cast from isolated pixels"),
 }
 
 for _name, (_fn, _desc) in _COLLECTIVE_OPS.items():
     registry.register(_name, _safe_grid_op(_fn), domain="arc", description=_desc)
+
+# Spatial & Anchor Ops
+_SPATIAL_OPS = {
+    "g_get_r": (g_get_r, "Row coord of color", 2),
+    "g_get_c": (g_get_c, "Col coord of color", 2),
+    "g_place": (g_place_like, "Place object like ref", 4),
+    "g_paste": (g_paste, "Paste object on canvas", 4),
+}
+for _name, (_fn, _desc, _arity) in _SPATIAL_OPS.items():
+    registry.register(_name, _safe_grid_op(_fn), domain="arc", description=_desc, arity=_arity, overwrite=True)
 
 # Restore missing object level ops
 _OBJECT_LEVEL_OPS_EXT = {

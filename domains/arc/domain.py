@@ -494,13 +494,17 @@ class ARCDomain(Domain):
         sym_h = np.all(inp_np == np.flip(inp_np, axis=0))
         sym_v = np.all(inp_np == np.flip(inp_np, axis=1))
         
+        # 5. Isolated Pixels
+        n_isolated = sum(1 for o in objs if len(o[3]) == 1)
+        
         return {
             "n_objs": n_objs,
             "n_colors": n_colors,
             "resized": resized,
             "grid_size": inp_np.size,
             "sym_h": sym_h,
-            "sym_v": sym_v
+            "sym_v": sym_v,
+            "n_isolated": n_isolated
         }
 
     def get_adaptive_weights(self, features: dict[str, Any]) -> dict[str, dict[str, float]]:
@@ -515,8 +519,13 @@ class ARCDomain(Domain):
         if features["n_objs"] > 3:
             boost("g_rainbow", 3.0)
             boost("g_stack_v", 3.0)
+            boost("g_stack_h", 3.0)
             boost("g_max_obj", 2.0)
             boost("g_sort_h", 2.0)
+            
+        # Heuristic 1b: Isolated Pixels -> Boost Ray Casting
+        if features["n_isolated"] > 0:
+            boost("g_project", 5.0)
             
         # Heuristic 2: Resized -> Boost Placement and Cropping
         if features["resized"]:

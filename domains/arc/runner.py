@@ -41,6 +41,7 @@ import subprocess
 import sys
 import time
 import hashlib
+import numpy as np
 from dataclasses import dataclass, field
 from typing import Any, Optional
 
@@ -600,9 +601,12 @@ def _run_task_process(
                     actual = tree.eval([inp], domain._primitives)
                     trace = None
                 
-                if isinstance(actual, list) and len(actual) > 0 and isinstance(actual[0], list):
+                if isinstance(actual, (list, np.ndarray)) and len(actual) > 0:
+                    # Uniformize for inspection
+                    actual_np = np.asarray(actual)
+                    expected_np = np.asarray(expected)
                     if len(expected) != len(actual) or len(expected[0]) != len(actual[0]):
-                        introspection_msg = f"Dimension mismatch: Expected {len(expected)}x{len(expected[0])}, Actual {len(actual)}x{len(actual[0])}"
+                        mismatches_msg = f"Dimension mismatch: Expected {len(expected)}x{len(expected[0])}, Actual {len(actual)}x{len(actual[0])}"
                     else:
                         mismatches = 0
                         total = len(expected) * len(expected[0])
@@ -610,7 +614,14 @@ def _run_task_process(
                             for c in range(len(expected[0])):
                                 if expected[r][c] != actual[r][c]:
                                     mismatches += 1
-                        introspection_msg = f"Pixel mismatch: {mismatches}/{total} pixels incorrect"
+                        mismatches_msg = f"Pixel mismatch: {mismatches}/{total} pixels incorrect"
+                    
+                    # Merge with Domain's own introspection (Complexity Trace)
+                    try:
+                        _, _, _, domain_intro, _ = domain.evaluate_candidate(tree)
+                        introspection_msg = f"{mismatches_msg} ({domain_intro})"
+                    except Exception:
+                        introspection_msg = mismatches_msg
                 else:
                     introspection_msg = f"Logical Failure: Output is not a valid 2D grid (got {type(actual).__name__})"
             else:
