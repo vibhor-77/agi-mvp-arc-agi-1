@@ -514,6 +514,28 @@ class TestARCDomain(unittest.TestCase):
         # With lam=1 and size=2, fitness ≈ 2
         self.assertLess(d_low.fitness(tree), d_high.fitness(tree))
 
+    def test_fuzz_hash_is_compact_for_large_grid(self):
+        task = self._rot90_task()
+        domain = ARCDomain(task, primitive_subset=["gid"])
+        tree = make_node("gid", [make_leaf_var(0)])
+        large_grid = [[(r + c) % 10 for c in range(200)] for r in range(200)]
+        domain.FUZZ_GRID = large_grid
+        fuzz = domain.fuzz_hash(tree)
+        self.assertIsInstance(fuzz, str)
+        self.assertLess(len(fuzz), 64)
+        self.assertTrue(fuzz.startswith("200x200:"))
+
+    def test_evaluate_candidate_reports_positive_cost(self):
+        task = self._rot90_task()
+        domain = ARCDomain(task, lam=0.0)
+        tree = make_node("grot90", [make_leaf_var(0)])
+        score, fingerprint, errors, fuzz, cost = domain.evaluate_candidate(tree)
+        self.assertGreaterEqual(score, 0.0)
+        self.assertEqual(len(fingerprint), len(task.train_pairs))
+        self.assertEqual(len(errors), len(task.train_pairs))
+        self.assertIsInstance(fuzz, str)
+        self.assertGreater(cost, 0)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

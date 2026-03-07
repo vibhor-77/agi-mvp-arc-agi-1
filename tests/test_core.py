@@ -211,6 +211,24 @@ class TestBeamSearch(unittest.TestCase):
         self.assertIsInstance(result.best_fitness, float)
         self.assertGreaterEqual(result.elapsed_s, 0)
 
+    def test_max_evals_budget_respected(self):
+        cfg = SearchConfig(
+            beam_size=4,
+            offspring=6,
+            generations=20,
+            max_evals=25,
+            verbose=False,
+            seed=0,
+        )
+        result = BeamSearch(
+            lambda t: float(t.size()),
+            registry.names(domain="math"),
+            n_vars=1,
+            config=cfg,
+        ).run()
+        self.assertGreater(result.n_evals, 0)
+        self.assertLessEqual(result.n_evals, 25)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

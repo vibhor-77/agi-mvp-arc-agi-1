@@ -32,6 +32,7 @@ from domains.arc.runner import (
     BenchmarkConfig,
     BenchmarkReport,
     TaskResult,
+    _stable_task_seed,
     evaluate_tasks,
     load_tasks_from_dir,
     run_benchmark,
@@ -161,6 +162,18 @@ class TestBenchmarkConfig(unittest.TestCase):
         self.assertEqual(cfg.beam_size, 7)
         self.assertEqual(cfg.generations, 3)
         self.assertFalse(cfg.verbose)
+
+    def test_task_seed_is_stable_by_name(self):
+        seed_a_1 = _stable_task_seed("8d5021e8", None)
+        seed_a_2 = _stable_task_seed("8d5021e8", None)
+        seed_b = _stable_task_seed("46442a0e", None)
+        self.assertEqual(seed_a_1, seed_a_2)
+        self.assertNotEqual(seed_a_1, seed_b)
+
+    def test_task_seed_respects_base_seed(self):
+        seed_a = _stable_task_seed("8d5021e8", 123)
+        seed_b = _stable_task_seed("8d5021e8", 456)
+        self.assertNotEqual(seed_a, seed_b)
 
 
 # ---------------------------------------------------------------------------

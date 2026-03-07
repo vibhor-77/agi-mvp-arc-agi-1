@@ -33,21 +33,16 @@ from __future__ import annotations
 
 import json
 import math
+import multiprocessing as mp
 import os
 import pathlib
+import resource
 import subprocess
 import sys
-import threading
 import time
-from concurrent.futures import ProcessPoolExecutor, as_completed
+import hashlib
 from dataclasses import dataclass, field
-import signal
-import multiprocessing as mp
 from typing import Any, Optional
-
-def _ignore_sigint_initializer():
-    """Ignore SIGINT in multiprocessing workers so only the parent receives KeyboardInterrupt."""
-    signal.signal(signal.SIGINT, signal.SIG_IGN)
 
 from core.tree import Node
 from core.search import SearchConfig
@@ -161,8 +156,9 @@ class BenchmarkConfig:
     verbose: bool = True
     baseline_only: bool = False
     seed: int | None = None
-    timeout_s: float | None = 300.0  # Optional wall-clock safety
+    timeout_s: float | None = None  # Optional wall-clock safety (off by default for deterministic budgets)
     max_evals: int | None = 1000000  # 1M evaluations (Deterministic Pruning)
+    max_cost: int | None = None
     mem_per_task_worker_gb: float = 3.0
     reserve_mem_gb: float = 10.0
     cpu_reserve: int = 2
@@ -170,6 +166,11 @@ class BenchmarkConfig:
     stall_kill_s: float | None = None
     adaptive_primitive_subset: bool = True
     primitive_cap: int = 80
+    fail_on_timeout: bool = True
+    progress_interval_s: float = 5.0
+    progress_log_path: str | None = None
+    max_rss_gb: float = 0.0
+    profile_primitives: bool = False
 
 
 # ---------------------------------------------------------------------------
@@ -189,9 +190,13 @@ class TaskResult:
     n_nodes: int
     elapsed_s: float
     n_evals: int = 0
+    n_cost: int = 0
     introspection: str = ""
     best_tree: Optional[Node] = None
     trace: list | None = None
+    primitive_hotspots: str = ""
+    timed_out: bool = False
+    worker_error: bool = False
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -206,6 +211,10 @@ class TaskResult:
             "n_nodes": self.n_nodes,
             "elapsed_s": round(self.elapsed_s, 2),
             "n_evals": self.n_evals,
+            "n_cost": self.n_cost,
+            "primitive_hotspots": self.primitive_hotspots,
+            "timed_out": self.timed_out,
+            "worker_error": self.worker_error,
             "introspection": self.introspection,
         }
 
@@ -248,11 +257,22 @@ class BenchmarkReport:
         return sum(int(r.n_evals) for r in self.results)
 
     @property
+    def total_cost(self) -> int:
+        return sum(int(r.n_cost) for r in self.results)
+
+    @property
     def solved_per_million_evals(self) -> float:
         te = self.total_evals
         if te <= 0:
             return 0.0
         return (self.n_solved * 1_000_000.0) / te
+
+    @property
+    def solved_per_million_cost(self) -> float:
+        tc = self.total_cost
+        if tc <= 0:
+            return 0.0
+        return (self.n_solved * 1_000_000.0) / tc
 
     def by_category(self) -> dict[str, dict]:
         cats: dict[str, dict] = {}
@@ -275,6 +295,8 @@ class BenchmarkReport:
             f"  Mean test acc:    {self.mean_test_acc:.3f}",
             f"  Total evals:      {self.total_evals/1000:.1f}k",
             f"  Solves / 1M eval: {self.solved_per_million_evals:.2f}",
+            f"  Total cost units: {self.total_cost/1000:.1f}k",
+            f"  Solves / 1M cost: {self.solved_per_million_cost:.2f}",
             f"  Total time:       {self.total_elapsed_s:.0f}s",
             "",
             "  Per-category:",
@@ -294,6 +316,10 @@ class BenchmarkReport:
             "pct_solved": round(self.pct_solved, 1),
             "mean_test_acc": round(self.mean_test_acc, 4),
             "total_elapsed_s": round(self.total_elapsed_s, 1),
+            "total_evals": self.total_evals,
+            "total_cost": self.total_cost,
+            "solves_per_million_evals": round(self.solved_per_million_evals, 2),
+            "solves_per_million_cost": round(self.solved_per_million_cost, 2),
             "results": [r.as_dict() for r in self.results],
         }
 
@@ -327,6 +353,8 @@ class BenchmarkReport:
         lines.append(f"- **Mean Test Accuracy**: {self.mean_test_acc:.3f}")
         lines.append(f"- **Total Evals**: {self.total_evals}")
         lines.append(f"- **Solves per 1M Evals**: {self.solved_per_million_evals:.2f}")
+        lines.append(f"- **Total Cost Units**: {self.total_cost}")
+        lines.append(f"- **Solves per 1M Cost Units**: {self.solved_per_million_cost:.2f}")
         lines.append(f"- **Total Time**: {self.total_elapsed_s:.1f}s")
         
         lines.append(f"\n## Performance by Category")
@@ -336,12 +364,12 @@ class BenchmarkReport:
             lines.append(f"- **{cat}**: {d['solved']}/{d['total']} ({pct:.1f}%)")
             
         lines.append(f"\n## Detailed Results (N={self.n_tasks})")
-        lines.append("| Task | Status | Evals | Time | Train | Test | Expression |")
-        lines.append("| :--- | :--- | :--- | :--- | :--- | :--- | :--- |")
+        lines.append("| Task | Status | Evals | Cost | Time | Train | Test | Expression |")
+        lines.append("| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |")
         for r in self.results:
             status = "✅ SOLVED" if r.solved else ("⚠️ NEAR" if r.near_solved else "❌ FAIL")
             expr = r.found_expr if len(r.found_expr) < 40 else r.found_expr[:37] + "..."
-            lines.append(f"| {r.task_name} | {status} | {r.n_evals/1000:5.1f}k | {r.elapsed_s:.1f}s | {r.train_acc:.2f} | {r.test_acc:.2f} | `{expr}` |")
+            lines.append(f"| {r.task_name} | {status} | {r.n_evals/1000:5.1f}k | {r.n_cost/1000:5.1f}k | {r.elapsed_s:.1f}s | {r.train_acc:.2f} | {r.test_acc:.2f} | `{expr}` |")
             
         lines.append(f"\n## Introspection Analysis (Failures by Category)")
         failed_by_cat = {}
@@ -358,7 +386,9 @@ class BenchmarkReport:
                 lines.append(f"- **{r.task_name}**: {r.introspection}")
                 if r.best_tree:
                     ast_str = r.found_expr if len(r.found_expr) < 120 else r.found_expr[:117] + "..."
-                    lines.append(f"  - **Best AST**: `{ast_str}` | {r.n_evals/1000:.1f}k evals | {r.elapsed_s:.1f}s")
+                    lines.append(f"  - **Best AST**: `{ast_str}` | {r.n_evals/1000:.1f}k evals | {r.n_cost/1000:.1f}k cost | {r.elapsed_s:.1f}s")
+                if r.primitive_hotspots:
+                    lines.append(f"  - **Hotspots**: {r.primitive_hotspots}")
                 
                 if r.trace:
                     lines.append("\n  <div style='overflow-x: auto; white-space: nowrap;'>")
@@ -395,6 +425,7 @@ class BenchmarkReport:
 # ---------------------------------------------------------------------------
 
 _worker_shared_evals = None
+_worker_shared_costs = None
 _worker_idx = None
 
 
@@ -416,6 +447,22 @@ def _detect_total_memory_gb() -> float:
     except Exception:
         return 16.0
 
+def _process_rss_gb() -> float:
+    """Best-effort process RSS in GB."""
+    rss = float(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+    # macOS reports bytes, Linux reports KiB.
+    if sys.platform == "darwin":
+        return rss / (1024**3)
+    return (rss * 1024.0) / (1024**3)
+
+
+def _stable_task_seed(task_name: str, base_seed: int | None) -> int:
+    """Derive a per-task seed that is stable across task ordering and batch slicing."""
+    base = 0 if base_seed is None else int(base_seed)
+    digest = hashlib.blake2b(task_name.encode("utf-8"), digest_size=4).digest()
+    task_seed = int.from_bytes(digest, byteorder="big", signed=False)
+    return (base + task_seed) & 0x7FFFFFFF
+
 
 def _recommend_task_workers(requested: int, cfg: BenchmarkConfig) -> int:
     """
@@ -432,13 +479,6 @@ def _recommend_task_workers(requested: int, cfg: BenchmarkConfig) -> int:
 
     return max(1, min(requested, cpu_cap, mem_cap))
 
-def _ignore_sigint_initializer(evals_arr: Any = None):
-    global _worker_shared_evals
-    import signal
-    signal.signal(signal.SIGINT, signal.SIG_IGN)
-    if evals_arr is not None:
-        _worker_shared_evals = evals_arr
-
 def _run_task_process(
     idx: int, 
     task: ARCTask, 
@@ -447,9 +487,10 @@ def _run_task_process(
     inner_workers: int,
     transition_matrix: dict[str, dict[str, float]] | None,
     learned_ops: dict[str, dict] | None = None,
-    worker_idx: int = 0
+    worker_idx: int = 0,
+    progress_hook: Any | None = None,
 ) -> tuple[int, TaskResult]:
-    global _worker_idx
+    global _worker_idx, _worker_shared_evals, _worker_shared_costs
     _worker_idx = worker_idx
     
     if learned_ops:
@@ -467,9 +508,22 @@ def _run_task_process(
         }
         lib.register_all(domain="arc")
     
-    def on_step(n_evals, elapsed):
+    def on_step(n_evals, elapsed, n_cost=None):
         if _worker_shared_evals is not None and _worker_idx is not None:
             _worker_shared_evals[_worker_idx] = n_evals
+        if _worker_shared_costs is not None and _worker_idx is not None:
+            _worker_shared_costs[_worker_idx] = 0 if n_cost is None else int(n_cost)
+        if cfg.max_rss_gb and cfg.max_rss_gb > 0:
+            rss_gb = _process_rss_gb()
+            if rss_gb >= cfg.max_rss_gb:
+                raise MemoryError(
+                    f"RSS limit exceeded: {rss_gb:.2f}GB >= {cfg.max_rss_gb:.2f}GB"
+                )
+        if progress_hook is not None:
+            try:
+                progress_hook(n_evals, elapsed, 0 if n_cost is None else int(n_cost))
+            except Exception:
+                pass
 
     search_cfg = SearchConfig(
         beam_size=cfg.beam_size,
@@ -478,9 +532,10 @@ def _run_task_process(
         workers=inner_workers,
         converge_threshold=1e-9,
         verbose=False,
-        seed=idx * 7 + 42 if cfg.seed is None else cfg.seed + idx,
+        seed=_stable_task_seed(task.name, cfg.seed),
         timeout_s=cfg.timeout_s,
         max_evals=cfg.max_evals,
+        max_cost=cfg.max_cost,
     )
 
     task_t0 = time.time()
@@ -491,7 +546,12 @@ def _run_task_process(
             selected_ops = select_primitives_for_task(task, op_subset, max_ops=cfg.primitive_cap)
         except Exception:
             selected_ops = op_subset
-    domain = ARCDomain(task, lam=cfg.lam, primitive_subset=selected_ops)
+    domain = ARCDomain(
+        task,
+        lam=cfg.lam,
+        primitive_subset=selected_ops,
+        profile_primitives=cfg.profile_primitives,
+    )
     domain.on_result = lambda x: None  # type: ignore[method-assign]
     
     result = domain.solve(config=search_cfg, transition_matrix=transition_matrix, on_step=on_step)
@@ -502,6 +562,12 @@ def _run_task_process(
     solved    = domain.check_solution(tree)
     near      = test_acc >= 0.80
     elapsed   = time.time() - task_t0
+    timed_out = (
+        cfg.timeout_s is not None
+        and elapsed >= cfg.timeout_s
+        and (cfg.max_evals is None or result.n_evals < cfg.max_evals)
+        and (cfg.max_cost is None or result.n_cost < cfg.max_cost)
+    )
 
     introspection_msg = ""
     if not solved and tree is not None:
@@ -548,16 +614,40 @@ def _run_task_process(
         n_nodes=tree.size() if tree else 0,
         elapsed_s=elapsed,
         n_evals=result.n_evals,
+        n_cost=result.n_cost,
         introspection=introspection_msg,
         best_tree=tree,
         trace=trace if 'trace' in locals() else None,
+        primitive_hotspots=(
+            " | ".join(
+                f"{name}:{calls}c/{secs:.3f}s"
+                for name, calls, secs in domain.primitive_runtime_top(5)
+            )
+            if cfg.profile_primitives
+            else ""
+        ),
+        timed_out=timed_out,
+        worker_error=False,
     )
     return idx, tr
 
-def _worker_wrapper(idx, task, cfg, op_subset, inner_workers, transition_matrix, learned_ops, slot, conn, shared_evals):
+def _worker_wrapper(
+    idx,
+    task,
+    cfg,
+    op_subset,
+    inner_workers,
+    transition_matrix,
+    learned_ops,
+    slot,
+    conn,
+    shared_evals,
+    shared_costs,
+):
     """Top-level wrapper for multiprocessing processes."""
-    global _worker_shared_evals
+    global _worker_shared_evals, _worker_shared_costs
     _worker_shared_evals = shared_evals
+    _worker_shared_costs = shared_costs
     try:
         from domains.arc.runner import _run_task_process
         _, tr = _run_task_process(idx, task, cfg, op_subset, inner_workers, transition_matrix, learned_ops, slot)
@@ -579,7 +669,8 @@ class LiveScoreboard:
         self.counters = {
             "solved": 0, "near": 0, "done": 0,
             "solved_time": 0.0, "near_time": 0.0, "unsolved_time": 0.0,
-            "total_evals": 0, "solved_evals": 0, "near_evals": 0, "unsolved_evals": 0
+            "total_evals": 0, "solved_evals": 0, "near_evals": 0, "unsolved_evals": 0,
+            "total_cost": 0, "solved_cost": 0, "near_cost": 0, "unsolved_cost": 0,
         }
         self.start_times: dict[int, float] = {}
         self.shared_evals: Any = None
@@ -587,17 +678,21 @@ class LiveScoreboard:
     def update(self, tr: TaskResult):
         self.counters["done"] += 1
         self.counters["total_evals"] += tr.n_evals
+        self.counters["total_cost"] += tr.n_cost
         if tr.solved:
             self.counters["solved"] += 1
             self.counters["solved_time"] += tr.elapsed_s
             self.counters["solved_evals"] += tr.n_evals
+            self.counters["solved_cost"] += tr.n_cost
         else:
             self.counters["unsolved_time"] += tr.elapsed_s
             self.counters["unsolved_evals"] += tr.n_evals
+            self.counters["unsolved_cost"] += tr.n_cost
             if tr.near_solved:
                 self.counters["near"] += 1
                 self.counters["near_time"] += tr.elapsed_s
                 self.counters["near_evals"] += tr.n_evals
+                self.counters["near_cost"] += tr.n_cost
 
     def render(self) -> str:
         c = self.counters
@@ -613,8 +708,11 @@ class LiveScoreboard:
         
         # Eval metrics
         total_evals = int(c["total_evals"])
+        total_cost = int(c["total_cost"])
         avg_work_e = total_evals / done if done > 0 else 0.0
         evals_p_s = total_evals / elapsed if elapsed > 0 else 0.0
+        avg_work_c = total_cost / done if done > 0 else 0.0
+        cost_p_s = total_cost / elapsed if elapsed > 0 else 0.0
         
         # Efficiency metrics
         speedup = task_total_t / elapsed if elapsed > 0 else 0.0
@@ -634,7 +732,8 @@ class LiveScoreboard:
             f"  │ → active={act}  ⏳ pending={pend}  done={done}/{self.n_total}  success={pct:.1f}%\n"
             f"  │ TIME:  elapsed={elapsed:.1f}s (Throughput: {elapsed/max(done,1):.2f}s/task | Latency Avg: {avg_work_t:.1f}s)\n"
             f"  │ WORK:  speedup={speedup:.2f}x ({utilization:.1f}% core) | STRAGGLER: {max_run_t:.1f}s, {max_run_e/1000:.1f}k evals\n"
-            f"  │ EVALS: total={total_evals/1000:.1f}k ({evals_p_s/1000:.2f}k/s | Per-Task Avg: {avg_work_e/1000:.1f}k)"
+            f"  │ EVALS: total={total_evals/1000:.1f}k ({evals_p_s/1000:.2f}k/s | Per-Task Avg: {avg_work_e/1000:.1f}k)\n"
+            f"  │ COST:  total={total_cost/1000:.1f}k ({cost_p_s/1000:.2f}k/s | Per-Task Avg: {avg_work_c/1000:.1f}k)"
         )
 
         if self.global_stats:
@@ -678,10 +777,59 @@ def evaluate_tasks(
     scoreboard = LiveScoreboard(len(tasks), t0, cfg.task_workers, epoch_str, global_stats=global_stats)
     ordered_results: list[tuple[int, TaskResult]] = []
     last_report_t = 0.0
+    last_progress_t = 0.0
 
-    import multiprocessing as mp
     shared_evals = mp.RawArray('i', cfg.task_workers)
+    shared_costs = mp.RawArray('q', cfg.task_workers)
     scoreboard.shared_evals = shared_evals
+
+    def _emit_progress(reason: str, force: bool = False):
+        nonlocal last_progress_t, last_report_t
+        now = time.time()
+        if (not force) and (now - last_progress_t < max(0.5, cfg.progress_interval_s)):
+            return
+        done = int(scoreboard.counters["done"])
+        active = min(cfg.task_workers, len(tasks) - done)
+        active_evals = [int(v) for v in shared_evals]
+        active_costs = [int(v) for v in shared_costs]
+        event = {
+            "t": round(now - t0, 2),
+            "reason": reason,
+            "done": done,
+            "total": len(tasks),
+            "active": active,
+            "solved": int(scoreboard.counters["solved"]),
+            "near": int(scoreboard.counters["near"]),
+            "total_evals": int(scoreboard.counters["total_evals"]),
+            "total_cost": int(scoreboard.counters["total_cost"]),
+            "inflight_evals": int(sum(active_evals)),
+            "inflight_cost": int(sum(active_costs)),
+            "active_evals": active_evals,
+            "active_costs": active_costs,
+        }
+        if cfg.verbose:
+            print(
+                f"  [HB] t={event['t']:.1f}s done={done}/{len(tasks)} active={active} "
+                f"solved={event['solved']} near={event['near']} evals={event['total_evals']/1000:.1f}k "
+                f"cost={event['total_cost']/1000:.1f}k inflight={event['inflight_evals']/1000:.1f}k evals "
+                f"{event['inflight_cost']/1000:.1f}k cost active_evals={event['active_evals']}",
+                flush=True,
+            )
+        if cfg.progress_log_path:
+            try:
+                log_dir = os.path.dirname(cfg.progress_log_path)
+                if log_dir:
+                    os.makedirs(log_dir, exist_ok=True)
+                with open(cfg.progress_log_path, "a", encoding="utf-8") as f:
+                    f.write(json.dumps(event, ensure_ascii=True) + "\n")
+            except Exception:
+                pass
+        if report_callback and ((now - last_report_t > 10.0) or force):
+            report.results = [r for _, r in sorted(ordered_results, key=lambda x: x[0])]
+            report.total_elapsed_s = now - t0
+            report_callback(report)
+            last_report_t = now
+        last_progress_t = now
 
     def _on_done(idx, tr, task):
         nonlocal last_report_t
@@ -690,7 +838,10 @@ def evaluate_tasks(
         ordered_results.append((idx, tr))
         if cfg.verbose:
             status = "✓" if tr.solved else ("~" if tr.near_solved else "✗")
-            print(f"  {status} [{idx+1:3d}/{len(tasks)}] DONE {task.name[:28]:28s} {tr.n_evals/1000:5.1f}k evals ({tr.elapsed_s:.1f}s)")
+            print(
+                f"  {status} [{idx+1:3d}/{len(tasks)}] DONE {task.name[:28]:28s} "
+                f"{tr.n_evals/1000:5.1f}k evals {tr.n_cost/1000:5.1f}k cost ({tr.elapsed_s:.1f}s)"
+            )
             print(scoreboard.render(), flush=True)
 
         if report_callback:
@@ -700,103 +851,110 @@ def evaluate_tasks(
                 report.total_elapsed_s = now - t0
                 report_callback(report)
                 last_report_t = now
+        _emit_progress("task_done", force=False)
 
     if cfg.task_workers > 1:
-        import multiprocessing as mp
-        # {slot: (process, task_idx, start_time, pipe_conn, last_eval, last_progress_t)}
-        active_processes = {}
+        def _worker_error(task: ARCTask, elapsed_s: float, timed_out: bool = False) -> TaskResult:
+            return TaskResult(
+                task_name=task.name,
+                category=task.name.split("_")[0],
+                true_op=task.true_op,
+                found_expr="TIMEOUT" if timed_out else "WORKER_ERROR",
+                train_acc=0.0,
+                test_acc=0.0,
+                solved=False,
+                near_solved=False,
+                n_nodes=0,
+                elapsed_s=elapsed_s,
+                n_evals=0,
+                n_cost=0,
+                introspection="Worker timed out." if timed_out else "Worker failed to return a result.",
+                timed_out=timed_out,
+                worker_error=(not timed_out),
+            )
+
+        active_processes: dict[int, tuple[Any, int, float, Any, int, float]] = {}
         task_queue = list(enumerate(tasks))
         free_slots = list(range(cfg.task_workers))
 
         try:
             while task_queue or active_processes:
-                # Start new tasks if slots available
-                while task_slots := [s for s in free_slots if task_queue]:
-                    slot = slot_idx = task_slots[0]
-                    free_slots.remove(slot)
+                while free_slots and task_queue:
+                    slot = free_slots.pop(0)
                     task_idx, task = task_queue.pop(0)
-
-                    if cfg.verbose: print(f"  → [{task_idx+1:3d}] STARTING  {task.name}", flush=True)
-                    
-                    # Create a pipe for the result
+                    if cfg.verbose:
+                        print(f"  → [{task_idx+1:3d}] STARTING  {task.name}", flush=True)
                     parent_conn, child_conn = mp.Pipe()
-                    
-                    # We reuse _run_task_process but wrap it to send result through the pipe
                     p = mp.Process(
-                        target=_worker_wrapper, 
-                        args=(task_idx, task, cfg, op_subset, inner_workers, transition_matrix, learned_ops, slot, child_conn, shared_evals)
+                        target=_worker_wrapper,
+                        args=(
+                            task_idx,
+                            task,
+                            cfg,
+                            op_subset,
+                            inner_workers,
+                            transition_matrix,
+                            learned_ops,
+                            slot,
+                            child_conn,
+                            shared_evals,
+                            shared_costs,
+                        ),
                     )
                     p.start()
                     now = time.time()
                     active_processes[slot] = (p, task_idx, now, parent_conn, 0, now)
-                    scoreboard.start_times[task_idx] = time.time()
+                    scoreboard.start_times[task_idx] = now
+                    _emit_progress("task_start", force=True)
 
-                # Monitor active processes
-                finished_slots = []
+                finished_slots: list[int] = []
                 for slot, (p, task_idx, start_t, conn, last_eval, last_progress_t) in list(active_processes.items()):
                     now = time.time()
                     elapsed = now - start_t
-                    timeout = cfg.timeout_s or 300.0
                     current_eval = int(shared_evals[slot]) if slot < len(shared_evals) else 0
                     if current_eval > last_eval:
                         last_eval = current_eval
                         last_progress_t = now
                         active_processes[slot] = (p, task_idx, start_t, conn, last_eval, last_progress_t)
 
-                    # Check if finished
                     if conn.poll():
+                        tr = None
                         try:
                             tr = conn.recv()
-                            if tr:
-                                _on_done(task_idx, tr, tasks[task_idx])
-                            else:
-                                # Worker crashed
-                                pass
                         except EOFError:
-                            pass
+                            tr = None
+                        if tr is None:
+                            tr = _worker_error(tasks[task_idx], elapsed, timed_out=False)
+                        _on_done(task_idx, tr, tasks[task_idx])
                         p.join()
                         finished_slots.append(slot)
                     elif not p.is_alive():
-                        # Process died unexpectedly
                         p.join()
+                        _on_done(task_idx, _worker_error(tasks[task_idx], elapsed, timed_out=False), tasks[task_idx])
                         finished_slots.append(slot)
-                    elif cfg.stall_kill_s is not None and (now - last_progress_t) > cfg.stall_kill_s:
-                        stalled_for = now - last_progress_t
+                    elif cfg.timeout_s is not None and elapsed >= cfg.timeout_s:
                         if cfg.verbose:
                             print(
-                                f"  [!] Hard killing straggler {tasks[task_idx].name} "
-                                f"(stalled={stalled_for:.1f}s, elapsed={elapsed:.1f}s, evals={current_eval})"
+                                f"  [!] Timeout {tasks[task_idx].name} "
+                                f"(elapsed={elapsed:.1f}s, evals={current_eval})",
+                                flush=True,
                             )
                         p.kill()
                         p.join()
+                        _on_done(task_idx, _worker_error(tasks[task_idx], elapsed, timed_out=True), tasks[task_idx])
                         finished_slots.append(slot)
-                        # On-done with empty result?
-                        from domains.arc.runner import TaskResult
-                        empty_tr = TaskResult(
-                            task_name=tasks[task_idx].name,
-                            category=tasks[task_idx].name.split("_")[0],
-                            true_op=tasks[task_idx].true_op,
-                            found_expr="TIMEOUT",
-                            train_acc=0.0,
-                            test_acc=0.0,
-                            solved=False,
-                            near_solved=False,
-                            n_nodes=0,
-                            elapsed_s=elapsed,
-                            n_evals=0,
-                            introspection="Hard timeout reached. Killed process."
-                        )
-                        _on_done(task_idx, empty_tr, tasks[task_idx])
 
                 for slot in finished_slots:
                     del active_processes[slot]
                     free_slots.append(slot)
                     shared_evals[slot] = 0
+                    shared_costs[slot] = 0
 
-                time.sleep(0.1) # Avoid busy wait
+                _emit_progress("heartbeat", force=False)
+                time.sleep(0.05)
 
         except KeyboardInterrupt:
-            for slot, (p, _, _, _) in active_processes.items():
+            for slot, (p, _, _, _, _, _) in active_processes.items():
                 p.kill()
                 p.join()
             os._exit(130)
@@ -804,12 +962,44 @@ def evaluate_tasks(
         for i, task in enumerate(tasks):
             scoreboard.start_times[i] = time.time()
             print(scoreboard.render(), flush=True)
-            _, tr = _run_task_process(i, task, cfg, op_subset, inner_workers, transition_matrix, learned_ops)
+            _emit_progress("task_start", force=True)
+            last_task_hb = time.time()
+
+            def _single_progress(n_evals: int, elapsed_s: float, n_cost: int):
+                nonlocal last_task_hb
+                shared_evals[0] = int(n_evals)
+                shared_costs[0] = int(n_cost)
+                now = time.time()
+                if now - last_task_hb >= max(0.5, cfg.progress_interval_s):
+                    if cfg.verbose:
+                        print(
+                            f"  [HB] task={task.name} evals={n_evals/1000:.1f}k cost={n_cost/1000:.1f}k "
+                            f"elapsed={elapsed_s:.1f}s",
+                            flush=True,
+                        )
+                    _emit_progress("single_task_heartbeat", force=False)
+                    last_task_hb = now
+
+            _, tr = _run_task_process(
+                i, task, cfg, op_subset, inner_workers, transition_matrix, learned_ops, progress_hook=_single_progress
+            )
             _on_done(i, tr, task)
+            shared_evals[0] = 0
+            shared_costs[0] = 0
 
     ordered_results.sort(key=lambda x: x[0])
     report.results = [tr for _, tr in ordered_results]
     report.total_elapsed_s = time.time() - t0
+    _emit_progress("final", force=True)
+    hard_failures = [r for r in report.results if r.timed_out or r.worker_error]
+    if hard_failures and cfg.fail_on_timeout:
+        failed_names = ", ".join(r.task_name for r in hard_failures[:10])
+        if len(hard_failures) > 10:
+            failed_names += f", ... (+{len(hard_failures)-10} more)"
+        raise RuntimeError(
+            f"Hard worker failures detected ({len(hard_failures)} tasks): {failed_names}. "
+            "Timeout/worker-error is treated as a bug by configuration."
+        )
     if cfg.verbose: print(report.summary())
     return report
 
@@ -937,6 +1127,8 @@ if __name__ == "__main__":
                         help="Number of CPU threads to keep free.")
     parser.add_argument("--capture-traces", action="store_true",
                         help="Capture AST execution traces in results (increases memory use).")
+    parser.add_argument("--profile-primitives", action="store_true",
+                        help="Profile primitive runtime per task (adds overhead).")
     parser.add_argument("--stall-kill-s", type=float, default=None,
                         help="Optional watchdog: kill a task worker if eval count makes no progress for this many seconds.")
     parser.add_argument("--adaptive-primitive-subset", action="store_true",
@@ -946,6 +1138,12 @@ if __name__ == "__main__":
     parser.add_argument("--primitive-cap", type=int, default=80,
                         help="Max primitive count per task when adaptive subset is enabled.")
     parser.add_argument("--generations",  type=int, default=100, help="Override generations")
+    parser.add_argument("--max-evals", type=int, default=1000000, help="Evaluation budget per task.")
+    parser.add_argument("--max-cost", type=int, default=0, help="Cost-unit budget per task (0=off).")
+    parser.add_argument("--timeout", type=float, default=0.0, help="Per-task timeout seconds (0=off).")
+    parser.add_argument("--progress-interval-s", type=float, default=5.0, help="Progress heartbeat interval.")
+    parser.add_argument("--progress-log", type=str, default=None, help="JSONL progress log path.")
+    parser.add_argument("--max-rss-gb", type=float, default=0.0, help="Abort if process RSS reaches this limit (0=off).")
     parser.add_argument("--tasks",        type=int, default=None, help="Limit number of tasks")
     parser.add_argument("--save",         type=str, default="results.json", help="Output JSON path")
     args = parser.parse_args()
@@ -959,13 +1157,20 @@ if __name__ == "__main__":
         verbose      = True,
         baseline_only = args.baseline_only,
         seed         = None,
+        timeout_s    = (None if args.timeout <= 0 else args.timeout),
+        max_evals    = args.max_evals,
+        max_cost     = (None if args.max_cost <= 0 else args.max_cost),
         mem_per_task_worker_gb=args.mem_per_task_worker_gb,
         reserve_mem_gb=args.reserve_mem_gb,
         cpu_reserve=args.cpu_reserve,
         capture_traces=args.capture_traces,
+        profile_primitives=args.profile_primitives,
         stall_kill_s=args.stall_kill_s,
         adaptive_primitive_subset=False if args.no_adaptive_primitive_subset else True,
         primitive_cap=args.primitive_cap,
+        progress_interval_s=args.progress_interval_s,
+        progress_log_path=args.progress_log,
+        max_rss_gb=args.max_rss_gb,
     )
 
     if args.data:

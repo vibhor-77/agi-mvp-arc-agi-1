@@ -1,89 +1,47 @@
 """
 core/search.py
 ==============
-Domain-agnostic beam search over expression trees.
+Domain-agnostic deterministic beam search over expression trees.
 
-The search engine knows nothing about specific domains.  It only needs:
+The search engine only needs:
   - A fitness function  f(Node) -> float  (lower is better)
   - A list of primitive names to build trees from
   - The number of input variables
 
 The same engine solves:
-  - Symbolic regression   (fitness = MSE + λ·size)
-  - CartPole policy search (fitness = −mean_steps)
-  - ARC grid transforms   (fitness = cell_error + λ·size)
+  - Symbolic regression   (fitness = MSE + lambda * size)
+  - CartPole policy search (fitness = -mean_steps)
+  - ARC grid transforms   (fitness = cell_error + lambda * size)
   - Any future domain      (define fitness, register primitives, go)
 
 Algorithm
 ---------
 Each generation:
-  1. Every beam member spawns ``offspring`` children via mutation/crossover.
-  2. All candidates (beam + offspring) are evaluated.
-  3. Top ``beam_size`` unique survivors (by string) form the new beam.
-  4. Repeat until convergence or ``generations`` reached.
+  1. Keep a scored beam from the previous generation.
+  2. Spawn up to ``beam_size * offspring`` new children.
+  3. Evaluate only those new children.
+  4. Merge old beam + new children and keep the top unique survivors.
 
-Performance
------------
-Set ``workers > 1`` to evaluate candidates in parallel across CPU cores.
-Parallel evaluation is the main bottleneck for slow fitness functions
-(e.g. CartPole episodes).  For fast functions (grid transforms, math),
-single-threaded is often faster due to spawn overhead.
+This keeps compute accounting simple and deterministic:
+  - budgets are enforced by evaluated candidate count / cost
+  - solved tasks can still use their full configured budget
+  - the hot path avoids novelty rewards, annealing noise, and extra fuzz evals
 """
 from __future__ import annotations
 
+import multiprocessing as mp
 import random
 import time
-import multiprocessing as mp
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
-from .tree import Node, random_tree, mutate, crossover
+from .tree import Node, crossover, mutate, random_tree
 
-
-# ---------------------------------------------------------------------------
-# Search configuration (dataclass for clean parameterisation)
-# ---------------------------------------------------------------------------
 
 @dataclass
 class SearchConfig:
-    """
-    All tunable parameters for a beam search run.
+    """All tunable parameters for a beam search run."""
 
-    Attributes
-    ----------
-    beam_size : int
-        Number of elite candidates kept between generations.
-        Larger beams explore more but cost more per generation.
-    offspring : int
-        Mutations generated per beam member per generation.
-        Total pool size = beam_size * (1 + offspring).
-    generations : int
-        Hard limit on number of generations.
-    max_init_depth : int
-        Maximum tree depth for the initial random population.
-    workers : int
-        CPU processes for parallel fitness evaluation.
-        0 or 1 = single-threaded (best for fast fitness functions).
-    converge_threshold : float
-        Stop early if best fitness falls below this value.
-    mutation_rate : float
-        Fraction of offspring created by mutation (vs crossover).
-    const_range : (float, float)
-        Range for randomly generated constant leaves.
-    const_sigma : float
-        Std dev for Gaussian perturbation of constants.
-    verbose : bool
-        Print progress every ``log_interval`` generations.
-    log_interval : int
-        How often to print progress when verbose=True.
-    seed : int | None
-        Random seed for reproducibility.
-    max_evals : int | None
-        Maximum cumulative evaluations allowed before forcing termination. This is the primary 
-        deterministic pruning mechanism for stragglers.
-    timeout_s : float | None
-        Wall-clock time limit for the search in seconds (optional safety).
-    """
     beam_size: int = 10
     offspring: int = 20
     generations: int = 25
@@ -96,113 +54,65 @@ class SearchConfig:
     verbose: bool = True
     log_interval: int = 50
     seed: int | None = None
-    initial_temp: float = 0.5
-    cooling_rate: float = 0.95
+    initial_temp: float = 0.0
+    cooling_rate: float = 1.0
     max_evals: int | None = None
+    max_cost: int | None = None
     timeout_s: float | None = None
 
 
-# ---------------------------------------------------------------------------
-# Search result
-# ---------------------------------------------------------------------------
-
 @dataclass
 class SearchResult:
-    """
-    Returned by BeamSearch.run().
+    """Returned by BeamSearch.run()."""
 
-    Attributes
-    ----------
-    best_tree : Node
-        The best expression tree found.
-    best_fitness : float
-        Its fitness score (lower is better).
-    history : list[dict]
-        Per-generation record: {gen, best_fitness, best_expr, elapsed_s}.
-    elapsed_s : float
-        Total wall-clock seconds.
-    converged : bool
-        True if search stopped early due to converge_threshold.
-    """
     best_tree: Node
     best_fitness: float
     history: list[dict] = field(default_factory=list)
     elapsed_s: float = 0.0
     converged: bool = False
     n_evals: int = 0
+    n_cost: int = 0
 
-
-# ---------------------------------------------------------------------------
-# Worker helpers (module-level so they survive pickling)
-# ---------------------------------------------------------------------------
 
 _worker_fitness_fn: Callable | None = None
 _worker_fingerprint_fn: Callable | None = None
-_worker_lexicase_fn: Callable | None = None
-_worker_fuzz_hash_fn: Callable | None = None
 _worker_evaluate_fn: Callable | None = None
 
-def _worker_eval(tree: Node) -> tuple[float, Node, tuple | None, list[float] | None, str | None]:
+
+ScoredTree = tuple[float, Node, tuple | None, int]
+
+
+def _normalize_eval_output(out: Any) -> tuple[float, tuple | None, int]:
+    if not isinstance(out, tuple):
+        return (float(out), None, 1)
+    if len(out) >= 5:
+        score, fp, _lex, _fuzz, cost = out[:5]
+        return (float(score), fp, max(1, int(cost)))
+    if len(out) == 4:
+        score, fp, _lex, _fuzz = out
+        return (float(score), fp, 1)
+    if len(out) == 3:
+        score, fp, cost = out
+        return (float(score), fp, max(1, int(cost)))
+    if len(out) == 2:
+        score, fp = out
+        return (float(score), fp, 1)
+    if len(out) == 1:
+        return (float(out[0]), None, 1)
+    return (float("inf"), None, 1)
+
+
+def _worker_eval(tree: Node) -> ScoredTree:
     if _worker_evaluate_fn is not None:
-        score, fp, lex, fuzz = _worker_evaluate_fn(tree)
-        return (score, tree, fp, lex, fuzz)
-    score = _worker_fitness_fn(tree) if _worker_fitness_fn else float('inf')
+        score, fp, cost = _normalize_eval_output(_worker_evaluate_fn(tree))
+        return (score, tree, fp, cost)
+    score = _worker_fitness_fn(tree) if _worker_fitness_fn else float("inf")
     fp = _worker_fingerprint_fn(tree) if _worker_fingerprint_fn else None
-    lex = _worker_lexicase_fn(tree) if _worker_lexicase_fn else None
-    fuzz = _worker_fuzz_hash_fn(tree) if _worker_fuzz_hash_fn else None
-    return (score, tree, fp, lex, fuzz)
+    return (score, tree, fp, 1)
 
-
-# ---------------------------------------------------------------------------
-# BeamSearch
-# ---------------------------------------------------------------------------
 
 class BeamSearch:
-    """
-    Beam search over expression trees guided by a pluggable fitness function.
-
-    Parameters
-    ----------
-    fitness_fn : Callable[[Node], float]
-        Lower is better.  Must be picklable if ``workers > 1``.
-    op_list : list[str]
-        Names of primitives available for tree construction.
-        Typically obtained from ``PrimitiveRegistry.names(domain=...)``.
-    n_vars : int
-        Number of input variables (determines variable leaf indices).
-    config : SearchConfig | None
-        Tuning parameters.  Uses defaults if None.
-    op_arities : dict[str, int] | None
-        Arity mapping for primitives. Uses default=1 if None.
-    fingerprint_fn : Callable[[Node], tuple] | None
-        If provided, used for Semantic Hashing / Anti-Aliasing.
-        Returns a tuple of outputs for dummy/training inputs.
-        Trees with identical fingerprints are deduped, keeping the smallest.
-    lexicase_fn : Callable[[Node], list[float]] | None
-        If provided, evaluates the tree and returns a list of individual 
-        fitness scores for each case/example. Used for Lexicase/Pareto Selection
-        to preserve edge-case abstractions.
-    transition_matrix : dict[str, dict[str, float]] | None
-        Learned generative priors P(child_op | parent_op) to speed up search.
-
-    Examples
-    --------
-    >>> from core.search import BeamSearch, SearchConfig
-    >>> from core.primitives import registry
-    >>> import math
-    >>>
-    >>> xs = [0.1 * i for i in range(30)]
-    >>> ys = [math.sin(x**2) for x in xs]
-    >>>
-    >>> def fitness(tree):
-    ...     preds = [tree.eval([x], {n: registry.get(n) for n in registry.names()}) for x in xs]
-    ...     mse = sum((p-y)**2 for p,y in zip(preds, ys)) / len(ys)
-    ...     return mse + 0.001 * tree.size()
-    >>>
-    >>> searcher = BeamSearch(fitness, registry.names(domain="math"), n_vars=1)
-    >>> result = searcher.run()
-    >>> print(result.best_tree)
-    """
+    """Deterministic beam search over expression trees."""
 
     def __init__(
         self,
@@ -214,7 +124,7 @@ class BeamSearch:
         fingerprint_fn: Callable[[Node], tuple] | None = None,
         lexicase_fn: Callable[[Node], list[float]] | None = None,
         fuzz_hash_fn: Callable[[Node], str] | None = None,
-        evaluate_fn: Callable[[Node], tuple[float, tuple | None, list[float] | None, str | None]] | None = None,
+        evaluate_fn: Callable[[Node], Any] | None = None,
         transition_matrix: dict[str, dict[str, float]] | None = None,
     ) -> None:
         self.fitness_fn = fitness_fn
@@ -223,273 +133,212 @@ class BeamSearch:
         self.config = config or SearchConfig()
         self.op_arities = op_arities
         self.fingerprint_fn = fingerprint_fn
-        self.lexicase_fn = lexicase_fn
-        self.fuzz_hash_fn = fuzz_hash_fn
         self.evaluate_fn = evaluate_fn
         self.transition_matrix = transition_matrix
         self._rng = random.Random(self.config.seed)
+        # Backward-compatible args kept in the signature, but intentionally unused.
+        _ = lexicase_fn
+        _ = fuzz_hash_fn
 
     def run(self, on_step: Any | None = None) -> SearchResult:
-        """
-        Execute the beam search.
-
-        Returns
-        -------
-        SearchResult
-            Contains best tree found, fitness, history, and timing.
-        """
         cfg = self.config
         rng = self._rng
-
-        # ── Initialise population ────────────────────────────────────────
-        init_pool = [
-            random_tree(self.op_list, self.n_vars, cfg.max_init_depth,
-                        cfg.const_range, rng, self.op_arities, self.transition_matrix)
-            for _ in range(cfg.beam_size * 5)
-        ]
-        scored = self._evaluate_all(init_pool)
-        n_evals_total = len(init_pool)
-        
-        # ── Global Novelty Search Set ────────────────────────────────────
-        global_seen_fuzzes: set[str] = set()
-        
-        # Helper to deduplicate a scored pool
-        def _dedupe_pool(pool: list[tuple[float, Node, tuple | None, list[float] | None, str | None]], limit: int, temperature: float = 0.0) -> list[tuple[float, Node, tuple | None, list[float] | None, str | None]]:
-            
-            seen_exprs: set[str] = set()
-            seen_fuzzes: set[str] = set()
-            # Map fingerprint -> count of admitted ASTs sharing it. Soft-hashing allows up to 3.
-            seen_fingerprints: dict[tuple, int] = {}
-            new_beam: list[tuple[float, Node, tuple | None, list[float] | None, str | None]] = []
-            
-            # Pareto (Lexicase) Selection
-            # Find the minimum error natively achieved across every individual case.
-            if len(pool) > 0 and pool[0][3] is not None:
-                n_cases = len(pool[0][3])
-                best_per_case = [float('inf')] * n_cases
-                for item in pool:
-                    for c_idx, err in enumerate(item[3]):
-                        if err < best_per_case[c_idx]:
-                            best_per_case[c_idx] = err
-                
-                # If an individual uniquely matches the BEST known score for a specific case, 
-                # we artificially boost its global score so it survives the generation cull (Pareto Front).
-                for i in range(len(pool)):
-                    lex = pool[i][3]
-                    is_pareto_optimal = any(lex[c] <= best_per_case[c] + 1e-5 for c in range(n_cases))
-                    if is_pareto_optimal:
-                        # Give it a massive boost to float to the top
-                        pool[i] = (pool[i][0] - 1000.0, pool[i][1], pool[i][2], pool[i][3], pool[i][4])
-                        
-            # ── NOVELTY SEARCH REWARD ──
-            # If an AST discovers a completely novel mathematical state that we haven't
-            # reached yet globally, we artificially boost it to float over optimizations.
-            for i in range(len(pool)):
-                fuzz = pool[i][4]
-                if fuzz is not None and fuzz not in global_seen_fuzzes:
-                    global_seen_fuzzes.add(fuzz)
-                    # Reward novelty
-                    pool[i] = (pool[i][0] - 50.0, pool[i][1], pool[i][2], pool[i][3], pool[i][4])
-
-            # Sort by score ascending, then by tree size ascending (Occam's razor)
-            # Simulated Annealing: Inject noise bounded by temperature to promote diversity early on
-            def sort_key(x):
-                score = x[0]
-                # Lexicase artificial boost should never be obfuscated by noise
-                if score < -500: return (score, x[1].size())
-                noise = temperature * rng.random()
-                return (score + noise, x[1].size())
-                
-            pool.sort(key=sort_key)
-            
-            for item in pool:
-                score, tree, fp, lex, fuzz = item
-                key = str(tree)
-                
-                # Check 1: syntactic exact match
-                if key in seen_exprs:
-                    continue
-                    
-                # Check 2: Mathematical / Functional Equivalency
-                # Evaluate against a high-entropy Fuzz Input. If two different ASTs compute 
-                # identically across a complex random grid, they are functionally identical mappings.
-                if fuzz is not None:
-                    if fuzz in seen_fuzzes:
-                        continue
-                    seen_fuzzes.add(fuzz)
-                    
-                # Check 3: Soft Semantic Hashing (Local Dataset-Aliasing)
-                # Allow a few structurally distinct ASTs to share the same training output
-                # so we don't prune valuable "near-miss" stepping stones.
-                if fp is not None:
-                    count = seen_fingerprints.get(fp, 0)
-                    if count >= 3:  # Max 3 aliases allowed
-                        continue
-                    seen_fingerprints[fp] = count + 1
-                
-                seen_exprs.add(key)
-                new_beam.append(item)
-                
-                if len(new_beam) == limit:
-                    break
-                    
-            return new_beam
-
-        # gen=0 temp decay
-        current_temp = cfg.initial_temp
-        scored = _dedupe_pool(scored, cfg.beam_size, current_temp)
-
-        beam: list[Node] = [t for _, t, _, _, _ in scored]
-        best_fitness = scored[0][0]
-        # if the score was artificially boosted negative for lexicase, correct it for reporting
-        if best_fitness < 0: best_fitness = self.fitness_fn(scored[0][1])
-        best_tree = scored[0][1].clone()
-
-        history: list[dict] = []
         t0 = time.time()
+        n_evals_total = 0
+        n_cost_total = 0
+        converged = False
+        history: list[dict] = []
 
-        # ── Main loop ────────────────────────────────────────────────────
+        init_count = self._cap_eval_count(cfg.beam_size * 5, n_evals_total)
+        if init_count <= 0:
+            init_count = 1
+        init_pool = [
+            random_tree(
+                self.op_list,
+                self.n_vars,
+                cfg.max_init_depth,
+                cfg.const_range,
+                rng,
+                self.op_arities,
+                self.transition_matrix,
+            )
+            for _ in range(init_count)
+        ]
+        beam_scored, evals_used, cost_used = self._evaluate_and_select(init_pool, cfg.beam_size)
+        n_evals_total += evals_used
+        n_cost_total += cost_used
+        best_score, best_tree, _best_fp, _best_cost = beam_scored[0]
+        best_tree = best_tree.clone()
+
         for gen in range(cfg.generations):
-            # Identify best-performing candidates per task example 
-            # (Allows for Disjoint Crossover / "Pooling" of complementary solutions)
-            best_lexicase_parents = {}
-            if len(scored) > 0 and scored[0][3] is not None:
-                n_cases = len(scored[0][3])
-                for c in range(n_cases):
-                    # Find the tree with the lowest error on this specific case
-                    best_for_c = min(scored, key=lambda x: x[3][c])
-                    best_lexicase_parents[c] = best_for_c[1]
-
-            # Generate offspring
-            pool = list(beam)
-            for i, parent_item in enumerate(scored):
-                parent_score, parent, fp, lex, fuzz = parent_item
-                
-                for _ in range(cfg.offspring):
-                    if rng.random() < cfg.mutation_rate or len(beam) < 2:
-                        child = mutate(
-                            parent, self.op_list, self.n_vars,
-                            cfg.const_range, cfg.const_sigma, rng,
-                            self.op_arities, self.transition_matrix
-                        )
-                    else:
-                        other = None
-                        # Disjoint Crossover (Berman's Pooling Technique)
-                        # Find the case where the current parent performs the *worst*, 
-                        # and explicitly breed it with the tree that performs the *best* on that gap!
-                        if lex is not None and best_lexicase_parents:
-                            worst_case_idx = max(range(len(lex)), key=lambda c: lex[c])
-                            if lex[worst_case_idx] > 0.0:  # If we actually have an error to fix
-                                other = best_lexicase_parents[worst_case_idx]
-                        
-                        # Fallback to standard random crossover if pooling didn't yield a distinct mate
-                        if other is None or other is parent:
-                            other = rng.choice(beam)
-                            
-                        child = crossover(parent, other, rng)
-                    pool.append(child)
-
-            # Evaluate
-            scored = self._evaluate_all(pool)
-            n_evals_total += len(pool)
-
-            # Decay temperature
-            current_temp = current_temp * cfg.cooling_rate
-
-            # Deduplicate by semantic hash or string form, keep top beam_size
-            scored = _dedupe_pool(scored, cfg.beam_size, current_temp)
-
-            beam = [t for _, t, _, _, _ in scored]
-            gen_best_score = scored[0][0]
-            if gen_best_score < 0: gen_best_score = self.fitness_fn(scored[0][1])
-            gen_best_tree = scored[0][1]
-
-            # Track history
             elapsed = time.time() - t0
-            
-            if on_step:
-                on_step(n_evals_total, elapsed)
-                
-            history.append({
-                "gen": gen,
-                "best_fitness": gen_best_score,
-                "best_expr": str(gen_best_tree),
-                "elapsed_s": round(elapsed, 2),
-            })
+            if on_step is not None:
+                try:
+                    on_step(n_evals_total, elapsed, n_cost_total)
+                except TypeError:
+                    on_step(n_evals_total, elapsed)
 
-            if gen_best_score < best_fitness:
-                best_fitness = gen_best_score
-                best_tree = gen_best_tree.clone()
+            history.append(
+                {
+                    "gen": gen,
+                    "best_fitness": best_score,
+                    "best_expr": str(best_tree),
+                    "elapsed_s": round(elapsed, 2),
+                }
+            )
 
-            # Log
             if cfg.verbose and (gen % cfg.log_interval == 0):
                 print(
-                    f"  gen={gen:4d}  fitness={best_fitness:.4e}  "
+                    f"  gen={gen:4d}  fitness={best_score:.4e}  "
                     f"expr={str(best_tree)[:55]}  [{elapsed:.1f}s]"
                 )
 
-            # Early exit
-            if best_fitness < cfg.converge_threshold:
-                if cfg.verbose:
-                    print(f"  ✓ Converged at generation {gen}")
-                return SearchResult(
-                    best_tree=best_tree,
-                    best_fitness=best_fitness,
-                    history=history,
-                    elapsed_s=time.time() - t0,
-                    converged=True,
-                    n_evals=n_evals_total,
-                )
-            # ── DETERMINISTIC PRUNING (Evaluations Budget) ──
-            if cfg.max_evals is not None and n_evals_total >= cfg.max_evals:
-                if cfg.verbose:
-                    print(f"  [!] Evaluation budget reached ({n_evals_total}/{cfg.max_evals}). Terminating.")
-                break
-            
             if cfg.timeout_s is not None and elapsed >= cfg.timeout_s:
-                if cfg.verbose:
-                    print(f"  [!] Time limit reached ({elapsed:.1f}s/{cfg.timeout_s}s). Terminating straggler.")
                 break
+            if cfg.max_evals is not None and n_evals_total >= cfg.max_evals:
+                break
+            if cfg.max_cost is not None and n_cost_total >= cfg.max_cost:
+                break
+
+            children = self._spawn_children(beam_scored)
+            if not children:
+                break
+            remaining = self._cap_eval_count(len(children), n_evals_total)
+            if remaining <= 0:
+                break
+            if remaining < len(children):
+                children = children[:remaining]
+
+            child_scored, evals_used, cost_used = self._evaluate_and_select(children, limit=len(children))
+            n_evals_total += evals_used
+            n_cost_total += cost_used
+
+            combined = beam_scored + child_scored
+            beam_scored = self._select_survivors(combined, cfg.beam_size)
+            if not beam_scored:
+                break
+
+            gen_best_score, gen_best_tree, _gen_fp, _gen_cost = beam_scored[0]
+            if gen_best_score < best_score:
+                best_score = gen_best_score
+                best_tree = gen_best_tree.clone()
+                converged = cfg.converge_threshold > 0 and best_score <= cfg.converge_threshold
 
         return SearchResult(
             best_tree=best_tree,
-            best_fitness=best_fitness,
+            best_fitness=float(best_score),
             history=history,
             elapsed_s=time.time() - t0,
-            converged=False,
+            converged=converged,
             n_evals=n_evals_total,
+            n_cost=n_cost_total,
         )
 
-    # ------------------------------------------------------------------ #
-    # Internal: batch evaluation (parallel or serial)                     #
-    # ------------------------------------------------------------------ #
+    def _cap_eval_count(self, requested: int, n_evals_total: int) -> int:
+        max_evals = self.config.max_evals
+        if max_evals is None:
+            return requested
+        remaining = max(0, int(max_evals) - int(n_evals_total))
+        return min(requested, remaining)
 
-    def _evaluate_all(self, pool: list[Node]) -> list[tuple[float, Node, tuple | None, list[float] | None, str | None]]:
-        """Evaluate every tree in *pool*, returning (score, tree, fingerprint, lexicase, fuzz_hash) tuples."""
+    def _spawn_children(self, beam_scored: list[ScoredTree]) -> list[Node]:
         cfg = self.config
-        
-        # We process sequentially if no multiproc to avoid closure issues
+        rng = self._rng
+        beam = [tree for _score, tree, _fp, _cost in beam_scored]
+        if not beam:
+            return []
+
+        children: list[Node] = []
+        seen_exprs = {str(tree) for tree in beam}
+        target = max(0, cfg.beam_size * cfg.offspring)
+        max_attempts = max(target * 4, 32)
+        attempts = 0
+        while len(children) < target and attempts < max_attempts:
+            attempts += 1
+            parent = beam[(attempts - 1) % len(beam)]
+            if rng.random() < cfg.mutation_rate or len(beam) < 2:
+                child = mutate(
+                    parent,
+                    self.op_list,
+                    self.n_vars,
+                    cfg.const_range,
+                    cfg.const_sigma,
+                    rng,
+                    self.op_arities,
+                    self.transition_matrix,
+                )
+            else:
+                mate = beam[rng.randrange(len(beam))]
+                if mate is parent and len(beam) > 1:
+                    mate = beam[(beam.index(parent) + 1) % len(beam)]
+                child = crossover(parent, mate, rng)
+            expr = str(child)
+            if expr in seen_exprs:
+                continue
+            seen_exprs.add(expr)
+            children.append(child)
+        return children
+
+    def _evaluate_and_select(self, pool: list[Node], limit: int) -> tuple[list[ScoredTree], int, int]:
+        scored = self._evaluate_all(pool)
+        return self._select_survivors(scored, limit), len(scored), sum(item[3] for item in scored)
+
+    def _select_survivors(self, pool: list[ScoredTree], limit: int) -> list[ScoredTree]:
+        best_by_expr: dict[str, ScoredTree] = {}
+        best_by_fp: dict[tuple, ScoredTree] = {}
+        for item in pool:
+            score, tree, fp, cost = item
+            expr = str(tree)
+            prev_expr = best_by_expr.get(expr)
+            if prev_expr is None or self._is_better(item, prev_expr):
+                best_by_expr[expr] = item
+            if fp is not None:
+                prev_fp = best_by_fp.get(fp)
+                if prev_fp is None or self._is_better(item, prev_fp):
+                    best_by_fp[fp] = item
+
+        survivors: list[ScoredTree] = []
+        seen_exprs: set[str] = set()
+        for item in sorted(best_by_expr.values(), key=self._sort_key):
+            score, tree, fp, cost = item
+            expr = str(tree)
+            if fp is not None and best_by_fp.get(fp) is not item:
+                continue
+            if expr in seen_exprs:
+                continue
+            seen_exprs.add(expr)
+            survivors.append((score, tree, fp, cost))
+            if len(survivors) >= limit:
+                break
+
+        if survivors:
+            return survivors
+        return sorted(pool, key=self._sort_key)[:limit]
+
+    def _sort_key(self, item: ScoredTree) -> tuple[float, int, str]:
+        score, tree, _fp, _cost = item
+        return (float(score), tree.size(), str(tree))
+
+    def _is_better(self, left: ScoredTree, right: ScoredTree) -> bool:
+        return self._sort_key(left) < self._sort_key(right)
+
+    def _evaluate_all(self, pool: list[Node]) -> list[ScoredTree]:
+        cfg = self.config
         if cfg.workers <= 1:
-            results = []
-            for t in pool:
+            results: list[ScoredTree] = []
+            for tree in pool:
                 if self.evaluate_fn is not None:
-                    score, fp, lex, fuzz = self.evaluate_fn(t)
+                    score, fp, cost = _normalize_eval_output(self.evaluate_fn(tree))
                 else:
-                    score = self.fitness_fn(t)
-                    fp = self.fingerprint_fn(t) if self.fingerprint_fn else None
-                    lex = self.lexicase_fn(t) if self.lexicase_fn else None
-                    fuzz = self.fuzz_hash_fn(t) if self.fuzz_hash_fn else None
-                results.append((score, t, fp, lex, fuzz))
+                    score = self.fitness_fn(tree)
+                    fp = self.fingerprint_fn(tree) if self.fingerprint_fn else None
+                    cost = 1
+                results.append((score, tree, fp, cost))
             return results
-            
-        global _worker_fitness_fn, _worker_fingerprint_fn, _worker_lexicase_fn, _worker_fuzz_hash_fn, _worker_evaluate_fn
+
+        global _worker_fitness_fn, _worker_fingerprint_fn, _worker_evaluate_fn
         _worker_fitness_fn = self.fitness_fn
         _worker_fingerprint_fn = self.fingerprint_fn
-        _worker_lexicase_fn = self.lexicase_fn
-        _worker_fuzz_hash_fn = self.fuzz_hash_fn
         _worker_evaluate_fn = self.evaluate_fn
-        
-        with mp.get_context('fork').Pool(cfg.workers) as p:
-            results = p.map(_worker_eval, pool)
-            
-        return results
+        with mp.get_context("fork").Pool(cfg.workers) as pool_executor:
+            return pool_executor.map(_worker_eval, pool)

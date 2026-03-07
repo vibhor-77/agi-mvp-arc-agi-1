@@ -32,6 +32,7 @@ Generalising to ARC-AGI-2 / ARC-AGI-3
 from __future__ import annotations
 
 import copy
+import hashlib
 from dataclasses import dataclass, field
 from typing import Any, NamedTuple
 
@@ -218,6 +219,15 @@ def _to_np_grid(g: Grid | np.ndarray) -> np.ndarray | None:
         return None
     return arr if arr.ndim == 2 else None
 
+def _compact_grid_fingerprint(pred: Any, pred_np: np.ndarray | None) -> str:
+    """Bounded-size semantic fingerprint for dedupe without huge string allocations."""
+    if pred_np is None:
+        return f"NON_GRID:{type(pred).__name__}"
+    rows, cols = pred_np.shape
+    # Hash bytes to keep fingerprint fixed-size regardless of grid dimensions.
+    digest = hashlib.blake2b(pred_np.tobytes(), digest_size=8).hexdigest()
+    return f"{rows}x{cols}:{digest}"
+
 def grid_cell_accuracy(pred: Grid, target: Grid) -> float:
     """
     Fraction of cells that match between *pred* and *target*.
@@ -287,6 +297,7 @@ class ARCDomain(Domain):
         lam: float = 0.02,
         primitive_subset: list[str] | None = None,
         library: Any = None,
+        profile_primitives: bool = False,
     ) -> None:
         self.task = task
         self.lam = lam
@@ -297,12 +308,45 @@ class ARCDomain(Domain):
             self._op_list = list(self._primitives.keys())
         self._discovery_eval_count = 0
         self._discovery_start_time = time.time()
+        self._primitive_profile: dict[str, dict[str, float]] = {}
+        self._profile_primitives = profile_primitives
         # Cache immutable targets as NumPy once to avoid per-eval conversion overhead.
         self._train_targets_np = [_to_np_grid(out) for _, out in self.task.train_pairs]
+        if self._profile_primitives:
+            self._instrument_primitives()
+
+    def _instrument_primitives(self) -> None:
+        wrapped: dict[str, Any] = {}
+        for name, fn in self._primitives.items():
+            self._primitive_profile[name] = {"calls": 0.0, "time_s": 0.0}
+
+            def _mk(n: str, f: Any):
+                def _wrapped(*args, **kwargs):
+                    t0 = time.perf_counter()
+                    try:
+                        return f(*args, **kwargs)
+                    finally:
+                        stat = self._primitive_profile[n]
+                        stat["calls"] += 1.0
+                        stat["time_s"] += (time.perf_counter() - t0)
+                return _wrapped
+
+            wrapped[name] = _mk(name, fn)
+        self._primitives = wrapped
 
     def get_stats(self) -> str:
         duration = max(0.1, time.time() - self._discovery_start_time)
         return f"evals={self._discovery_eval_count} rate={self._discovery_eval_count/duration:.1f}/s"
+
+    def primitive_runtime_top(self, top_n: int = 5) -> list[tuple[str, int, float]]:
+        rows: list[tuple[str, int, float]] = []
+        for name, stat in self._primitive_profile.items():
+            calls = int(stat.get("calls", 0.0))
+            elapsed_s = float(stat.get("time_s", 0.0))
+            if calls > 0:
+                rows.append((name, calls, elapsed_s))
+        rows.sort(key=lambda x: x[2], reverse=True)
+        return rows[:top_n]
 
     # ------------------------------------------------------------------ #
     # Domain interface                                                     #
@@ -325,11 +369,12 @@ class ARCDomain(Domain):
         functionally identical globally, regardless of how they are written.
         """
         try:
-            return str(tree.eval([self.FUZZ_GRID], self._primitives))
+            pred = tree.eval([self.FUZZ_GRID], self._primitives)
+            return _compact_grid_fingerprint(pred, _to_np_grid(pred))
         except Exception:
             return "ERR"
 
-    def evaluate_candidate(self, tree: Node) -> tuple[float, tuple[str, ...], list[float], str]:
+    def evaluate_candidate(self, tree: Node) -> tuple[float, tuple[str, ...], list[float], str, int]:
         """
         Single-pass evaluation for search.
         Returns (fitness, fingerprint, lexicase_errors, fuzz_hash).
@@ -337,7 +382,9 @@ class ARCDomain(Domain):
         self._discovery_eval_count += 1
         errors: list[float] = []
         fp: list[str] = []
+        cost_units = 0
 
+        MAX_EVAL_CELLS = 10_000
         for idx, (inp, _out) in enumerate(self.task.train_pairs):
             try:
                 pred = tree.eval([inp], self._primitives)
@@ -345,20 +392,33 @@ class ARCDomain(Domain):
                 target_np = self._train_targets_np[idx]
                 if pred_np is None or target_np is None:
                     acc = 0.0
+                    in_cells = len(inp) * len(inp[0]) if inp and inp[0] else 1
+                    cost_units += max(1, in_cells * max(1, tree.size()))
                 else:
-                    acc = grid_cell_accuracy(pred_np, target_np)
+                    pred_cells = int(pred_np.shape[0] * pred_np.shape[1])
+                    # Hard guard against giant intermediate grids causing memory blowups.
+                    if pred_cells > MAX_EVAL_CELLS:
+                        acc = 0.0
+                    else:
+                        acc = grid_cell_accuracy(pred_np, target_np)
+                    out_cells = int(target_np.shape[0] * target_np.shape[1])
+                    pair_cells = max(pred_cells, out_cells)
+                    cost_units += max(1, pair_cells * max(1, tree.size()))
                 errors.append(1.0 - acc)
-                fp.append(str(pred))
+                fp.append(_compact_grid_fingerprint(pred, pred_np))
             except Exception:
                 errors.append(1.0)
                 fp.append("ERR")
+                in_cells = len(inp) * len(inp[0]) if inp and inp[0] else 1
+                cost_units += max(1, in_cells * max(1, tree.size()))
 
         mean_error = sum(errors) / max(len(errors), 1)
         return (
             mean_error + self.lam * tree.size(),
             tuple(fp),
             errors,
-            self.fuzz_hash(tree),
+            "",
+            max(1, int(cost_units)),
         )
 
     def primitive_names(self) -> list[str]:
@@ -369,7 +429,7 @@ class ARCDomain(Domain):
         return 1
 
     def fitness(self, tree: Node) -> float:
-        score, _, _, _ = self.evaluate_candidate(tree)
+        score, _, _, _, _ = self.evaluate_candidate(tree)
         return score
         
     def solve(self, config: SearchConfig | None = None, transition_matrix: dict[str, dict[str, float]] | None = None, on_step: Any | None = None) -> SearchResult:
