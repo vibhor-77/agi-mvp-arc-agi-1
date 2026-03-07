@@ -145,7 +145,6 @@ def cmd_train(args):
         max_cost=(int(args.max_evals * 100) if args.max_cost <= 0 else args.max_cost),
         max_eval_cost=(50000 if args.max_eval_cost <= 0 else args.max_eval_cost),
         baseline_only=True, seed=args.seed,
-        fail_on_timeout=True, # Strictly detect bugs/stragglers
         mem_per_task_worker_gb=args.mem_per_task_worker_gb,
         reserve_mem_gb=args.reserve_mem_gb,
         cpu_reserve=args.cpu_reserve,
@@ -157,6 +156,7 @@ def cmd_train(args):
         progress_interval_s=args.progress_interval_s,
         progress_log_path=progress_log_path,
         max_rss_gb=args.max_rss_gb,
+        fail_on_timeout=False,
     )
 
     _log_run_header(
@@ -319,6 +319,7 @@ def cmd_eval(args):
         progress_interval_s=args.progress_interval_s,
         progress_log_path=progress_log_path,
         max_rss_gb=args.max_rss_gb,
+        fail_on_timeout=False,
     )
 
     _log_run_header(

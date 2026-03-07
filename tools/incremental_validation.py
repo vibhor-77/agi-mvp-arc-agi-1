@@ -80,9 +80,29 @@ def run_tier_3(args):
     ]
     subprocess.run(cmd, check=True)
 
+def run_tier_4(args):
+    """Tier 4: Global Benchmark (N=100)"""
+    print(f"\n[🔬 TIER 4] Testing Global Benchmark with Compounding (N=100)")
+    print("Hypothesis: Continuous compounding increases solve rates at scale on randomized evaluation tasks.")
+    
+    timestamp = int(time.time())
+    cmd = [
+        sys.executable, "agi.py", "train",
+        "--tasks", "100",
+        "--batch-size", "10",
+        "--epochs", "3",
+        "--data", "arc_data/data/evaluation",
+        "--shuffle", "--seed", "42",
+        "--beam-size", "50",
+        "--generations", "150",
+        "--task-workers", "4",
+        "--report", f"reports/tier4_compounding_{timestamp}.md"
+    ]
+    subprocess.run(cmd, check=True)
+
 def main():
     parser = argparse.ArgumentParser(description="Incremental Scientific Validation")
-    parser.add_argument("--tier", type=int, choices=[1, 2, 3], required=True)
+    parser.add_argument("--tier", type=int, choices=[1, 2, 3, 4], required=True)
     args = parser.parse_args()
     
     if args.tier == 1:
@@ -91,6 +111,8 @@ def main():
         run_tier_2(args)
     elif args.tier == 3:
         run_tier_3(args)
+    elif args.tier == 4:
+        run_tier_4(args)
     else:
         print("Tier not implemented yet.")
 
