@@ -445,12 +445,21 @@ def random_tree(
 
     # DreamCoder Generative Prior: 80% learned transitions, 20% uniform exploration
     op = None
-    if transition_matrix and parent_op and parent_op in transition_matrix:
-        weights_dict = transition_matrix[parent_op]
-        if weights_dict:
-            weights = [weights_dict.get(o, 0.0) * 0.8 + (0.2 / len(op_list)) for o in op_list]
-            op = rng.choices(op_list, weights=weights, k=1)[0]
-            
+    
+    # If starting from the very top, we often want to use 'ROOT' weights
+    current_parent = parent_op if parent_op else "ROOT"
+    
+    if transition_matrix and current_parent in transition_matrix:
+        weights_dict = transition_matrix[current_parent]
+        if weights_dict and rng.random() < 0.80:
+            names = list(weights_dict.keys())
+            probs = list(weights_dict.values())
+            # Normalize Probs
+            total = sum(probs)
+            if total > 0:
+                probs = [p/total for p in probs]
+                op = rng.choices(names, weights=probs, k=1)[0]
+    
     if op is None:
         op = rng.choice(op_list)
         

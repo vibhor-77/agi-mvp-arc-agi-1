@@ -124,9 +124,10 @@ def select_primitives_for_task(task: "ARCTask", op_pool: list[str], max_ops: int
 
     grow_tokens = ("scale", "pad", "repeat", "stack", "fractal", "inflate")
     shrink_tokens = ("crop", "downscale")
-    color_tokens = ("swap", "mod", "replace", "fill", "color", "invert", "majority")
+    color_tokens = ("swap", "mod", "replace", "fill", "color", "invert", "majority", "pfc", "pdc", "rainbow")
     geom_tokens = ("rot", "refl", "trsp", "mirror", "diag", "align")
-    object_tokens = ("obj", "cc", "extract", "keep_largest", "render")
+    object_tokens = ("obj", "cc", "extract", "keep_largest", "render", "max_obj", "plo", "stack_v", "sort_h")
+    anchor_tokens = ("place", "get_r", "get_c", "crop")
 
     # Measure shape trends across train examples
     grows = shrinks = same = 0
@@ -163,10 +164,10 @@ def select_primitives_for_task(task: "ARCTask", op_pool: list[str], max_ops: int
             s += 3
         if shrinks > 0 and any(t in low for t in shrink_tokens):
             s += 3
-        if same > 0 and ("hstack" in low or "vstack" in low):
-            s -= 2
+        if grows > 0 and any(t in low for t in anchor_tokens):
+            s += 3
         if any(t in low for t in object_tokens):
-            s += 2
+            s += 4
         scored.append((s, op))
 
     scored.sort(key=lambda x: (-x[0], x[1]))
@@ -468,17 +469,97 @@ class ARCDomain(Domain):
         score, _, _, _, _ = self.evaluate_candidate(tree)
         return score
         
+    def extract_task_features(self) -> dict[str, Any]:
+        """Compute high-level heuristics from the first training pair."""
+        from .primitives import _get_all_objects
+        
+        pair = self.task.train_pairs[0]
+        inp, out = pair[0], pair[1]
+        inp_np = np.asarray(inp, dtype=np.int16)
+        out_np = np.asarray(out, dtype=np.int16)
+        
+        # 1. Object Density
+        objs = _get_all_objects(inp)
+        n_objs = len(objs)
+        
+        # 2. Color Entropy
+        unique_colors = np.unique(inp_np)
+        n_colors = len(unique_colors[unique_colors != 0])
+        
+        # 3. Geometric Change
+        resized = inp_np.shape != out_np.shape
+        
+        # 4. Symmetry
+        sym_h = np.all(inp_np == np.flip(inp_np, axis=0))
+        sym_v = np.all(inp_np == np.flip(inp_np, axis=1))
+        
+        return {
+            "n_objs": n_objs,
+            "n_colors": n_colors,
+            "resized": resized,
+            "grid_size": inp_np.size,
+            "sym_h": sym_h,
+            "sym_v": sym_v
+        }
+
+    def get_adaptive_weights(self, features: dict[str, Any]) -> dict[str, dict[str, float]]:
+        """Bias the transition matrix based on extracted features."""
+        # Baseline transition matrix (uniform for now, but we boost specific primitives)
+        matrix: dict[str, dict[str, float]] = {"ROOT": {}}
+        
+        def boost(op: str, weight: float):
+            matrix["ROOT"][op] = matrix["ROOT"].get(op, 1.0) * weight
+
+        # Heuristic 1: High Object Density -> Boost Collective/Map Primitives
+        if features["n_objs"] > 3:
+            boost("g_rainbow", 3.0)
+            boost("g_stack_v", 3.0)
+            boost("g_max_obj", 2.0)
+            boost("g_sort_h", 2.0)
+            
+        # Heuristic 2: Resized -> Boost Placement and Cropping
+        if features["resized"]:
+            boost("g_place", 4.0)
+            boost("g_crop", 3.0)
+            boost("g_fill_dom", 2.0)
+            
+        # Heuristic 3: High Color Entropy -> Boost Context/Color Primitives
+        if features["n_colors"] > 4:
+            boost("g_pdc", 2.0)
+            boost("g_pfc", 2.0)
+            boost("g_plo", 2.0)
+            
+        # Heuristic 4: Symmetry -> Boost Rotations and Reflections
+        if features["sym_h"] or features["sym_v"]:
+            boost("grot90", 3.0)
+            boost("grot180", 2.0)
+            boost("grefl_h", 3.0)
+            boost("grefl_v", 3.0)
+            boost("gmirror_h", 2.0)
+            boost("gmirror_v", 2.0)
+            
+        return matrix
+
     def solve(self, config: SearchConfig | None = None, transition_matrix: dict[str, dict[str, float]] | None = None, on_step: Any | None = None) -> SearchResult:
         """
-        Execute beam search to find the best generic expression tree
-        that mapping inputs to outputs for this task.
-
-        Returns
-        -------
-        SearchResult
+        Execute beam search with adaptive heuristic weighting.
         """
         from .primitives import registry
         from core.search import BeamSearch
+        
+        # 1. Extract features and compute adaptive weights
+        features = self.extract_task_features()
+        adaptive_matrix = self.get_adaptive_weights(features)
+        
+        # 2. Merge with provided transition_matrix (if any)
+        if transition_matrix:
+            # Deep merge (simplified)
+            for p, children in transition_matrix.items():
+                if p not in adaptive_matrix:
+                    adaptive_matrix[p] = {}
+                for c, w in children.items():
+                    adaptive_matrix[p][c] = adaptive_matrix[p].get(c, 1.0) * w
+
         op_arities = {name: registry.arity(name) for name in self.primitive_names()}
         searcher = BeamSearch(
             fitness_fn=self.fitness,
@@ -487,7 +568,7 @@ class ARCDomain(Domain):
             config=config or SearchConfig(),
             op_arities=op_arities,
             evaluate_fn=self.evaluate_candidate,
-            transition_matrix=transition_matrix,
+            transition_matrix=adaptive_matrix,
         )
         result = searcher.run(on_step=on_step)
         self.on_result(result)
