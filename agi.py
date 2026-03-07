@@ -168,90 +168,81 @@ def cmd_train(args):
         model_path=model_path,
         log_file=log_file,
     )
-    
     for epoch in range(1, args.epochs + 1):
+        batch_size = args.batch_size if args.batch_size > 0 else len(tasks)
         ops = registry.names(domain="arc")
         
-        # Pass 1: Standard Search
-        report = evaluate_tasks(
-            tasks, ops, cfg, label=f"Epoch {epoch} - Pass 1", 
-            transition_matrix=lib.transition_matrix, learned_ops=compact_learned_ops,
-            epoch_str=f"Epoch {epoch}/{args.epochs}",
-            report_callback=lambda r: r.save(report_path)
-        )
-        
-        # Identify near-misses for Pass 2 refinement (>= 80% acc but not solved)
-        near_miss_tasks = [
-            t for t in tasks 
-            if any(r.task_name == t.name and not r.solved and r.test_acc >= 0.80 for r in report.results)
-        ]
-        
-        if near_miss_tasks:
-            print(f"  [Refinement] Found {len(near_miss_tasks)} near-miss tasks. Re-running with 2x budget...")
-            refine_cfg = BenchmarkConfig(**asdict(cfg))
-            refine_cfg.beam_size *= 2
-            if refine_cfg.max_evals: refine_cfg.max_evals *= 2
-            refine_cfg.generations += 10
+        for i in range(0, len(tasks), batch_size):
+            chunk = tasks[i : i + batch_size]
+            chunk_label = f"Epoch {epoch} [{i//batch_size + 1}]"
             
-            # Show cumulative progress in the scoreboard
-            solves_p1 = sum(1 for r in report.results if r.solved)
-            near_p1 = sum(1 for r in report.results if not r.solved and r.test_acc >= 0.8)
-            global_stats = {
-                "offset": len(tasks) - len(near_miss_tasks),
+            chunk_stats = {
+                "offset": i,
                 "global_total": len(tasks),
-                "global_solved": solves_p1,
-                "global_near": near_p1 - len(near_miss_tasks), # Those not in this pass
+                "global_solved": sum(1 for r in cumulative_solved_ids),
+                "global_near": 0 # Estimated
             }
-            
-            refine_report = evaluate_tasks(
-                near_miss_tasks, ops, refine_cfg, label=f"Epoch {epoch} - Pass 2 (Refinement)", 
+
+            # Pass 1: Standard Search for this chunk
+            report = evaluate_tasks(
+                chunk, ops, cfg, label=chunk_label, 
                 transition_matrix=lib.transition_matrix, learned_ops=compact_learned_ops,
-                epoch_str=f"Epoch {epoch}/{args.epochs} [Refine]",
-                report_callback=None,
-                global_stats=global_stats
+                epoch_str=f"Epoch {epoch}/{args.epochs}",
+                report_callback=lambda r: r.save(report_path),
+                global_stats=chunk_stats
             )
             
-            # Merge refined results back into main report
-            refined_map = {r.task_name: r for r in refine_report.results}
-            refine_fixes = 0
-            for i, r in enumerate(report.results):
-                if r.task_name in refined_map:
-                    best_refined = refined_map[r.task_name]
-                    if best_refined.solved and not r.solved:
-                        refine_fixes += 1
-                        report.results[i] = best_refined
-                    elif best_refined.test_acc > r.test_acc:
-                        report.results[i] = best_refined
+            # Identify near-misses for Pass 2 refinement (>= 80% acc but not solved)
+            near_miss_tasks = [
+                t for t in chunk 
+                if any(r.task_name == t.name and not r.solved and r.test_acc >= 0.80 for r in report.results)
+            ]
             
-            print(f"  [Refinement] Delta: +{refine_fixes} tasks solved via Pass 2.")
-            report.label = f"Epoch {epoch} (Refined: +{refine_fixes})"
-            report.save(report_path)
+            if near_miss_tasks:
+                print(f"  [Refinement] Found {len(near_miss_tasks)} near-miss tasks in chunk. Re-running with 2x budget...")
+                refine_cfg = BenchmarkConfig(**asdict(cfg))
+                refine_cfg.beam_size *= 2
+                if refine_cfg.max_evals: refine_cfg.max_evals *= 2
+                refine_cfg.generations += 10
+                
+                refine_report = evaluate_tasks(
+                    near_miss_tasks, ops, refine_cfg, label=f"{chunk_label} (Refine)", 
+                    transition_matrix=lib.transition_matrix, learned_ops=compact_learned_ops,
+                    epoch_str=f"{chunk_label} [Refine]",
+                    report_callback=None
+                )
+                
+                # Merge refined results back into main report
+                refined_map = {r.task_name: r for r in refine_report.results}
+                for j, r in enumerate(report.results):
+                    if r.task_name in refined_map:
+                        best_refined = refined_map[r.task_name]
+                        if best_refined.test_acc > r.test_acc:
+                            report.results[j] = best_refined
 
-        # Sleep Phase: Extract from both solved AND near-solved (>=90% accuracy)
-        successes = {
-            r.task_name: r.best_tree 
-            for r in report.results 
-            if (r.solved or r.test_acc >= 0.90) and r.best_tree
-        }
-        
-        # Auto-tune min_tasks: if solve rate is low, be more aggressive/exploratory.
-        solves = sum(1 for r in report.results if r.solved)
-        mt = 1 if solves < 10 else 2
-        print(f"  [Sleep] Solved={solves}. Extracting with min_tasks={mt}...")
-        
-        lib.extract_from_tasks(successes, min_size=3, min_tasks=mt)
-        lib.register_all(domain="arc")
-        lib.save()
-
-        # Update learned_ops for worker serialization in next epoch
-        compact_learned_ops = {
-            name: {"expr": meta.get("expr", ""), "arity": int(meta.get("arity", 1))}
-            for name, meta in lib.learned_ops.items()
-            if meta.get("expr")
-        }
-        
-        usage = sum(1 for r in report.results if r.solved and "lib_op_" in str(r.found_expr))
-        print(f"  [Analysis] Epoch {epoch}: {solves} solved | {len(lib.learned_ops)} abstractions | {usage} used learned ops.")
+            # Sleep Phase for this chunk: Extract and Compound
+            chunk_successes = {
+                r.task_name: r.best_tree 
+                for r in report.results 
+                if (r.solved or r.test_acc >= 0.90) and r.best_tree
+            }
+            
+            if chunk_successes:
+                solves_in_chunk = sum(1 for r in report.results if r.solved)
+                mt = 1 if solves_in_chunk < 2 else 2
+                lib.extract_from_tasks(chunk_successes, min_size=3, min_tasks=mt)
+                lib.register_all(domain="arc")
+                lib.save()
+                
+                # Refresh compact_learned_ops for next chunk
+                compact_learned_ops = {
+                    name: {"expr": meta.get("expr", ""), "arity": int(meta.get("arity", 1))}
+                    for name, meta in lib.learned_ops.items()
+                    if meta.get("expr")
+                }
+            
+            newly_solved = {r.task_name for r in report.results if r.solved}
+            cumulative_solved_ids.update(newly_solved)
 
         # Validation Pass (Holdout Set)
         if val_tasks:
@@ -382,6 +373,7 @@ def main():
     shared.add_argument("--stall-kill-s", type=float, default=0.0, help="Kill worker only if no eval progress for N seconds (0=off).")
     shared.add_argument("--primitive-cap", type=int, default=80)
     shared.add_argument("--shuffle", action="store_true", help="Randomize task order for scientific validity")
+    shared.add_argument("--batch-size", type=int, default=0, help="If > 0, enables micro-batch compounding within epochs.")
 
     p_train = subparsers.add_parser("train", parents=[shared])
     p_train.add_argument("--data", type=str, default="arc_data/data/training")
