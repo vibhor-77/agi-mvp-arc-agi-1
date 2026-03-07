@@ -20,6 +20,7 @@ import json
 import os
 import sys
 import time
+import numpy as np
 from dataclasses import asdict
 
 from domains.arc.runner import load_tasks_from_dir, BenchmarkConfig, evaluate_tasks
@@ -123,6 +124,11 @@ def cmd_train(args):
         if meta.get("expr")
     }
     
+    val_tasks = []
+    if args.val_tasks > 0:
+        val_tasks = setup_tasks(args.val_data, args.val_tasks, None)
+        print(f"  [Validation] Loaded {len(val_tasks)} tasks from {args.val_data}")
+
     cfg = BenchmarkConfig(
         beam_size=args.beam_size, offspring=args.offspring, generations=args.generations,
         task_workers=args.task_workers, workers=args.workers, timeout_s=(None if args.timeout <= 0 else args.timeout), max_evals=args.max_evals,
@@ -235,6 +241,21 @@ def cmd_train(args):
         usage = sum(1 for r in report.results if r.solved and "lib_op_" in str(r.found_expr))
         print(f"  [Analysis] Epoch {epoch}: {solves} solved | {len(lib.learned_ops)} abstractions | {usage} used learned ops.")
 
+        # Validation Pass (Holdout Set)
+        if val_tasks:
+            print(f"\n  {'='*40}\n  [VALIDATION] Epoch {epoch} Holdout Evaluation\n  {'='*40}")
+            val_cfg = BenchmarkConfig(**asdict(cfg))
+            # Validation always uses base budget to measure true generalization
+            val_report = evaluate_tasks(
+                val_tasks, ops, val_cfg, label=f"Epoch {epoch} - Validation", 
+                transition_matrix=lib.transition_matrix, learned_ops=compact_learned_ops,
+                epoch_str=f"Epoch {epoch} [Val]",
+                report_callback=None
+            )
+            v_solves = sum(1 for r in val_report.results if r.solved)
+            v_acc = np.mean([r.test_acc for r in val_report.results]) if val_report.results else 0
+            print(f"  [Validation] Results: {v_solves}/{len(val_tasks)} solved | Mean Acc: {v_acc:.3f}")
+            
     print(f"\n✅ Training Complete. Model: {model_path}")
     return model_path
 
@@ -327,6 +348,8 @@ def main():
 
     p_train = subparsers.add_parser("train", parents=[shared])
     p_train.add_argument("--data", type=str, default="arc_data/data/training")
+    p_train.add_argument("--val-data", type=str, default="arc_data/data/evaluation")
+    p_train.add_argument("--val-tasks", type=int, default=100)
     p_train.add_argument("--epochs", type=int, default=5)
     p_train.add_argument("--model", type=str, default=None)
     p_train.add_argument("--report", type=str, default=None)
