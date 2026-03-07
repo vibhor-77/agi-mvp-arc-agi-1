@@ -281,6 +281,7 @@ def cmd_train(args):
 
 def cmd_eval(args):
     timestamp = get_timestamp()
+    log_file = setup_output_logging(timestamp)
     report_path = args.report or f"reports/eval_{timestamp}.md"
     progress_log_path = args.progress_log or f"logs/eval_progress_{timestamp}.jsonl"
     
@@ -330,6 +331,7 @@ def cmd_eval(args):
         progress_log_path=progress_log_path,
         report_path=report_path,
         model_path=model_path,
+        log_file=log_file,
     )
     
     report = evaluate_tasks(

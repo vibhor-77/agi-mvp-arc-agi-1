@@ -41,7 +41,8 @@ All primitives treat 0 as background unless stated otherwise.
 from __future__ import annotations
 
 import copy
-from typing import Any, Callable
+from typing import List, Tuple, Any, Dict, Set, Optional, Callable
+import collections
 import numpy as np
 from core.primitives import registry
 
@@ -1048,9 +1049,9 @@ def g_extract_objects(g: Grid) -> Grid:
                 # BFS to find the object
                 obj_cells = [(r, c)]
                 visited.add((r, c))
-                queue = [(r, c)]
+                queue = collections.deque([(r, c)])
                 while queue:
-                    curr_r, curr_c = queue.pop(0)
+                    curr_r, curr_c = queue.popleft()
                     for nr, nc in get_neighbors(curr_r, curr_c, col):
                         visited.add((nr, nc))
                         obj_cells.append((nr, nc))
@@ -1231,9 +1232,9 @@ def _get_all_objects(g: Grid) -> list[tuple[int, int, list[tuple[int, int]]]]:
             if col != 0 and (r, c) not in visited:
                 obj_cells = [(r, c)]
                 visited.add((r, c))
-                queue = [(r, c)]
+                queue = collections.deque([(r, c)])
                 while queue:
-                    curr_r, curr_c = queue.pop(0)
+                    curr_r, curr_c = queue.popleft()
                     for nr, nc in get_neighbors(curr_r, curr_c, col):
                         visited.add((nr, nc))
                         obj_cells.append((nr, nc))
@@ -1716,8 +1717,9 @@ def g_flood_fill(g: Grid) -> Grid:
                     border_connected.add((r, c))
                     queue.append((r, c))
     
+    queue = collections.deque(queue)
     while queue:
-        cr, cc = queue.pop(0)
+        cr, cc = queue.popleft()
         for dr, dc in [(-1,0),(1,0),(0,-1),(0,1)]:
             nr, nc = cr+dr, cc+dc
             if 0 <= nr < R and 0 <= nc < C and g[nr][nc] == 0 and (nr, nc) not in border_connected:
@@ -1757,10 +1759,10 @@ def g_extract_objects_any(g: Grid) -> Grid:
         for c in range(C):
             if g[r][c] != 0 and (r, c) not in visited:
                 obj_cells = []
-                queue = [(r, c)]
+                queue = collections.deque([(r, c)])
                 visited.add((r, c))
                 while queue:
-                    cr, cc = queue.pop(0)
+                    cr, cc = queue.popleft()
                     obj_cells.append((cr, cc))
                     for dr, dc in [(-1,0),(1,0),(0,-1),(0,1)]:
                         nr, nc = cr+dr, cc+dc
@@ -1827,10 +1829,10 @@ def g_unique_color_per_obj(g: Grid) -> Grid:
             if g[r][c] != 0 and (r, c) not in visited:
                 color_idx += 1
                 assign_color = color_idx % 10 if color_idx % 10 != 0 else 1
-                queue = [(r, c)]
+                queue = collections.deque([(r, c)])
                 visited.add((r, c))
                 while queue:
-                    cr, cc = queue.pop(0)
+                    cr, cc = queue.popleft()
                     out[cr][cc] = assign_color
                     for dr, dc in [(-1,0),(1,0),(0,-1),(0,1)]:
                         nr, nc = cr+dr, cc+dc
@@ -1851,10 +1853,10 @@ def _count_objects(g: Grid) -> int:
         for c in range(C):
             if g[r][c] != 0 and (r, c) not in visited:
                 count += 1
-                queue = [(r, c)]
+                queue = collections.deque([(r, c)])
                 visited.add((r, c))
                 while queue:
-                    cr, cc = queue.pop(0)
+                    cr, cc = queue.popleft()
                     for dr, dc in [(-1,0),(1,0),(0,-1),(0,1)]:
                         nr, nc = cr+dr, cc+dc
                         if 0 <= nr < R and 0 <= nc < C and g[nr][nc] != 0 and (nr, nc) not in visited:
@@ -2225,10 +2227,10 @@ def _find_connected_components(g: Grid, fg_only: bool = True) -> list[list[tuple
                 continue
             # BFS
             component = []
-            queue = [(sr, sc)]
+            queue = collections.deque([(sr, sc)])
             visited[sr][sc] = True
             while queue:
-                r, c = queue.pop(0)
+                r, c = queue.popleft()
                 component.append((r, c))
                 for dr, dc in [(-1,0),(1,0),(0,-1),(0,1)]:
                     nr, nc = r+dr, c+dc
