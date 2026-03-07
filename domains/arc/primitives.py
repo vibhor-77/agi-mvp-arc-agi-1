@@ -94,15 +94,35 @@ def _safe_grid_op(fn: Callable) -> Callable:
     arg_annotations = list(getattr(fn, "__annotations__", {}).values())
     wants_numpy = any("ndarray" in str(a) for a in arg_annotations)
 
+    MAX_DIM = 64 # ARC max is 30, 64 gives search room but prevents explosion
+
     def _wrapped(*args, **kwargs):
+        # Initial check on input sizes
+        for a in args:
+            if isinstance(a, list) and (len(a) > MAX_DIM or (a and len(a[0]) > MAX_DIM)):
+                 return _clone(args[0]) if args else []
+            if isinstance(a, np.ndarray) and (a.shape[0] > MAX_DIM or a.shape[1] > MAX_DIM):
+                 return _clone(args[0]) if args else []
+
         normalized_args = tuple(_to_numpy_grid(a) for a in args) if wants_numpy else args
         try:
             res = fn(*normalized_args, **kwargs)
+            # Size guard on result
+            if isinstance(res, np.ndarray):
+                if res.shape[0] > MAX_DIM or res.shape[1] > MAX_DIM:
+                    raise ValueError("Grid explosion detected")
+            elif isinstance(res, list) and res and isinstance(res[0], list):
+                if len(res) > MAX_DIM or len(res[0]) > MAX_DIM:
+                    raise ValueError("Grid explosion detected")
+            
             return _to_python_grid(res)
         except Exception:
             # Retry with original argument types for list-native implementations.
             try:
                 res = fn(*args, **kwargs)
+                if isinstance(res, list) and res and isinstance(res[0], list):
+                    if len(res) > MAX_DIM or len(res[0]) > MAX_DIM:
+                         raise ValueError("Grid explosion detected")
                 return _to_python_grid(res)
             except Exception:
                 pass

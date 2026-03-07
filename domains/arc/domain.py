@@ -205,6 +205,10 @@ if njit is not None:
 else:
     _fast_cell_match_numba = None
 
+class BudgetExceededException(Exception):
+    """Raised when an expression tree exceeds its allocated Pixel-Budget."""
+    pass
+
 def _to_np_grid(g: Grid | np.ndarray) -> np.ndarray | None:
     """Normalize grid-like values to a 2D NumPy array."""
     if isinstance(g, np.ndarray):
@@ -298,6 +302,7 @@ class ARCDomain(Domain):
         primitive_subset: list[str] | None = None,
         library: Any = None,
         profile_primitives: bool = False,
+        max_eval_cost: int | None = None,
     ) -> None:
         self.task = task
         self.lam = lam
@@ -310,25 +315,43 @@ class ARCDomain(Domain):
         self._discovery_start_time = time.time()
         self._primitive_profile: dict[str, dict[str, float]] = {}
         self._profile_primitives = profile_primitives
+        self._max_eval_cost = max_eval_cost
         # Cache immutable targets as NumPy once to avoid per-eval conversion overhead.
         self._train_targets_np = [_to_np_grid(out) for _, out in self.task.train_pairs]
-        if self._profile_primitives:
-            self._instrument_primitives()
+        self._current_eval_cost = 0 # Tracked during evaluate_candidate
+        self._instrument_primitives()
 
     def _instrument_primitives(self) -> None:
         wrapped: dict[str, Any] = {}
         for name, fn in self._primitives.items():
-            self._primitive_profile[name] = {"calls": 0.0, "time_s": 0.0}
+            self._primitive_profile[name] = {"calls": 0.0, "time_s": 0.0, "pixels": 0.0}
 
             def _mk(n: str, f: Any):
                 def _wrapped(*args, **kwargs):
                     t0 = time.perf_counter()
                     try:
-                        return f(*args, **kwargs)
-                    finally:
-                        stat = self._primitive_profile[n]
-                        stat["calls"] += 1.0
-                        stat["time_s"] += (time.perf_counter() - t0)
+                        res = f(*args, **kwargs)
+                        # Pixel-Budgeting: Charge for the complexity of the grid produced
+                        px = 1
+                        if isinstance(res, (list, np.ndarray)):
+                             r_np = _to_np_grid(res)
+                             if r_np is not None:
+                                 px = int(r_np.shape[0] * r_np.shape[1])
+                        
+                        self._current_eval_cost += px
+                        
+                        if self._max_eval_cost and self._current_eval_cost > self._max_eval_cost:
+                            raise BudgetExceededException(f"Eval cost {self._current_eval_cost} exceeded limit {self._max_eval_cost}")
+
+                        if self._profile_primitives:
+                            stat = self._primitive_profile[n]
+                            stat["calls"] += 1.0
+                            stat["time_s"] += (time.perf_counter() - t0)
+                            stat["pixels"] += px
+                        return res
+                    except Exception:
+                        self._current_eval_cost += 1
+                        raise
                 return _wrapped
 
             wrapped[name] = _mk(name, fn)
@@ -380,9 +403,10 @@ class ARCDomain(Domain):
         Returns (fitness, fingerprint, lexicase_errors, fuzz_hash).
         """
         self._discovery_eval_count += 1
+        self._current_eval_cost = 0 # Reset for this specific tree
+        
         errors: list[float] = []
         fp: list[str] = []
-        cost_units = 0
 
         MAX_EVAL_CELLS = 10_000
         for idx, (inp, _out) in enumerate(self.task.train_pairs):
@@ -392,33 +416,36 @@ class ARCDomain(Domain):
                 target_np = self._train_targets_np[idx]
                 if pred_np is None or target_np is None:
                     acc = 0.0
-                    in_cells = len(inp) * len(inp[0]) if inp and inp[0] else 1
-                    cost_units += max(1, in_cells * max(1, tree.size()))
                 else:
                     pred_cells = int(pred_np.shape[0] * pred_np.shape[1])
-                    # Hard guard against giant intermediate grids causing memory blowups.
+                    # Infrastructure guard (memory safety)
                     if pred_cells > MAX_EVAL_CELLS:
                         acc = 0.0
                     else:
                         acc = grid_cell_accuracy(pred_np, target_np)
-                    out_cells = int(target_np.shape[0] * target_np.shape[1])
-                    pair_cells = max(pred_cells, out_cells)
-                    cost_units += max(1, pair_cells * max(1, tree.size()))
+                
                 errors.append(1.0 - acc)
                 fp.append(_compact_grid_fingerprint(pred, pred_np))
+            except BudgetExceededException:
+                errors.append(1.0)
+                fp.append("BUDGET_EXCEEDED")
+                # Ensure we report the actual cost that triggered the exception
+                break 
             except Exception:
                 errors.append(1.0)
                 fp.append("ERR")
-                in_cells = len(inp) * len(inp[0]) if inp and inp[0] else 1
-                cost_units += max(1, in_cells * max(1, tree.size()))
+                self._current_eval_cost += 1 # Penalty for crash
 
         mean_error = sum(errors) / max(len(errors), 1)
+        # Cost is pixels processed * tree size (to penalize complex programs producing large outputs)
+        final_cost = max(1, int(self._current_eval_cost))
+        
         return (
             mean_error + self.lam * tree.size(),
             tuple(fp),
             errors,
             "",
-            max(1, int(cost_units)),
+            final_cost,
         )
 
     def primitive_names(self) -> list[str]:

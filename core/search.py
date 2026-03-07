@@ -58,6 +58,7 @@ class SearchConfig:
     cooling_rate: float = 1.0
     max_evals: int | None = None
     max_cost: int | None = None
+    max_eval_cost: int | None = None  # Per-evaluation pixel budget
     timeout_s: float | None = None
 
 

@@ -136,7 +136,8 @@ def cmd_train(args):
     cfg = BenchmarkConfig(
         beam_size=args.beam_size, offspring=args.offspring, generations=args.generations,
         task_workers=args.task_workers, workers=args.workers, timeout_s=(None if args.timeout <= 0 else args.timeout), max_evals=args.max_evals,
-        max_cost=(None if args.max_cost <= 0 else args.max_cost),
+        max_cost=(int(args.max_evals * 100) if args.max_cost <= 0 else args.max_cost),
+        max_eval_cost=(50000 if args.max_eval_cost <= 0 else args.max_eval_cost),
         baseline_only=True, seed=args.seed,
         fail_on_timeout=True, # Strictly detect bugs/stragglers
         mem_per_task_worker_gb=args.mem_per_task_worker_gb,
@@ -306,7 +307,8 @@ def cmd_eval(args):
     cfg = BenchmarkConfig(
         beam_size=args.beam_size, offspring=args.offspring, generations=args.generations,
         task_workers=args.task_workers, workers=args.workers, timeout_s=(None if args.timeout <= 0 else args.timeout), max_evals=args.max_evals,
-        max_cost=(None if args.max_cost <= 0 else args.max_cost),
+        max_cost=(int(args.max_evals * 100) if args.max_cost <= 0 else args.max_cost),
+        max_eval_cost=(50000 if args.max_eval_cost <= 0 else args.max_eval_cost),
         baseline_only=True, seed=args.seed,
         mem_per_task_worker_gb=args.mem_per_task_worker_gb,
         reserve_mem_gb=args.reserve_mem_gb,
@@ -349,7 +351,8 @@ def main():
     shared.add_argument("--offspring", type=int, default=20)
     shared.add_argument("--generations", type=int, default=25)
     shared.add_argument("--max-evals", type=int, default=1000000)
-    shared.add_argument("--max-cost", type=int, default=0, help="Optional cost-unit budget per task (0=off).")
+    shared.add_argument("--max-cost", type=int, default=0, help="Optional total Pixel-Budget per task (0=off).")
+    shared.add_argument("--max-eval-cost", type=int, default=0, help="Optional per-evaluation Pixel-Budget (0=off).")
     shared.add_argument("--timeout", type=float, default=0.0)
     shared.add_argument("--progress-interval-s", type=float, default=5.0, help="Heartbeat interval in seconds.")
     shared.add_argument("--progress-log", type=str, default=None, help="Timestamped JSONL progress log path.")

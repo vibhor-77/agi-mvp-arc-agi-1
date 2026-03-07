@@ -157,8 +157,9 @@ class BenchmarkConfig:
     baseline_only: bool = False
     seed: int | None = None
     timeout_s: float | None = None  # Optional wall-clock safety (off by default for deterministic budgets)
-    max_evals: int | None = 1000000  # 1M evaluations (Deterministic Pruning)
-    max_cost: int | None = None
+    max_evals: int | None = 1000000  # 1M evaluations (Baseline Deterministic Limit)
+    max_cost: int | None = None     # Total Pixel-Budget (if set, overrides max_evals)
+    max_eval_cost: int | None = None # Per-evaluation Pixel-Budget
     mem_per_task_worker_gb: float = 3.0
     reserve_mem_gb: float = 10.0
     cpu_reserve: int = 2
@@ -536,6 +537,7 @@ def _run_task_process(
         timeout_s=cfg.timeout_s,
         max_evals=cfg.max_evals,
         max_cost=cfg.max_cost,
+        max_eval_cost=cfg.max_eval_cost,
     )
 
     task_t0 = time.time()
@@ -551,6 +553,7 @@ def _run_task_process(
         lam=cfg.lam,
         primitive_subset=selected_ops,
         profile_primitives=cfg.profile_primitives,
+        max_eval_cost=search_cfg.max_eval_cost,
     )
     domain.on_result = lambda x: None  # type: ignore[method-assign]
     
@@ -726,10 +729,28 @@ class LiveScoreboard:
 
         prefix = f" [{self.epoch_str}]" if self.epoch_str else ""
         
+        # If global stats provided, make main header global-aware for better intuition
+        disp_sol = sol
+        disp_near = near
+        disp_done = done
+        disp_total = self.n_total
+        disp_unsol = unsol
+        disp_pct = pct
+
+        if self.global_stats:
+            gs = self.global_stats
+            g_offset = gs.get("offset", 0)
+            disp_total = gs.get("global_total", self.n_total)
+            disp_sol = gs.get("global_solved", 0) + sol
+            disp_near = gs.get("global_near", 0) + near
+            disp_done = g_offset + done
+            disp_unsol = disp_total - disp_sol
+            disp_pct = 100 * disp_sol / max(disp_total, 1)
+
         main_scoreboard = (
             f"  ┌ scoreboard{prefix} ─\n"
-            f"  │ ✓ solved={sol} ({100*sol/max(done,1):.1f}%)  ⚠️ near={near}  ✗ unsolved={unsol}\n"
-            f"  │ → active={act}  ⏳ pending={pend}  done={done}/{self.n_total}  success={pct:.1f}%\n"
+            f"  │ ✓ solved={disp_sol} ({100*disp_sol/max(disp_done,1):.1f}%)  ⚠️ near={disp_near}  ✗ unsolved={disp_unsol}\n"
+            f"  │ → active={act}  ⏳ pending={pend}  done={disp_done}/{disp_total}  success={disp_pct:.1f}%\n"
             f"  │ TIME:  elapsed={elapsed:.1f}s (Throughput: {elapsed/max(done,1):.2f}s/task | Latency Avg: {avg_work_t:.1f}s)\n"
             f"  │ WORK:  speedup={speedup:.2f}x ({utilization:.1f}% core) | STRAGGLER: {max_run_t:.1f}s, {max_run_e/1000:.1f}k evals\n"
             f"  │ EVALS: total={total_evals/1000:.1f}k ({evals_p_s/1000:.2f}k/s | Per-Task Avg: {avg_work_e/1000:.1f}k)\n"
@@ -737,16 +758,8 @@ class LiveScoreboard:
         )
 
         if self.global_stats:
-            gs = self.global_stats
-            g_offset = gs.get("offset", 0)
-            g_total = gs.get("global_total", self.n_total)
-            g_solved = gs.get("global_solved", 0) + sol
-            g_near = gs.get("global_near", 0) + near
-            g_done = g_offset + done
-            g_pct = 100 * g_solved / max(g_done, 1)
-            
-            global_line = f"\n  │ GLOBAL: done={g_done}/{g_total} | solved={g_solved} ({g_pct:.1f}%) | near={g_near}"
-            main_scoreboard += global_line
+            # Add a local pass line instead of a global line at the bottom
+            main_scoreboard += f"\n  │ PASS:  done={done}/{self.n_total} | solved={sol} | near={near} | success={pct:.1f}%"
 
         return main_scoreboard
 
