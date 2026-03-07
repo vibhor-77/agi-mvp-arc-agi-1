@@ -1401,15 +1401,11 @@ def g_scale_3x(g: Grid) -> Grid:
 @_safe_grid_op
 def g_fractal_inflate(g: Grid) -> Grid:
     """Fractal expansion: replace each non-zero pixel with a copy of the entire grid."""
-    R, C = len(g), len(g[0])
-    out = [[0] * (C * C) for _ in range(R * R)]
-    for r in range(R):
-        for c in range(C):
-            if g[r][c] != 0:
-                for ir in range(R):
-                    for ic in range(C):
-                        out[r * R + ir][c * C + ic] = g[ir][ic]
-    return out
+    a = np.array(g, dtype=np.int8)
+    mask = (a != 0).astype(np.int8)
+    # Output is Kronecker product of mask and original grid
+    res = np.kron(mask, a)
+    return res.tolist()
 
 
 
@@ -2336,17 +2332,18 @@ def g_fractal_self(g: Grid) -> Grid:
     return res
 
 
+@_safe_grid_op
 def g_tile_self(g: Grid) -> Grid:
     """
     Tile the entire current grid (g) to fill a 30x30 workspace.
     """
-    rows, cols = _rows(g), _cols(g)
-    if rows == 0 or cols == 0: return g
-    res = [[0] * 30 for _ in range(30)]
-    for r in range(30):
-        for c in range(30):
-            res[r][c] = g[r % rows][c % cols]
-    return res
+    a = np.array(g, dtype=np.int8)
+    R, C = a.shape
+    if R == 0 or C == 0: return g
+    reps_r = (30 + R - 1) // R
+    reps_c = (30 + C - 1) // C
+    tiled = np.tile(a, (reps_r, reps_c))
+    return tiled[:30, :30].tolist()
 
 
 _OBJECT_LEVEL_OPS = {
