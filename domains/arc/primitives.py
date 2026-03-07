@@ -2646,7 +2646,97 @@ def g_tile_self(g: Grid) -> Grid:
     return tiled[:30, :30].tolist()
 
 
-_OBJECT_LEVEL_OPS = {
+# ---------------------------------------------------------------------------
+# ARC Collective Object Primitives (Loop-less Iteration)
+# ---------------------------------------------------------------------------
+
+def g_rainbow_objects(g: Grid) -> Grid:
+    """Extract all objects and color them 1, 2, 3... sequentially in the output."""
+    objs = _get_all_objects(g)
+    if not objs: return _clone(g)
+    R, C = len(g), len(g[0])
+    out = [[0]*C for _ in range(R)]
+    for idx, (min_r, min_c, box, cells) in enumerate(objs):
+        color = (idx % 9) + 1
+        for (r, c) in cells:
+            out[r][c] = color
+    return out
+
+def g_stack_objects_v(g: Grid) -> Grid:
+    """Rigid body gravity: slide each object down until it hits the bottom or another object."""
+    objs = _get_all_objects(g)
+    if not objs: return _clone(g)
+    R, C = len(g), len(g[0])
+    out = [[0]*C for _ in range(R)]
+    # Sort by original bottom row so we stack from bottom up
+    objs.sort(key=lambda x: x[0] + len(x[2]), reverse=True)
+    
+    for (min_r, min_c, box, cells) in objs:
+        curr_r = min_r
+        # Try to move down as far as possible
+        while curr_r + len(box) < R:
+            can_move = True
+            for br in range(len(box)):
+                for bc in range(len(box[0])):
+                    if box[br][bc] != 0:
+                        if out[curr_r + br + 1][min_c + bc] != 0:
+                            can_move = False
+                            break
+                if not can_move: break
+            if not can_move: break
+            curr_r += 1
+        # Place at final curr_r
+        for br in range(len(box)):
+            for bc in range(len(box[0])):
+                if box[br][bc] != 0:
+                    out[curr_r + br][min_c + bc] = box[br][bc]
+    return out
+
+def g_sort_objects_h(g: Grid) -> Grid:
+    """Sort all objects by area and place them sequentially from left to right."""
+    objs = _get_all_objects(g)
+    if not objs: return _clone(g)
+    # Sort by pixel count (area)
+    objs.sort(key=lambda x: len(x[3]))
+    R, C = len(g), len(g[0])
+    out = [[0]*C for _ in range(R)]
+    cursor_c = 0
+    for min_r, _, box, cells in objs:
+        bR, bC = len(box), len(box[0])
+        # If it fits in remaining width
+        if cursor_c + bC <= C:
+            # Center vertically or keep top? Let's keep top for now.
+            for r in range(bR):
+                for c in range(bC):
+                    if box[r][c] != 0 and r < R:
+                        out[r][cursor_c + c] = box[r][c]
+            cursor_c += bC + 1 # Space gap
+    return out
+
+def g_find_largest_object(g: Grid) -> Grid:
+    """Returns a grid containing ONLY the object with the most pixels (connected component)."""
+    objs = _get_all_objects(g)
+    if not objs: return [[0]*len(g[0]) for _ in range(len(g))]
+    largest = max(objs, key=lambda x: len(x[3]))
+    R, C = len(g), len(g[0])
+    out = [[0]*C for _ in range(R)]
+    for r, c in largest[3]:
+        out[r][c] = g[r][c]
+    return out
+
+# Register Collective Ops
+_COLLECTIVE_OPS = {
+    "g_rainbow": (g_rainbow_objects, "Recolor objects 1,2,3..."),
+    "g_stack_v": (g_stack_objects_v, "Rigid body gravity stack"),
+    "g_sort_h":  (g_sort_objects_h,  "Order objects by size (L->R)"),
+    "g_max_obj": (g_find_largest_object, "Isolate the largest object"),
+}
+
+for _name, (_fn, _desc) in _COLLECTIVE_OPS.items():
+    registry.register(_name, _safe_grid_op(_fn), domain="arc", description=_desc)
+
+# Restore missing object level ops
+_OBJECT_LEVEL_OPS_EXT = {
     "g_scale_by_color":      (g_scale_by_color,      "Scale each pixel to a block sized = color value"),
     "g_frame_each_pixel":    (g_frame_each_pixel,    "Draw 3x3 border of 1s around each isolated pixel"),
     "g_fill_rects_by_size":  (g_fill_rects_by_size,  "Fill rectangle interiors: 1=small, 2=large"),
@@ -2655,5 +2745,12 @@ _OBJECT_LEVEL_OPS = {
     "g_tile_self":           (g_tile_self,           "Tile grid to 30x30"),
 }
 
-for _name, (_fn, _desc) in _OBJECT_LEVEL_OPS.items():
+for _name, (_fn, _desc) in _OBJECT_LEVEL_OPS_EXT.items():
     registry.register(_name, _fn, domain="arc", description=_desc, arity=1, overwrite=True)
+
+# ---------------------------------------------------------------------------
+# DSL Registry Summary
+# ---------------------------------------------------------------------------
+
+# All arc ops are now registered into the singleton 'registry' in core/primitives.py.
+# To see the full list, run: python -c "from domains.arc.primitives import registry; print(registry.summary())"
