@@ -377,7 +377,7 @@ def main():
     shared.add_argument("--primitive-cap", type=int, default=80)
     shared.add_argument("--shuffle", action="store_true", help="Randomize task order for scientific validity")
     shared.add_argument("--batch-size", type=int, default=0, help="If > 0, enables micro-batch compounding within epochs.")
-    shared.add_argument("--lam", type=float, default=0.05, help="MDL complexity penalty coefficient.")
+    shared.add_argument("--lam", type=float, default=0.01, help="MDL complexity penalty coefficient.")
 
     p_train = subparsers.add_parser("train", parents=[shared])
     p_train.add_argument("--data", type=str, default="arc_data/data/training")

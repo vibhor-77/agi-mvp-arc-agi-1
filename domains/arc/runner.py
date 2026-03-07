@@ -563,6 +563,21 @@ def _run_task_process(
     train_acc = domain.train_accuracy(tree)
     test_acc  = domain.test_accuracy(tree)
     solved    = domain.check_solution(tree)
+    
+    # NEW: Local Refinement for Near-Misses (80%+)
+    if not solved and tree is not None and test_acc >= 0.80:
+        refined_tree = domain.refine_near_miss(tree)
+        refined_acc = domain.test_accuracy(refined_tree)
+        if refined_acc > test_acc:
+            tree = refined_tree
+            test_acc = refined_acc
+            train_acc = domain.train_accuracy(tree)
+            solved = domain.check_solution(tree)
+            # Update the result object so it gets saved correctly
+            result.best_tree = tree
+            result.best_fitness = domain.evaluate_candidate(tree)[0] # Includes lam penalty
+            result.solved = solved
+
     near      = test_acc >= 0.80
     elapsed   = time.time() - task_t0
     timed_out = (

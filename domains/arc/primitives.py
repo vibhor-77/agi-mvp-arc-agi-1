@@ -109,19 +109,17 @@ def _safe_grid_op(fn: Callable) -> Callable:
             if isinstance(a, np.ndarray) and (a.shape[0] > MAX_DIM or a.shape[1] > MAX_DIM):
                  return args[0].copy() if args else np.zeros((1,1))
 
-        # Determine if we can stay in NumPy
-        grids_in = [a for a in args if isinstance(a, (list, np.ndarray))]
-        all_numpy_in = len(grids_in) > 0 and all(isinstance(g, np.ndarray) for g in grids_in)
-        
-        # KEY PERFORMANCE FIX: If the primitive wants NumPy, we give it NumPy.
-        # IF IT DOES NOT, we MUST give it lists. Iterating over ndarray in Python loops is 10x slower.
+        # Stay in NumPy if the primitive supports it, otherwise convert to List.
+        # But critically, if we are ALREADY in the desired format, do nothing.
         if wants_numpy:
             normalized_args = tuple(_to_numpy_grid(a) for a in args)
         else:
-            normalized_args = tuple(_to_python_grid(a) for a in args)
+            # ONLY convert to python list if it's currently a numpy array (item indexing tax)
+            normalized_args = tuple(a.tolist() if isinstance(a, np.ndarray) else a for a in args)
 
         try:
             res = fn(*normalized_args, **kwargs)
+            
             # Size guard on result
             if isinstance(res, np.ndarray):
                 if res.shape[0] > MAX_DIM or res.shape[1] > MAX_DIM:
@@ -130,11 +128,9 @@ def _safe_grid_op(fn: Callable) -> Callable:
                 if len(res) > MAX_DIM or len(res[0]) > MAX_DIM:
                     raise ValueError("Grid explosion detected")
             
-            # If we are in a NumPy-friendly chain, stay in NumPy.
-            # But only if the result is actually an array (primitives might return ints).
-            if all_numpy_in and isinstance(res, np.ndarray):
-                return res
-            return _to_python_grid(res)
+            # Return as-is. The next node in the tree's _wrapped will handle the conversion IF needed.
+            # This avoids the redundant list<->array tax on every single node.
+            return res
         except Exception:
             # Fallback to the first argument
             if args:
@@ -795,6 +791,57 @@ def gcol_majority(g: Grid) -> Grid:
     """Per-column majority color fill (transpose of gmajority)."""
     return gtrsp(gmajority(gtrsp(g)))
 
+
+# ---------------------------------------------------------------------------
+# ARC Context Primitives (Object & Color Context)
+# ---------------------------------------------------------------------------
+
+def g_pick_dominant_color(g: np.ndarray) -> int:
+    """Return the color that appears most frequently in the grid."""
+    if g.size == 0: return 0
+    counts = np.bincount(g.flatten().astype(np.int64), minlength=10)
+    return int(np.argmax(counts))
+
+def g_pick_foreground_color(g: np.ndarray) -> int:
+    """Return the most frequent non-zero color."""
+    if g.size == 0: return 0
+    flat = g.flatten()
+    non_zero = flat[flat != 0]
+    if non_zero.size == 0: return 0
+    counts = np.bincount(non_zero.astype(np.int64), minlength=10)
+    return int(np.argmax(counts))
+
+def g_pick_color_of_largest_object(g: np.ndarray) -> int:
+    """Find the largest connected component (numba) and return its color."""
+    labels = _njit_label_same_color(g) if _njit_label_same_color else np.zeros_like(g)
+    if labels.max() == 0: return 0
+    counts = np.bincount(labels.flatten().astype(np.int64))
+    largest_label = np.argmax(counts[1:]) + 1
+    # Get the color of any pixel with this label
+    coords = np.where(labels == largest_label)
+    return int(g[coords[0][0], coords[1][0]])
+
+def g_fill_with_dominant_input(g: np.ndarray) -> np.ndarray:
+    """Fill the entire grid with the most common color from the input."""
+    color = g_pick_dominant_color(g)
+    return np.full_like(g, color)
+
+def g_fill_with_foreground_input(g: np.ndarray) -> np.ndarray:
+    """Fill the entire grid with the most common non-zero color from the input."""
+    color = g_pick_foreground_color(g)
+    return np.full_like(g, color)
+
+# Register Context Primitives
+_CONTEXT_OPS = {
+    "g_pdc": (g_pick_dominant_color, "Pick dominant color (Scalar)"),
+    "g_pfc": (g_pick_foreground_color, "Pick foreground color (Scalar)"),
+    "g_plo": (g_pick_color_of_largest_object, "Color of largest object (Scalar)"),
+    "g_fill_dom": (g_fill_with_dominant_input, "Fill with dominant color"),
+    "g_fill_fg": (g_fill_with_foreground_input, "Fill with foreground color"),
+}
+
+for name, (fn, desc) in _CONTEXT_OPS.items():
+    registry.register(name, _safe_grid_op(fn), domain="arc", description=desc)
 
 # ---------------------------------------------------------------------------
 # Registration

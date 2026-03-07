@@ -439,11 +439,18 @@ class ARCDomain(Domain):
                 self._current_eval_cost += 1 # Penalty for crash
 
         mean_error = sum(errors) / max(len(errors), 1)
-        # Cost is pixels processed * tree size (to penalize complex programs producing large outputs)
+        # Final cost is roughly throughput-proportional
         final_cost = max(1, int(self._current_eval_cost))
-        
+
+        # Scientific Change: Nonlinear MDL Progress Bonus
+        # If mean_error < 0.2 (80% accuracy), we relax the simplicity constraint
+        # to allow the tree to grow slightly to capture the remaining bit-perfections.
+        penalty = self.lam * tree.size()
+        if mean_error < 0.20:
+            penalty *= 0.5
+
         return (
-            mean_error + self.lam * tree.size(),
+            mean_error + penalty,
             tuple(fp),
             errors,
             "",
@@ -541,3 +548,49 @@ class ARCDomain(Domain):
             except Exception:
                 accs.append(0.0)
         return sum(accs) / max(len(accs), 1)
+
+    def refine_near_miss(self, tree: Node) -> Node:
+        """
+        If a solution is near-perfect (80%+), try local hill climbing on its constants.
+        """
+        if tree is None: return None
+        best_tree = tree
+        best_acc = self.test_accuracy(tree)
+        print(f"  [Refiner] Starting Hill-Climb on '{self.task.name}' (Base Acc: {best_acc:.4f})")
+        
+        # 1. Identify all constant-leaf nodes in the tree
+        def find_constants(node: Node, path: list[int] = []) -> list[list[int]]:
+            consts = []
+            if node.const is not None:
+                consts.append(path)
+            for i, child in enumerate(node.children):
+                consts.extend(find_constants(child, path + [i]))
+            return consts
+            
+        const_paths = find_constants(tree)
+        if not const_paths: return tree
+        
+        # 2. Sequential sweep for each constant (Hill climbing)
+        # We try values 0-9 to fix color/offset mismatches
+        current_tree = tree.clone()
+        for path in const_paths:
+            # Navigate to the node in current_tree
+            target = current_tree
+            for step in path:
+                target = target.children[step]
+            
+            orig_val = target.const
+            for v in range(10): # ARC Colors / Typical offsets
+                if v == orig_val: continue
+                target.const = float(v)
+                new_acc = self.test_accuracy(current_tree)
+                if new_acc > best_acc:
+                    best_acc = new_acc
+                    best_tree = current_tree.clone()
+                if best_acc >= 1.0: break
+            
+            if best_acc >= 1.0: break
+            # Reset to best found so far for next constant's sweep
+            current_tree = best_tree.clone()
+            
+        return best_tree
