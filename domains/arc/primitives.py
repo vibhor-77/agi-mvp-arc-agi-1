@@ -842,7 +842,6 @@ _CONTEXT_OPS = {
 
 for name, (fn, desc) in _CONTEXT_OPS.items():
     registry.register(name, _safe_grid_op(fn), domain="arc", description=desc)
-
 # ---------------------------------------------------------------------------
 # ARC Spatial Anchors (Relative Positioning)
 # ---------------------------------------------------------------------------
@@ -857,31 +856,55 @@ def g_get_c(g: np.ndarray, color: int) -> int:
     coords = np.where(g == color)
     return int(np.min(coords[1])) if coords[1].size > 0 else 0
 
-def g_place(g_obj: np.ndarray, r: int, c: int) -> np.ndarray:
-    """
-    Creates a 30x30 canvas (standard ARC max) and places g_obj at (r, c).
-    If out of bounds, it clips.
-    """
-    canvas = np.zeros((30, 30), dtype=np.int16)
-    R, C = g_obj.shape
+def g_place_like(g_ref: np.ndarray, g_obj: np.ndarray, r: int, c: int) -> np.ndarray:
+    """Creates a canvas sized like g_ref and places g_obj at (r, c)."""
+    R_ref, C_ref = g_ref.shape
+    canvas = np.zeros_like(g_ref)
+    R_obj, C_obj = g_obj.shape
     r_int, c_int = int(r), int(c)
     
-    # Calculate clipping
+    # Calculate clipping against ref canvas
     r_start = max(0, r_int)
-    r_end = min(30, r_int + R)
+    r_end = min(R_ref, r_int + R_obj)
     c_start = max(0, c_int)
-    c_end = min(30, c_int + C)
+    c_end = min(C_ref, c_int + C_obj)
     
+    if r_end <= r_start or c_end <= c_start:
+        return canvas
+        
     # Calculate source slicing
     src_r_start = max(0, -r_int)
     src_r_end = src_r_start + (r_end - r_start)
     src_c_start = max(0, -c_int)
     src_c_end = src_c_start + (c_end - c_start)
     
-    if r_end > r_start and c_end > c_start:
-        canvas[r_start:r_end, c_start:c_end] = g_obj[src_r_start:src_r_end, src_c_start:src_c_end]
-    
+    canvas[r_start:r_end, c_start:c_end] = g_obj[src_r_start:src_r_end, src_c_start:src_c_end]
     return canvas
+
+def g_paste(g_canvas: np.ndarray, g_obj: np.ndarray, r: int, c: int) -> np.ndarray:
+    """Pastes g_obj onto existing g_canvas at (r, c)."""
+    res = g_canvas.copy()
+    R_ref, C_ref = res.shape
+    R_obj, C_obj = g_obj.shape
+    r_int, c_int = int(r), int(c)
+    
+    r_start = max(0, r_int)
+    r_end = min(R_ref, r_int + R_obj)
+    c_start = max(0, c_int)
+    c_end = min(C_ref, c_int + C_obj)
+    
+    if r_end <= r_start or c_end <= c_start:
+        return res
+        
+    src_r_start = max(0, -r_int)
+    src_r_end = src_r_start + (r_end - r_start)
+    src_c_start = max(0, -c_int)
+    src_c_end = src_c_start + (c_end - c_start)
+    
+    # Overlay non-zero pixels
+    mask = (g_obj[src_r_start:src_r_end, src_c_start:src_c_end] != 0)
+    res[r_start:r_end, c_start:c_end][mask] = g_obj[src_r_start:src_r_end, src_c_start:src_c_end][mask]
+    return res
 
 def g_crop_to_content(g: np.ndarray) -> np.ndarray:
     """Crop the grid to its tightest non-zero bounding box."""
@@ -892,10 +915,11 @@ def g_crop_to_content(g: np.ndarray) -> np.ndarray:
     return g[r_min:r_max+1, c_min:c_max+1].copy()
 
 # Register Spatial Ops
-registry.register("g_get_r", g_get_r, domain="arc", description="Min Row of color (Scalar)", arity=2)
-registry.register("g_get_c", g_get_c, domain="arc", description="Min Col of color (Scalar)", arity=2)
-registry.register("g_place", _safe_grid_op(g_place), domain="arc", description="Place object on Canvas", arity=3)
-registry.register("g_crop", _safe_grid_op(g_crop_to_content), domain="arc", description="Crop to content")
+registry.register("g_get_r", _safe_grid_op(g_get_r), domain="arc", description="Min Row of color (Scalar)", arity=2, overwrite=True)
+registry.register("g_get_c", _safe_grid_op(g_get_c), domain="arc", description="Min Col of color (Scalar)", arity=2, overwrite=True)
+registry.register("g_place", _safe_grid_op(g_place_like), domain="arc", description="Place object on Like canvas", arity=4, overwrite=True)
+registry.register("g_paste", _safe_grid_op(g_paste), domain="arc", description="Paste object onto canvas", arity=4, overwrite=True)
+registry.register("g_crop", _safe_grid_op(g_crop_to_content), domain="arc", description="Crop to content", overwrite=True)
 
 # ---------------------------------------------------------------------------
 # Registration
@@ -1452,48 +1476,38 @@ gkeep_color9 = _make_gkeep_color(9)
 # MAP (Higher-Order Object Transforms)
 # ---------------------------------------------------------------------------
 
-def _get_all_objects(g: Grid) -> list[tuple[int, int, list[tuple[int, int]]]]:
-    """Helper to extract all objects with their bounding box offsets."""
-    R, C = len(g), len(g[0])
-    visited = set()
-    objects = []
+def _get_all_objects(g: Grid) -> list[tuple[int, int, list[list[int]], list[tuple[int, int]]]]:
+    """Helper to extract all objects with their bounding box offsets using Numba & NumPy."""
+    g_np = _to_np_grid(g)
+    if g_np is None: return []
     
-    def get_neighbors(r, c, color):
-        for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
-            nr, nc = r + dr, c + dc
-            if 0 <= nr < R and 0 <= nc < C and (nr, nc) not in visited:
-                if g[nr][nc] == color:
-                    yield nr, nc
-
-    for r in range(R):
-        for c in range(C):
-            col = g[r][c]
-            if col != 0 and (r, c) not in visited:
-                obj_cells = [(r, c)]
-                visited.add((r, c))
-                queue = collections.deque([(r, c)])
-                while queue:
-                    curr_r, curr_c = queue.popleft()
-                    for nr, nc in get_neighbors(curr_r, curr_c, col):
-                        visited.add((nr, nc))
-                        obj_cells.append((nr, nc))
-                        queue.append((nr, nc))
-                
-                # Bounding box
-                min_r = min(cr for cr, cc in obj_cells)
-                max_r = max(cr for cr, cc in obj_cells)
-                min_c = min(cc for cr, cc in obj_cells)
-                max_c = max(cc for cr, cc in obj_cells)
-                
-                # Extract Box Grid
-                box_R = max_r - min_r + 1
-                box_C = max_c - min_c + 1
-                box = [[0] * box_C for _ in range(box_R)]
-                for cr, cc in obj_cells:
-                    box[cr - min_r][cc - min_c] = g[cr][cc]
-                    
-                objects.append((min_r, min_c, box, obj_cells))
-                
+    # 1. Use Numba-accelerated labeler
+    labels = _njit_label_same_color(g_np)
+    max_label = labels.max()
+    if max_label == 0: return []
+    
+    objects = []
+    # 2. Iterate using NumPy to extract masks and bounding boxes
+    for lbl in range(1, max_label + 1):
+        # find coordinates of this label
+        coords = np.where(labels == lbl)
+        r_indices = coords[0]
+        c_indices = coords[1]
+        
+        min_r, max_r = r_indices.min(), r_indices.max()
+        min_c, max_c = c_indices.min(), c_indices.max()
+        
+        box_R = max_r - min_r + 1
+        box_C = max_c - min_c + 1
+        
+        # 3. Fast extraction into 2D Grid
+        box_np = np.zeros((box_R, box_C), dtype=g_np.dtype)
+        box_np[r_indices - min_r, c_indices - min_c] = g_np[r_indices, c_indices]
+        
+        # Consistent return format: (min_r, min_c, box_grid, cell_list)
+        obj_cells = list(zip(r_indices.tolist(), c_indices.tolist()))
+        objects.append((int(min_r), int(min_c), box_np.tolist(), obj_cells))
+        
     return objects
 
 def _apply_gmap(g: Grid, transform_fn: Callable) -> Grid:

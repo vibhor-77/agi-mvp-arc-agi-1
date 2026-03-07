@@ -450,11 +450,12 @@ class ARCDomain(Domain):
         if mean_error < 0.20:
             penalty *= 0.5
 
+        introspection = f"Err={mean_error:.4f}, Pen={penalty:.4f}, Size={tree.size()}"
         return (
             mean_error + penalty,
             tuple(fp),
             errors,
-            "",
+            introspection,
             final_cost,
         )
 
