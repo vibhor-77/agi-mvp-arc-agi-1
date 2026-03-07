@@ -507,13 +507,12 @@ class ARCDomain(Domain):
             "n_isolated": n_isolated
         }
 
-    def get_adaptive_weights(self, features: dict[str, Any]) -> dict[str, dict[str, float]]:
-        """Bias the transition matrix based on extracted features."""
-        # Baseline transition matrix (uniform for now, but we boost specific primitives)
-        matrix: dict[str, dict[str, float]] = {"ROOT": {}}
+    def get_adaptive_weights(self, features: dict[str, Any]) -> dict[str, float]:
+        """Compute flat instinct boosts (ROOT level biases) based on extracted features."""
+        boosts: dict[str, float] = {}
         
         def boost(op: str, weight: float):
-            matrix["ROOT"][op] = matrix["ROOT"].get(op, 1.0) * weight
+            boosts[op] = boosts.get(op, 1.0) * weight
 
         # Heuristic 1: High Object Density -> Boost Collective/Map Primitives
         if features["n_objs"] > 3:
@@ -548,7 +547,7 @@ class ARCDomain(Domain):
             boost("gmirror_h", 2.0)
             boost("gmirror_v", 2.0)
             
-        return matrix
+        return boosts
 
     def solve(self, config: SearchConfig | None = None, transition_matrix: dict[str, dict[str, float]] | None = None, on_step: Any | None = None) -> SearchResult:
         """
@@ -557,19 +556,10 @@ class ARCDomain(Domain):
         from .primitives import registry
         from core.search import BeamSearch
         
-        # 1. Extract features and compute adaptive weights
+        # 1. Extract features and compute instinct boosts (Heuristic priors)
         features = self.extract_task_features()
-        adaptive_matrix = self.get_adaptive_weights(features)
+        boosts = self.get_adaptive_weights(features)
         
-        # 2. Merge with provided transition_matrix (if any)
-        if transition_matrix:
-            # Deep merge (simplified)
-            for p, children in transition_matrix.items():
-                if p not in adaptive_matrix:
-                    adaptive_matrix[p] = {}
-                for c, w in children.items():
-                    adaptive_matrix[p][c] = adaptive_matrix[p].get(c, 1.0) * w
-
         op_arities = {name: registry.arity(name) for name in self.primitive_names()}
         searcher = BeamSearch(
             fitness_fn=self.fitness,
@@ -578,7 +568,8 @@ class ARCDomain(Domain):
             config=config or SearchConfig(),
             op_arities=op_arities,
             evaluate_fn=self.evaluate_candidate,
-            transition_matrix=adaptive_matrix,
+            transition_matrix=transition_matrix,
+            boost_weights=boosts,
         )
         result = searcher.run(on_step=on_step)
         self.on_result(result)

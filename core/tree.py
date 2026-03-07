@@ -409,6 +409,7 @@ def random_tree(
     op_arities: dict[str, int] | None = None,
     transition_matrix: dict[str, dict[str, float]] | None = None,
     parent_op: str | None = None,
+    boost_weights: dict[str, float] | None = None,
 ) -> Node:
     """
     Build a random expression tree.
@@ -461,11 +462,17 @@ def random_tree(
                 op = rng.choices(names, weights=probs, k=1)[0]
     
     if op is None:
-        op = rng.choice(op_list)
+        if boost_weights:
+            # Re-weight the op_list
+            weights = [boost_weights.get(o, 1.0) for o in op_list]
+            # Use exponential weighting or similar if needed, but linear is fine for now
+            op = rng.choices(op_list, weights=weights, k=1)[0]
+        else:
+            op = rng.choice(op_list)
         
     arity = op_arities.get(op, 1) if op_arities else 1
     children = [
-        random_tree(op_list, n_vars, max_depth - 1, const_range, rng, op_arities, transition_matrix, op)
+        random_tree(op_list, n_vars, max_depth - 1, const_range, rng, op_arities, transition_matrix, op, boost_weights)
         for _ in range(arity)
     ]
     return make_node(op, children)
@@ -484,6 +491,7 @@ def mutate(
     rng: random.Random | None = None,
     op_arities: dict[str, int] | None = None,
     transition_matrix: dict[str, dict[str, float]] | None = None,
+    boost_weights: dict[str, float] | None = None,
 ) -> Node:
     """
     Return a mutated copy of *node*.
@@ -518,14 +526,19 @@ def mutate(
     r = rng.random()
 
     if r < 0.50:
-        _replace_random_subtree(tree, op_list, n_vars, const_range, rng, op_arities, transition_matrix)
+        _replace_random_subtree(tree, op_list, n_vars, const_range, rng, op_arities, transition_matrix, boost_weights)
     elif r < 0.80:
         if not _tweak_constant(tree, const_sigma, rng):
             # No constants found — fall back to subtree replacement
-            _replace_random_subtree(tree, op_list, n_vars, const_range, rng, op_arities, transition_matrix)
+            _replace_random_subtree(tree, op_list, n_vars, const_range, rng, op_arities, transition_matrix, boost_weights)
     else:
         # Wrap self with a new op
-        op = rng.choice(op_list)
+        if boost_weights:
+            weights = [boost_weights.get(o, 1.0) for o in op_list]
+            op = rng.choices(op_list, weights=weights, k=1)[0]
+        else:
+            op = rng.choice(op_list)
+            
         arity = op_arities.get(op, 1) if op_arities else 1
         
         # Self becomes one child (randomly chosen position)
@@ -535,7 +548,7 @@ def mutate(
             if i == self_idx:
                 children.append(tree)
             else:
-                children.append(random_tree(op_list, n_vars, max_depth=1, const_range=const_range, rng=rng, op_arities=op_arities, transition_matrix=transition_matrix, parent_op=op))
+                children.append(random_tree(op_list, n_vars, max_depth=1, const_range=const_range, rng=rng, op_arities=op_arities, transition_matrix=transition_matrix, parent_op=op, boost_weights=boost_weights))
                 
         wrapped = make_node(op, children)
         return wrapped
@@ -586,6 +599,7 @@ def _replace_random_subtree(
     rng: random.Random,
     op_arities: dict[str, int] | None = None,
     transition_matrix: dict[str, dict[str, float]] | None = None,
+    boost_weights: dict[str, float] | None = None,
 ) -> None:
     """In-place: overwrite a randomly chosen node with a new random sub-tree."""
     nodes = _all_nodes_list(root)
@@ -602,7 +616,7 @@ def _replace_random_subtree(
     target = rng.choice(nodes)
     parent_op = parent_map.get(id(target))
     
-    new = random_tree(op_list, n_vars, max_depth=2, const_range=const_range, rng=rng, op_arities=op_arities, transition_matrix=transition_matrix, parent_op=parent_op)
+    new = random_tree(op_list, n_vars, max_depth=2, const_range=const_range, rng=rng, op_arities=op_arities, transition_matrix=transition_matrix, parent_op=parent_op, boost_weights=boost_weights)
     # Copy attributes in-place so references to `target` elsewhere remain valid
     target.op = new.op
     target.children = new.children

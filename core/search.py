@@ -127,6 +127,7 @@ class BeamSearch:
         fuzz_hash_fn: Callable[[Node], str] | None = None,
         evaluate_fn: Callable[[Node], Any] | None = None,
         transition_matrix: dict[str, dict[str, float]] | None = None,
+        boost_weights: dict[str, float] | None = None,
     ) -> None:
         self.fitness_fn = fitness_fn
         self.op_list = list(op_list)
@@ -136,6 +137,7 @@ class BeamSearch:
         self.fingerprint_fn = fingerprint_fn
         self.evaluate_fn = evaluate_fn
         self.transition_matrix = transition_matrix
+        self.boost_weights = boost_weights
         self._rng = random.Random(self.config.seed)
         # Backward-compatible args kept in the signature, but intentionally unused.
         _ = lexicase_fn
@@ -162,6 +164,7 @@ class BeamSearch:
                 rng,
                 self.op_arities,
                 self.transition_matrix,
+                boost_weights=self.boost_weights
             )
             for _ in range(init_count)
         ]
@@ -267,6 +270,7 @@ class BeamSearch:
                     rng,
                     self.op_arities,
                     self.transition_matrix,
+                    self.boost_weights
                 )
             else:
                 mate = beam[rng.randrange(len(beam))]

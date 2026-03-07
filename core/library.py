@@ -86,27 +86,47 @@ class PrimitiveLibrary:
 
     def _add_to_library(self, node: Node) -> None:
         """Add a deeply cloned node to the library if it doesn't already exist."""
-        key = str(node)
-        # Check if already learned
+        # Hierarchical compression: try to express this new op using existing ones
+        compressed_node = self._compress_recursive(node)
+        key = str(compressed_node)
+
+        # Check if identical after compression
         if any(v.get("expr") == key for v in self.learned_ops.values()):
             return
 
         op_name = f"lib_op_{len(self.learned_ops) + 1}"
         
-        # Calculate arity by finding the max var_idx used + 1
+        # Calculate arity
         var_indices = [n.var_idx for n in node.all_subtrees() if n.var_idx is not None]
         arity = max(var_indices) + 1 if var_indices else 0
-        
-        # NOTE: some learned operations might take 0 arguments if they are just constant-generating trees.
-        # But in ARC, usually everything operates on the main grid (var 0).
-        if arity == 0:
-            arity = 1 # Fallback 
+        if arity == 0: arity = 1
 
         self.learned_ops[op_name] = {
             "expr": key,
             "arity": arity,
-            "node": node
+            "node": node # We store the original uncompressed one for registration stability
         }
+
+    def _compress_recursive(self, node: Node) -> Node:
+        """Helper to rewrite a node using existing library ops."""
+        if not self.learned_ops:
+            return node.clone()
+            
+        # Recursive compression of children
+        new_children = [self._compress_recursive(c) for c in node.children]
+        candidate = Node(node.op, new_children, node.var_idx, node.const)
+        
+        # Identity match against existing library
+        curr_expr = str(candidate)
+        for op_name, meta in self.learned_ops.items():
+            if meta["expr"] == curr_expr:
+                # Found a library equivalent! 
+                # Replace this whole subtree with the lib_op call.
+                # Note: This assumes variables map 1:1 which is true for extraction subtrees.
+                var_nodes = [Node(var_idx=i) for i in range(meta["arity"])]
+                return Node(op_name, var_nodes)
+                
+        return candidate
         
     def register_all(self, domain: str = "arc", overwrite: bool = True) -> None:
         """Inject all learned primitives into the active environment registry."""

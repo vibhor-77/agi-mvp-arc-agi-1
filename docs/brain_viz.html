@@ -1,0 +1,76 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AGI Brain - Library Visualizer</title>
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style type="text/css">
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            overflow: hidden;
+        }
+        #mynetwork {
+            width: 100vw;
+            height: 100vh;
+        }
+        #header {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        h1 { margin: 0; font-size: 24px; color: #2c3e50; }
+        p { margin: 5px 0 0 0; color: #7f8c8d; font-size: 14px; }
+        .stats { margin-top: 10px; font-weight: bold; color: #4a90e2; }
+    </style>
+</head>
+<body>
+
+<div id="header">
+    <h1>AGI Brain Explorer</h1>
+    <p>Visualizing Symbolic Abstractions & Transition Priors</p>
+    <div class="stats">Learned Abstractions: 6</div>
+</div>
+
+<div id="mynetwork"></div>
+
+<script type="text/javascript">
+    var nodes = new vis.DataSet([{"id": "lib_op_1", "label": "<b>lib_op_1</b>\n<font size='2'>gmirror_v(g_repeat_v(x))...</font>", "color": {"background": "#4a90e2", "border": "#2c3e50"}, "font": {"multi": "html", "color": "#ffffff"}, "shape": "box", "margin": 10}, {"id": "lib_op_2", "label": "<b>lib_op_2</b>\n<font size='2'>gkeep_largest(gmirror_h(g_repe...</font>", "color": {"background": "#4a90e2", "border": "#2c3e50"}, "font": {"multi": "html", "color": "#ffffff"}, "shape": "box", "margin": 10}, {"id": "lib_op_3", "label": "<b>lib_op_3</b>\n<font size='2'>gmirror_h(g_repeat_h(x))...</font>", "color": {"background": "#4a90e2", "border": "#2c3e50"}, "font": {"multi": "html", "color": "#ffffff"}, "shape": "box", "margin": 10}, {"id": "lib_op_4", "label": "<b>lib_op_4</b>\n<font size='2'>g_stack_v(grot180(x))...</font>", "color": {"background": "#4a90e2", "border": "#2c3e50"}, "font": {"multi": "html", "color": "#ffffff"}, "shape": "box", "margin": 10}, {"id": "lib_op_5", "label": "<b>lib_op_5</b>\n<font size='2'>gmirror_h(gmirror_v(g_repeat_2...</font>", "color": {"background": "#4a90e2", "border": "#2c3e50"}, "font": {"multi": "html", "color": "#ffffff"}, "shape": "box", "margin": 10}, {"id": "lib_op_6", "label": "<b>lib_op_6</b>\n<font size='2'>gmirror_v(g_repeat_2x2(x))...</font>", "color": {"background": "#4a90e2", "border": "#2c3e50"}, "font": {"multi": "html", "color": "#ffffff"}, "shape": "box", "margin": 10}, {"id": "ROOT", "label": "<b>GENERATIVE PRIOR</b>", "color": {"background": "#e67e22", "border": "#d35400"}, "font": {"multi": "html", "color": "#ffffff"}, "shape": "diamond"}]);
+    var edges = new vis.DataSet([]);
+
+    var container = document.getElementById('mynetwork');
+    var data = { nodes: nodes, edges: edges };
+    var options = {
+        nodes: {
+            shadow: true,
+            borderWidth: 2
+        },
+        edges: {
+            width: 2,
+            shadow: true,
+            smooth: { type: 'cubicBezier', forceDirection: 'vertical', roundness: 0.4 }
+        },
+        layout: {
+            hierarchical: {
+                direction: 'UD',
+                sortMethod: 'directed',
+                nodeSpacing: 200,
+                levelSeparation: 150
+            }
+        },
+        physics: false,
+        interaction: { hover: true, tooltipDelay: 200 }
+    };
+    var network = new vis.Network(container, data, options);
+</script>
+</body>
+</html>
