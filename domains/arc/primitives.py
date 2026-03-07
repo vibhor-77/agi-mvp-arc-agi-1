@@ -844,6 +844,60 @@ for name, (fn, desc) in _CONTEXT_OPS.items():
     registry.register(name, _safe_grid_op(fn), domain="arc", description=desc)
 
 # ---------------------------------------------------------------------------
+# ARC Spatial Anchors (Relative Positioning)
+# ---------------------------------------------------------------------------
+
+def g_get_r(g: np.ndarray, color: int) -> int:
+    """Return the minimum row index where 'color' appears."""
+    coords = np.where(g == color)
+    return int(np.min(coords[0])) if coords[0].size > 0 else 0
+
+def g_get_c(g: np.ndarray, color: int) -> int:
+    """Return the minimum column index where 'color' appears."""
+    coords = np.where(g == color)
+    return int(np.min(coords[1])) if coords[1].size > 0 else 0
+
+def g_place(g_obj: np.ndarray, r: int, c: int) -> np.ndarray:
+    """
+    Creates a 30x30 canvas (standard ARC max) and places g_obj at (r, c).
+    If out of bounds, it clips.
+    """
+    canvas = np.zeros((30, 30), dtype=np.int16)
+    R, C = g_obj.shape
+    r_int, c_int = int(r), int(c)
+    
+    # Calculate clipping
+    r_start = max(0, r_int)
+    r_end = min(30, r_int + R)
+    c_start = max(0, c_int)
+    c_end = min(30, c_int + C)
+    
+    # Calculate source slicing
+    src_r_start = max(0, -r_int)
+    src_r_end = src_r_start + (r_end - r_start)
+    src_c_start = max(0, -c_int)
+    src_c_end = src_c_start + (c_end - c_start)
+    
+    if r_end > r_start and c_end > c_start:
+        canvas[r_start:r_end, c_start:c_end] = g_obj[src_r_start:src_r_end, src_c_start:src_c_end]
+    
+    return canvas
+
+def g_crop_to_content(g: np.ndarray) -> np.ndarray:
+    """Crop the grid to its tightest non-zero bounding box."""
+    coords = np.where(g != 0)
+    if coords[0].size == 0: return g
+    r_min, r_max = np.min(coords[0]), np.max(coords[0])
+    c_min, c_max = np.min(coords[1]), np.max(coords[1])
+    return g[r_min:r_max+1, c_min:c_max+1].copy()
+
+# Register Spatial Ops
+registry.register("g_get_r", g_get_r, domain="arc", description="Min Row of color (Scalar)", arity=2)
+registry.register("g_get_c", g_get_c, domain="arc", description="Min Col of color (Scalar)", arity=2)
+registry.register("g_place", _safe_grid_op(g_place), domain="arc", description="Place object on Canvas", arity=3)
+registry.register("g_crop", _safe_grid_op(g_crop_to_content), domain="arc", description="Crop to content")
+
+# ---------------------------------------------------------------------------
 # Registration
 # ---------------------------------------------------------------------------
 # fmt: off
