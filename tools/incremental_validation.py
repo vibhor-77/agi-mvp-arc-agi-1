@@ -62,6 +62,24 @@ def run_tier_2(args):
     ]
     subprocess.run(cmd_exp, check=True)
 
+def run_tier_3(args):
+    """Tier 3: Statistical Scaling (N=50)"""
+    print(f"\n[🔬 TIER 3] Testing Statistical Scaling (N=50)")
+    print("Hypothesis: Higher Generations (G=150) will convert 15-20% of evaluation tasks.")
+    
+    timestamp = int(time.time())
+    cmd = [
+        sys.executable, "agi.py", "eval",
+        "--tasks", "50",
+        "--data", "arc_data/data/evaluation",
+        "--shuffle", "--seed", "42",
+        "--beam-size", "50",
+        "--generations", "150",
+        "--task-workers", "4",
+        "--report", f"reports/tier3_scaling_{timestamp}.md"
+    ]
+    subprocess.run(cmd, check=True)
+
 def main():
     parser = argparse.ArgumentParser(description="Incremental Scientific Validation")
     parser.add_argument("--tier", type=int, choices=[1, 2, 3], required=True)
@@ -71,6 +89,8 @@ def main():
         run_tier_1(args)
     elif args.tier == 2:
         run_tier_2(args)
+    elif args.tier == 3:
+        run_tier_3(args)
     else:
         print("Tier not implemented yet.")
 
