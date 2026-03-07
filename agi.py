@@ -175,11 +175,22 @@ def cmd_train(args):
             if refine_cfg.max_evals: refine_cfg.max_evals *= 2
             refine_cfg.generations += 10
             
+            # Show cumulative progress in the scoreboard
+            solves_p1 = sum(1 for r in report.results if r.solved)
+            near_p1 = sum(1 for r in report.results if not r.solved and r.test_acc >= 0.8)
+            global_stats = {
+                "offset": len(tasks) - len(near_miss_tasks),
+                "global_total": len(tasks),
+                "global_solved": solves_p1,
+                "global_near": near_p1 - len(near_miss_tasks), # Those not in this pass
+            }
+            
             refine_report = evaluate_tasks(
                 near_miss_tasks, ops, refine_cfg, label=f"Epoch {epoch} - Pass 2 (Refinement)", 
                 transition_matrix=lib.transition_matrix, learned_ops=compact_learned_ops,
                 epoch_str=f"Epoch {epoch}/{args.epochs} [Refine]",
-                report_callback=None
+                report_callback=None,
+                global_stats=global_stats
             )
             
             # Merge refined results back into main report
