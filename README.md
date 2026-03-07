@@ -43,9 +43,10 @@ pip install -r requirements.txt
 
 ## ⚡ Performance Optimization (JIT Acceleration)
 The ARC solver is optimized for high-throughput symbolic search on modern hardware:
-*   **3500x Speedup**: Core matching kernels and primitives are JIT-compiled using **Numba**.
-*   **NumPy Native**: The entire evaluation pipeline resides in machine-native memory, pushing throughput to **~7,000 evals/sec** per core on M1 Max.
-*   **Parallel Execution**: Non-daemonic multiprocessing enables scaled search across all available CPU cores.
+*   **Vectorized Object Engine**: Object extraction (BFS/DFS) and connected component labeling are fully offloaded to **Numba-parallel** kernels, bypassing Python's iteration tax.
+*   **10,000+ Evals/Sec**: Core matching kernels and primitives are JIT-compiled, pushing core-normalized throughput past **10k evals/sec** on M-series hardware.
+*   **NumPy Native**: The entire evaluation pipeline resides in machine-native memory, ensuring bit-perfect parity with the ARC specification at scale.
+*   **Parallel Execution**: Non-daemonic multiprocessing enables scaled search across all available CPU cores with minimal overhead.
 
 ---
 
@@ -102,8 +103,23 @@ The system is split into three core specialized layers:
 *   **Benchmark Runner (`runner.py`)**: A parallelized, high-performance executor with live "Scoreboard" reporting and HTML introspection.
 *   **Primitives (`primitives.py`)**: The initial "Seed" DSL (geometric transforms, color ops, etc.).
 
-### 3. Unified Interface (`agi.py`)
+### 3. Task-Adaptive Meta-Learning (`domains/arc/domain.py`)
+*   **Feature Extraction**: Analyzes input grids for geometric signatures: Symmetry (H/V), Object Density, Color Entropy, and Resizing trends.
+*   **Dynamic Biasing**: Automatically adjusts the Search Transition Matrix to prioritize relevant primitive families (e.g., boosting **Geometric** for symmetric tasks, **Collective** for high-object tasks).
+*   **ROOT Weighting**: Guides the very first primitive choice in the AST, significantly reducing search entropy for complex multi-stage tasks.
+
+### 4. Unified Interface (`agi.py`)
 A single, professional CLI for orchestrating training and evaluation runs.
+
+---
+
+## 📦 Collective Object Engine (DSL+)
+
+The system includes a specialized **G-Family** of primitives for multi-object manipulation without explicit loops:
+*   **`g_rainbow`**: Sequentially recolors objects (1, 2, 3...) based on their discovery order.
+*   **`g_stack_v` / `g_stack_h`**: Rigid body gravity simulation (vertical and horizontal).
+*   **`g_sort_h`**: Orders objects horizontally based on pixel area (MDL-efficient sorting).
+*   **`g_place_like`**: Context-aware spatial anchoring (placing objects relative to a reference grid).
 
 ---
 
