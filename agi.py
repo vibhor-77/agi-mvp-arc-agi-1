@@ -74,11 +74,12 @@ def _log_run_header(
     progress_log_path: str,
     report_path: str,
     model_path: str,
+    log_file: str,
 ) -> None:
     cmdline = " ".join(sys.argv)
     print(f"\n{'='*65}\n  {title}\n{'='*65}")
     print(f"  [Cmd] python {' '.join(sys.argv)}")
-    print(f"  [Log File] logs/run_{get_timestamp()}.log (tail -f to monitor)")
+    print(f"  [Log File] {log_file} (tail -f to monitor)")
     print(f"  [Out] report={report_path}")
     print(f"  [Out] model={model_path}")
     print(f"  [Log] progress={progress_log_path}")
@@ -106,7 +107,7 @@ def _log_run_header(
 
 def cmd_train(args):
     timestamp = get_timestamp()
-    setup_output_logging(timestamp)
+    log_file = setup_output_logging(timestamp)
     model_path = args.model or f"models/arc_model_{timestamp}.json"
     report_path = args.report or f"reports/train_{timestamp}.md"
     progress_log_path = args.progress_log or f"logs/train_progress_{timestamp}.jsonl"
@@ -114,6 +115,8 @@ def cmd_train(args):
     tasks = setup_tasks(args.data, args.tasks, args.task_ids)
     lib = PrimitiveLibrary(model_path)
     lib.load()
+    
+    # We maintain this for cross-process worker serialization
     compact_learned_ops = {
         name: {"expr": meta.get("expr", ""), "arity": int(meta.get("arity", 1))}
         for name, meta in lib.learned_ops.items()
@@ -145,6 +148,7 @@ def cmd_train(args):
         progress_log_path=progress_log_path,
         report_path=report_path,
         model_path=model_path,
+        log_file=log_file,
     )
     
     for epoch in range(1, args.epochs + 1):
@@ -209,6 +213,13 @@ def cmd_train(args):
         lib.extract_from_tasks(successes, min_size=3, min_tasks=mt)
         lib.register_all(domain="arc")
         lib.save()
+
+        # Update learned_ops for worker serialization in next epoch
+        compact_learned_ops = {
+            name: {"expr": meta.get("expr", ""), "arity": int(meta.get("arity", 1))}
+            for name, meta in lib.learned_ops.items()
+            if meta.get("expr")
+        }
         
         usage = sum(1 for r in report.results if r.solved and "lib_op_" in str(r.found_expr))
         print(f"  [Analysis] Epoch {epoch}: {solves} solved | {len(lib.learned_ops)} abstractions | {usage} used learned ops.")
