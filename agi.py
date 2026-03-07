@@ -157,6 +157,7 @@ def cmd_train(args):
         progress_log_path=progress_log_path,
         max_rss_gb=args.max_rss_gb,
         fail_on_timeout=False,
+        lam=args.lam,
     )
 
     _log_run_header(
@@ -320,6 +321,7 @@ def cmd_eval(args):
         progress_log_path=progress_log_path,
         max_rss_gb=args.max_rss_gb,
         fail_on_timeout=False,
+        lam=args.lam,
     )
 
     _log_run_header(
@@ -375,6 +377,7 @@ def main():
     shared.add_argument("--primitive-cap", type=int, default=80)
     shared.add_argument("--shuffle", action="store_true", help="Randomize task order for scientific validity")
     shared.add_argument("--batch-size", type=int, default=0, help="If > 0, enables micro-batch compounding within epochs.")
+    shared.add_argument("--lam", type=float, default=0.05, help="MDL complexity penalty coefficient.")
 
     p_train = subparsers.add_parser("train", parents=[shared])
     p_train.add_argument("--data", type=str, default="arc_data/data/training")

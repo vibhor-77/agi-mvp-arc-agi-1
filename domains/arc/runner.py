@@ -152,7 +152,7 @@ class BenchmarkConfig:
     generations: int = 25
     workers: int = 1
     task_workers: int = field(default_factory=lambda: os.cpu_count() or 1)
-    lam: float = 0.02
+    lam: float = 0.05
     verbose: bool = True
     baseline_only: bool = False
     seed: int | None = None
@@ -734,7 +734,7 @@ class LiveScoreboard:
         disp_near = near
         disp_done = done
         disp_total = self.n_total
-        disp_unsol = unsol
+        disp_failed = unsol
         disp_pct = pct
 
         if self.global_stats:

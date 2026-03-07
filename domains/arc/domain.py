@@ -298,7 +298,7 @@ class ARCDomain(Domain):
     def __init__(
         self,
         task: ARCTask,
-        lam: float = 0.02,
+        lam: float = 0.05,
         primitive_subset: list[str] | None = None,
         library: Any = None,
         profile_primitives: bool = False,
