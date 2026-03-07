@@ -107,9 +107,19 @@ def _safe_grid_op(fn: Callable) -> Callable:
             if isinstance(a, list) and (len(a) > MAX_DIM or (a and len(a[0]) > MAX_DIM)):
                  return _clone(args[0]) if args else []
             if isinstance(a, np.ndarray) and (a.shape[0] > MAX_DIM or a.shape[1] > MAX_DIM):
-                 return _clone(args[0]) if args else []
+                 return args[0].copy() if args else np.zeros((1,1))
 
-        normalized_args = tuple(_to_numpy_grid(a) for a in args) if wants_numpy else args
+        # Determine if we can stay in NumPy
+        grids_in = [a for a in args if isinstance(a, (list, np.ndarray))]
+        all_numpy_in = len(grids_in) > 0 and all(isinstance(g, np.ndarray) for g in grids_in)
+        
+        # KEY PERFORMANCE FIX: If the primitive wants NumPy, we give it NumPy.
+        # IF IT DOES NOT, we MUST give it lists. Iterating over ndarray in Python loops is 10x slower.
+        if wants_numpy:
+            normalized_args = tuple(_to_numpy_grid(a) for a in args)
+        else:
+            normalized_args = tuple(_to_python_grid(a) for a in args)
+
         try:
             res = fn(*normalized_args, **kwargs)
             # Size guard on result
@@ -120,21 +130,16 @@ def _safe_grid_op(fn: Callable) -> Callable:
                 if len(res) > MAX_DIM or len(res[0]) > MAX_DIM:
                     raise ValueError("Grid explosion detected")
             
+            # If we are in a NumPy-friendly chain, stay in NumPy.
+            # But only if the result is actually an array (primitives might return ints).
+            if all_numpy_in and isinstance(res, np.ndarray):
+                return res
             return _to_python_grid(res)
         except Exception:
-            # Retry with original argument types for list-native implementations.
-            try:
-                res = fn(*args, **kwargs)
-                if isinstance(res, list) and res and isinstance(res[0], list):
-                    if len(res) > MAX_DIM or len(res[0]) > MAX_DIM:
-                         raise ValueError("Grid explosion detected")
-                return _to_python_grid(res)
-            except Exception:
-                pass
-            # Fallback to a clone of the original input
-            if args and isinstance(args[0], np.ndarray):
-                return args[0].tolist()
-            return _clone(args[0]) if args else []
+            # Fallback to the first argument
+            if args:
+                return args[0].copy() if isinstance(args[0], np.ndarray) else _clone(args[0])
+            return []
     _wrapped.__name__ = fn.__name__
     setattr(_wrapped, "_arc_numpy_safe", True)
     return _wrapped

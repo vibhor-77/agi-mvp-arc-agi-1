@@ -316,8 +316,9 @@ class ARCDomain(Domain):
         self._primitive_profile: dict[str, dict[str, float]] = {}
         self._profile_primitives = profile_primitives
         self._max_eval_cost = max_eval_cost
-        # Cache immutable targets as NumPy once to avoid per-eval conversion overhead.
+        # Cache immutable targets and inputs as NumPy once to avoid per-eval conversion overhead.
         self._train_targets_np = [_to_np_grid(out) for _, out in self.task.train_pairs]
+        self._train_inputs_np = [_to_np_grid(inp) for inp, _ in self.task.train_pairs]
         self._current_eval_cost = 0 # Tracked during evaluate_candidate
         self._instrument_primitives()
 
@@ -409,11 +410,12 @@ class ARCDomain(Domain):
         fp: list[str] = []
 
         MAX_EVAL_CELLS = 10_000
-        for idx, (inp, _out) in enumerate(self.task.train_pairs):
+        for idx, target_np in enumerate(self._train_targets_np):
+            inp_np = self._train_inputs_np[idx]
             try:
-                pred = tree.eval([inp], self._primitives)
+                pred = tree.eval([inp_np], self._primitives)
                 pred_np = _to_np_grid(pred)
-                target_np = self._train_targets_np[idx]
+                # target_np is already pre-converted
                 if pred_np is None or target_np is None:
                     acc = 0.0
                 else:

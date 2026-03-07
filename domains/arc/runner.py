@@ -744,13 +744,13 @@ class LiveScoreboard:
             disp_sol = gs.get("global_solved", 0) + sol
             disp_near = gs.get("global_near", 0) + near
             disp_done = g_offset + done
-            disp_unsol = disp_total - disp_sol
+            disp_failed = disp_done - disp_sol
             disp_pct = 100 * disp_sol / max(disp_total, 1)
 
         main_scoreboard = (
             f"  ┌ scoreboard{prefix} ─\n"
-            f"  │ ✓ solved={disp_sol} ({100*disp_sol/max(disp_done,1):.1f}%)  ⚠️ near={disp_near}  ✗ unsolved={disp_unsol}\n"
-            f"  │ → active={act}  ⏳ pending={pend}  done={disp_done}/{disp_total}  success={disp_pct:.1f}%\n"
+            f"  │ ✓ solved={disp_sol} ({100*disp_sol/max(disp_done,1):.1f}%)  ⚠️ near={disp_near}  ✗ failed={disp_failed}  ⏳ pending={pend}\n"
+            f"  │ → active={act}  done={disp_done}/{disp_total}  success={disp_pct:.1f}%\n"
             f"  │ TIME:  elapsed={elapsed:.1f}s (Throughput: {elapsed/max(done,1):.2f}s/task | Latency Avg: {avg_work_t:.1f}s)\n"
             f"  │ WORK:  speedup={speedup:.2f}x ({utilization:.1f}% core) | STRAGGLER: {max_run_t:.1f}s, {max_run_e/1000:.1f}k evals\n"
             f"  │ EVALS: total={total_evals/1000:.1f}k ({evals_p_s/1000:.2f}k/s | Per-Task Avg: {avg_work_e/1000:.1f}k)\n"
