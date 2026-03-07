@@ -44,6 +44,10 @@ import copy
 from typing import List, Tuple, Any, Dict, Set, Optional, Callable
 import collections
 import numpy as np
+try:
+    from numba import njit
+except ImportError:
+    njit = None
 from core.primitives import registry
 
 # Type alias for readability
@@ -134,6 +138,135 @@ def _safe_grid_op(fn: Callable) -> Callable:
     _wrapped.__name__ = fn.__name__
     setattr(_wrapped, "_arc_numpy_safe", True)
     return _wrapped
+
+
+# ---------------------------------------------------------------------------
+# Numba JIT Accelerators
+# ---------------------------------------------------------------------------
+
+if njit is not None:
+    @njit(cache=True)
+    def _njit_label_any_fg(g: np.ndarray) -> np.ndarray:
+        """
+        Label connected components of ANY non-zero pixels as a single blob class.
+        Uses a pre-allocated stack for O(1) memory pressure.
+        """
+        R, C = g.shape
+        labels = np.zeros_like(g, dtype=np.int32)
+        next_label = 1
+        stack = np.empty((R * C, 2), dtype=np.int32)
+        
+        for r in range(R):
+            for c in range(C):
+                if g[r,c] != 0 and labels[r,c] == 0:
+                    labels[r,c] = next_label
+                    stack[0, 0] = r
+                    stack[0, 1] = c
+                    sp = 1
+                    while sp > 0:
+                        sp -= 1
+                        cr = stack[sp, 0]
+                        cc = stack[sp, 1]
+                        for dr in range(-1, 2):
+                            for dc in range(-1, 2):
+                                if dr == 0 and dc == 0: continue
+                                nr, nc = cr+dr, cc+dc
+                                if 0 <= nr < R and 0 <= nc < C and g[nr,nc] != 0 and labels[nr,nc] == 0:
+                                    labels[nr,nc] = next_label
+                                    stack[sp, 0] = nr
+                                    stack[sp, 1] = nc
+                                    sp += 1
+                    next_label += 1
+        return labels
+
+    @njit(cache=True)
+    def _njit_label_same_color(g: np.ndarray) -> np.ndarray:
+        """
+        Label connected components of SAME-colored pixels.
+        """
+        R, C = g.shape
+        labels = np.zeros_like(g, dtype=np.int32)
+        next_label = 1
+        stack = np.empty((R * C, 2), dtype=np.int32)
+        
+        for r in range(R):
+            for c in range(C):
+                if g[r,c] != 0 and labels[r,c] == 0:
+                    color = g[r,c]
+                    labels[r,c] = next_label
+                    stack[0, 0] = r
+                    stack[0, 1] = c
+                    sp = 1
+                    while sp > 0:
+                        sp -= 1
+                        cr = stack[sp, 0]
+                        cc = stack[sp, 1]
+                        for dr in range(-1, 2):
+                            for dc in range(-1, 2):
+                                if dr == 0 and dc == 0: continue
+                                nr, nc = cr+dr, cc+dc
+                                if 0 <= nr < R and 0 <= nc < C and g[nr,nc] == color and labels[nr,nc] == 0:
+                                    labels[nr,nc] = next_label
+                                    stack[sp, 0] = nr
+                                    stack[sp, 1] = nc
+                                    sp += 1
+                    next_label += 1
+        return labels
+
+    @njit(cache=True)
+    def _njit_fill_holes(g: np.ndarray) -> np.ndarray:
+        """
+        Fill enclosed zero-regions with neighboring colors.
+        """
+        R, C = g.shape
+        # 1) Find border-connected zeros
+        mask = (g == 0)
+        connected = np.zeros_like(g, dtype=np.int8)
+        stack = np.empty((R * C, 2), dtype=np.int32)
+        sp = 0
+        
+        for r in range(R):
+            for c in range(C):
+                if mask[r,c] and (r == 0 or r == R-1 or c == 0 or c == C-1):
+                    connected[r,c] = 1
+                    stack[sp, 0] = r
+                    stack[sp, 1] = c
+                    sp += 1
+        
+        while sp > 0:
+            sp -= 1
+            cr = stack[sp, 0]
+            cc = stack[sp, 1]
+            for dr, dc in [(-1,0),(1,0),(0,-1),(0,1)]:
+                nr, nc = cr+dr, cc+dc
+                if 0 <= nr < R and 0 <= nc < C and mask[nr,nc] and connected[nr,nc] == 0:
+                    connected[nr,nc] = 1
+                    stack[sp, 0] = nr
+                    stack[sp, 1] = nc
+                    sp += 1
+        
+        # 2) Fill holes
+        out = g.copy()
+        for r in range(R):
+            for c in range(C):
+                if g[r,c] == 0 and connected[r,c] == 0:
+                    # Find neighbor color
+                    fc = 1
+                    found = False
+                    for dr in range(-1, 2):
+                        for dc in range(-1, 2):
+                            nr, nc = r+dr, c+dc
+                            if 0 <= nr < R and 0 <= nc < C and g[nr,nc] != 0:
+                                fc = g[nr,nc]
+                                found = True
+                                break
+                        if found: break
+                    out[r,c] = fc
+        return out
+else:
+    _njit_label_any_fg = None
+    _njit_label_same_color = None
+    _njit_fill_holes = None
 
 
 # ---------------------------------------------------------------------------
@@ -1696,9 +1829,20 @@ def g_replace_1_with_3(g: Grid) -> Grid:
 def g_flood_fill(g: Grid) -> Grid:
     """
     Fill all enclosed zero-regions (holes) with the surrounding non-zero color.
-    A zero-region is 'enclosed' if it does not touch the grid border.
-    Critical for 'fill the hole' ARC tasks.
+    Uses Numba-accelerated border connectivity check.
     """
+    if _njit_fill_holes is not None:
+        a = np.array(g, dtype=np.int16)
+        if a.size == 0: return g
+        out = _njit_fill_holes(a)
+        return out.tolist()
+
+    R, C = len(g), len(g[0])
+    if R == 0 or C == 0:
+        return _clone(g)
+    
+    # ... fallback ...
+
     R, C = len(g), len(g[0])
     if R == 0 or C == 0:
         return _clone(g)
@@ -1722,7 +1866,7 @@ def g_flood_fill(g: Grid) -> Grid:
                 border_connected.add((nr, nc))
                 queue.append((nr, nc))
     
-    # 2) Any zero cell NOT border-connected is a hole → fill with neighboring color
+    # 2) Any zero cell NOT border-connected is a hole
     out = _clone(g)
     for r in range(R):
         for c in range(C):
@@ -1743,10 +1887,42 @@ def g_flood_fill(g: Grid) -> Grid:
 @_safe_grid_op
 def g_extract_objects_any(g: Grid) -> Grid:
     """
-    Extract the largest connected component treating ALL non-zero pixels as connected
-    (not restricted to same-color). Returns the bounding box of the largest blob.
-    Unlocks multi-colored object isolation.
+    Extract the largest connected component treating ALL non-zero pixels as connected.
+    Uses Numba labeling for O(1) bottleneck avoidance.
     """
+    if _njit_label_any_fg is not None:
+        a = np.array(g, dtype=np.int16)
+        labels = _njit_label_any_fg(a)
+        num_labels = np.max(labels)
+        if num_labels == 0: return _clone(g)
+        
+        # Count sizes
+        counts = np.zeros(num_labels + 1, dtype=np.int32)
+        for val in labels.flat:
+            counts[val] += 1
+        
+        largest_label = np.argmax(counts[1:]) + 1
+        
+        # Bounding box
+        R, C = labels.shape
+        min_r, max_r, min_c, max_c = R, 0, C, 0
+        for r in range(R):
+            for c in range(C):
+                if labels[r,c] == largest_label:
+                    min_r = min(min_r, r)
+                    max_r = max(max_r, r)
+                    min_c = min(min_c, c)
+                    max_c = max(max_c, c)
+        
+        out_R = max_r - min_r + 1
+        out_C = max_c - min_c + 1
+        res = [[0]*out_C for _ in range(out_R)]
+        for r in range(min_r, max_r + 1):
+            for c in range(min_c, max_c + 1):
+                if labels[r,c] == largest_label:
+                    res[r - min_r][c - min_c] = g[r][c]
+        return res
+
     R, C = len(g), len(g[0])
     visited = set()
     objects = []
@@ -1782,6 +1958,50 @@ def g_extract_objects_any(g: Grid) -> Grid:
     for r, c in largest:
         out[r - min_r][c - min_c] = g[r][c]
     return out
+
+
+def _find_connected_components(g: Grid, fg_only: bool = True) -> list[list[tuple[int,int]]]:
+    """BFS flood-fill connected components of non-zero cells."""
+    if _njit_label_same_color is not None and fg_only:
+        a = np.array(g, dtype=np.int16)
+        labels = _njit_label_same_color(a)
+        num_labels = np.max(labels)
+        if num_labels == 0: return []
+        
+        comps = [[] for _ in range(num_labels)]
+        R, C = labels.shape
+        for r in range(R):
+            for c in range(C):
+                l = labels[r,c]
+                if l > 0:
+                    comps[l-1].append((r,c))
+        return comps
+
+    rows, cols = len(g), len(g[0])
+    visited = [[False] * cols for _ in range(rows)]
+    components = []
+    for sr in range(rows):
+        for sc in range(cols):
+            if visited[sr][sc]:
+                continue
+            if fg_only and g[sr][sc] == 0:
+                continue
+            # BFS
+            component = []
+            queue = collections.deque([(sr, sc)])
+            visited[sr][sc] = True
+            while queue:
+                r, c = queue.popleft()
+                component.append((r, c))
+                for dr, dc in [(-1,0),(1,0),(0,-1),(0,1), (1,1), (-1,-1), (1,-1), (-1,1)]:
+                    nr, nc = r+dr, c+dc
+                    if 0 <= nr < rows and 0 <= nc < cols and not visited[nr][nc]:
+                        if not fg_only or g[nr][nc] != 0:
+                            if not fg_only or (fg_only and (g[nr][nc] == g[sr][sc])):
+                                visited[nr][nc] = True
+                                queue.append((nr, nc))
+            components.append(component)
+    return components
 
 
 # ── Parametric Recoloring ──────────────────────────────────────────────────────
@@ -2210,32 +2430,6 @@ def g_frame_each_pixel(g: Grid) -> Grid:
     return result
 
 
-def _find_connected_components(g: Grid, fg_only: bool = True) -> list[list[tuple[int,int]]]:
-    """BFS flood-fill connected components of non-zero cells."""
-    rows, cols = len(g), len(g[0])
-    visited = [[False] * cols for _ in range(rows)]
-    components = []
-    for sr in range(rows):
-        for sc in range(cols):
-            if visited[sr][sc]:
-                continue
-            if fg_only and g[sr][sc] == 0:
-                continue
-            # BFS
-            component = []
-            queue = collections.deque([(sr, sc)])
-            visited[sr][sc] = True
-            while queue:
-                r, c = queue.popleft()
-                component.append((r, c))
-                for dr, dc in [(-1,0),(1,0),(0,-1),(0,1)]:
-                    nr, nc = r+dr, c+dc
-                    if 0 <= nr < rows and 0 <= nc < cols and not visited[nr][nc]:
-                        if not fg_only or g[nr][nc] != 0:
-                            visited[nr][nc] = True
-                            queue.append((nr, nc))
-            components.append(component)
-    return components
 
 
 def g_fill_rects_by_size(g: Grid) -> Grid:

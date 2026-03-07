@@ -31,11 +31,17 @@ from core.primitives import registry
 def get_timestamp():
     return datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 
-def setup_tasks(data_path, limit, task_ids):
+def setup_tasks(data_path, limit, task_ids, shuffle=False, seed=None):
     try:
         tasks = load_tasks_from_dir(data_path)
-        # Curriculum: easier tasks first (smaller grids)
-        tasks.sort(key=lambda t: sum(len(inp)*len(inp[0]) for inp, _ in t.train_pairs))
+        if shuffle:
+            import random
+            if seed is not None:
+                random.seed(seed)
+            random.shuffle(tasks)
+        else:
+            # Curriculum: easier tasks first (smaller grids)
+            tasks.sort(key=lambda t: sum(len(inp)*len(inp[0]) for inp, _ in t.train_pairs))
         if task_ids:
             target_ids = [t.strip() for t in task_ids.split(",")]
             tasks = [t for t in tasks if t.name in target_ids]
@@ -113,7 +119,7 @@ def cmd_train(args):
     report_path = args.report or f"reports/train_{timestamp}.md"
     progress_log_path = args.progress_log or f"logs/train_progress_{timestamp}.jsonl"
     
-    tasks = setup_tasks(args.data, args.tasks, args.task_ids)
+    tasks = setup_tasks(args.data, args.tasks, args.task_ids, shuffle=args.shuffle, seed=args.seed)
     lib = PrimitiveLibrary(model_path)
     lib.load()
     
@@ -125,9 +131,9 @@ def cmd_train(args):
     }
     
     val_tasks = []
-    if args.val_tasks > 0:
-        val_tasks = setup_tasks(args.val_data, args.val_tasks, None)
-        print(f"  [Validation] Loaded {len(val_tasks)} tasks from {args.val_data}")
+    if getattr(args, "val_tasks", 0) > 0:
+        val_tasks = setup_tasks(getattr(args, "val_data", "arc_data/data/evaluation"), args.val_tasks, None, shuffle=args.shuffle, seed=args.seed)
+        print(f"  [Validation] Loaded {len(val_tasks)} tasks from {getattr(args, 'val_data', 'arc_data/data/evaluation')}")
 
     # Track RoA (Return on Abstraction)
     cumulative_solved_ids = set()
@@ -146,7 +152,7 @@ def cmd_train(args):
         capture_traces=args.capture_traces,
         profile_primitives=args.profile_primitives,
         stall_kill_s=(None if args.stall_kill_s <= 0 else args.stall_kill_s),
-        adaptive_primitive_subset=(not args.no_adaptive_primitive_subset),
+        adaptive_primitive_subset=True,
         primitive_cap=args.primitive_cap,
         progress_interval_s=args.progress_interval_s,
         progress_log_path=progress_log_path,
@@ -295,7 +301,7 @@ def cmd_eval(args):
         print(f"[!] Error: Model path {model_path} not found.")
         return
 
-    tasks = setup_tasks(args.data, args.tasks, args.task_ids)
+    tasks = setup_tasks(args.data, args.tasks, args.task_ids, shuffle=args.shuffle, seed=args.seed)
     lib = PrimitiveLibrary(model_path)
     lib.load()
     lib.register_all(domain="arc")
@@ -317,7 +323,7 @@ def cmd_eval(args):
         capture_traces=args.capture_traces,
         profile_primitives=args.profile_primitives,
         stall_kill_s=(None if args.stall_kill_s <= 0 else args.stall_kill_s),
-        adaptive_primitive_subset=(not args.no_adaptive_primitive_subset),
+        adaptive_primitive_subset=True,
         primitive_cap=args.primitive_cap,
         progress_interval_s=args.progress_interval_s,
         progress_log_path=progress_log_path,
@@ -334,10 +340,17 @@ def cmd_eval(args):
         log_file=log_file,
     )
     
+    def _save_all(r):
+        r.save(report_path)
+        # Also save as JSON for easy parsing by HPO sweep scripts
+        json_path = report_path.replace(".md", ".json")
+        with open(json_path, "w") as f_json:
+            json.dump(r.as_dict(), f_json, indent=2)
+            
     report = evaluate_tasks(
         tasks, registry.names(domain="arc"), cfg, label="Evaluation",
         transition_matrix=lib.transition_matrix, learned_ops=compact_learned_ops,
-        report_callback=lambda r: r.save(report_path)
+        report_callback=_save_all
     )
     print(f"\n✅ Evaluation Complete. Report: {report_path}")
 
@@ -367,8 +380,8 @@ def main():
     shared.add_argument("--capture-traces", action="store_true", help="Capture eval traces for unsolved tasks (high memory).")
     shared.add_argument("--profile-primitives", action="store_true", help="Profile primitive runtime per task (adds overhead).")
     shared.add_argument("--stall-kill-s", type=float, default=0.0, help="Kill worker only if no eval progress for N seconds (0=off).")
-    shared.add_argument("--no-adaptive-primitive-subset", action="store_true")
     shared.add_argument("--primitive-cap", type=int, default=80)
+    shared.add_argument("--shuffle", action="store_true", help="Randomize task order for scientific validity")
 
     p_train = subparsers.add_parser("train", parents=[shared])
     p_train.add_argument("--data", type=str, default="arc_data/data/training")
@@ -409,6 +422,8 @@ def main():
         train_args.tasks = args.train_tasks
         train_args.model = None
         train_args.report = None
+        train_args.val_tasks = 0
+        train_args.val_data = "arc_data/data/evaluation"
         m_path = cmd_train(train_args)
         
         eval_args = argparse.Namespace(**vars(args))

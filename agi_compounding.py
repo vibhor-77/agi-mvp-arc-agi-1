@@ -19,10 +19,17 @@ from core.primitives import registry
 def get_timestamp():
     return datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
 
-def setup_tasks(data_path, limit, task_ids):
+def setup_tasks(data_path, limit, task_ids, shuffle=False, seed=None):
     try:
         tasks = load_tasks_from_dir(data_path)
-        tasks.sort(key=lambda t: sum(len(inp)*len(inp[0]) for inp, _ in t.train_pairs))
+        if shuffle:
+            import random
+            random.seed(seed)
+            random.shuffle(tasks)
+        else:
+            # Traditional curriculum: easier tasks first
+            tasks.sort(key=lambda t: sum(len(inp)*len(inp[0]) for inp, _ in t.train_pairs))
+            
         if task_ids:
             target_ids = [t.strip() for t in task_ids.split(",")]
             tasks = [t for t in tasks if t.name in target_ids]
@@ -36,7 +43,7 @@ def cmd_train(args):
     model_path = args.model or f"models/compounding_{timestamp}.json"
     report_path = args.report or f"reports/train_compounding_{timestamp}.md"
     
-    tasks = setup_tasks(args.data, args.tasks, args.task_ids)
+    tasks = setup_tasks(args.data, args.tasks, args.task_ids, shuffle=args.shuffle, seed=args.seed)
     lib = PrimitiveLibrary(model_path)
     lib.load()
     
@@ -50,11 +57,12 @@ def cmd_train(args):
     print(f"\n{'='*65}\n  CONTINUOUS COMPOUNDING: {len(tasks)} tasks | N={batch_size}\n{'='*65}")
     
     for epoch in range(1, args.epochs + 1):
-        epoch_successes = {}
+        total_tasks = len(tasks)
+        all_results = []
         cumulative_solved = 0
         cumulative_near = 0
         cumulative_done = 0
-        total_tasks = len(tasks)
+        epoch_successes = {}
         
         for i in range(0, len(tasks), batch_size):
             chunk = tasks[i : i + batch_size]
@@ -93,8 +101,15 @@ def cmd_train(args):
             cumulative_solved += report.n_solved
             cumulative_near += report.n_near
             cumulative_done += len(chunk)
+            all_results.extend(report.results)
             
             print(f"  [Compounding] Chunk {i//batch_size+1} done. Library @ {len(lib.learned_ops)} ops. Global: {cumulative_solved} solved / {cumulative_done} done.")
+
+        # Save Final Report
+        from domains.arc.runner import BenchmarkReport
+        final_report = BenchmarkReport("Compounding Training", all_results)
+        final_report.save(report_path)
+        print(f"  [Report] Unified report saved to {report_path}")
 
     print(f"\n✅ Training Complete. Model: {model_path}")
     return model_path
@@ -112,8 +127,9 @@ def main():
     parser.add_argument("--offspring", type=int, default=20)
     parser.add_argument("--generations", type=int, default=25)
     parser.add_argument("--max-evals", type=int, default=1000000)
-    parser.add_argument("--timeout", type=float, default=60.0)
-    parser.add_argument("--seed", type=int, default=None)
+    parser.add_argument("--timeout", type=float, default=300.0)
+    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--shuffle", action="store_true", help="Randomize task order for scientific validity")
     parser.add_argument("--task-ids", type=str, default=None)
     parser.add_argument("--model", type=str, default=None)
     parser.add_argument("--report", type=str, default=None)
