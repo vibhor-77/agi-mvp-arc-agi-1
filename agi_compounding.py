@@ -107,9 +107,20 @@ def cmd_train(args):
 
         # Save Final Report
         from domains.arc.runner import BenchmarkReport
-        final_report = BenchmarkReport("Compounding Training", all_results)
+        final_report = BenchmarkReport(
+            label="Compounding Training", 
+            results=all_results,
+            n_ops=len(registry.names(domain="arc"))
+        )
         final_report.save(report_path)
-        print(f"  [Report] Unified report saved to {report_path}")
+        
+        # Also save JSON for compounding
+        json_path = report_path.replace(".md", ".json").replace(".html", ".json")
+        import json
+        with open(json_path, "w") as f_json:
+            json.dump(final_report.as_dict(), f_json, indent=2)
+            
+        print(f"  [Report] Unified report saved to {report_path} (and .json)")
 
     print(f"\n✅ Training Complete. Model: {model_path}")
     return model_path
