@@ -129,11 +129,16 @@ def cmd_train(args):
         val_tasks = setup_tasks(args.val_data, args.val_tasks, None)
         print(f"  [Validation] Loaded {len(val_tasks)} tasks from {args.val_data}")
 
+    # Track RoA (Return on Abstraction)
+    cumulative_solved_ids = set()
+    roa_saturation_count = 0
+
     cfg = BenchmarkConfig(
         beam_size=args.beam_size, offspring=args.offspring, generations=args.generations,
         task_workers=args.task_workers, workers=args.workers, timeout_s=(None if args.timeout <= 0 else args.timeout), max_evals=args.max_evals,
         max_cost=(None if args.max_cost <= 0 else args.max_cost),
         baseline_only=True, seed=args.seed,
+        fail_on_timeout=True, # Strictly detect bugs/stragglers
         mem_per_task_worker_gb=args.mem_per_task_worker_gb,
         reserve_mem_gb=args.reserve_mem_gb,
         cpu_reserve=args.cpu_reserve,
@@ -256,6 +261,20 @@ def cmd_train(args):
             v_acc = np.mean([r.test_acc for r in val_report.results]) if val_report.results else 0
             print(f"  [Validation] Results: {v_solves}/{len(val_tasks)} solved | Mean Acc: {v_acc:.3f}")
             
+        # Scientific RoA Saturation Check
+        newly_solved = {r.task_name for r in report.results if r.solved}
+        if newly_solved.issubset(cumulative_solved_ids):
+            roa_saturation_count += 1
+            print(f"  [RoA] No new tasks solved this epoch (Saturation Streak: {roa_saturation_count})")
+        else:
+            roa_saturation_count = 0
+            cumulative_solved_ids.update(newly_solved)
+            print(f"  [RoA] Total unique solved: {len(cumulative_solved_ids)}")
+
+        if roa_saturation_count >= 2:
+            print(f"\n  [!] Scientific Saturation Point reached after {epoch} epochs.")
+            break
+
     print(f"\n✅ Training Complete. Model: {model_path}")
     return model_path
 

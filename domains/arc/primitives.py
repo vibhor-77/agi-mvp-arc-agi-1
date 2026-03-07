@@ -54,7 +54,8 @@ Grid = list[list[int]]
 # ---------------------------------------------------------------------------
 
 def _clone(g: Grid) -> Grid:
-    return copy.deepcopy(g)
+    # Optimized nested list slice is ~10-20x faster than deepcopy
+    return [row[:] for row in g]
 
 
 def _rows(g: Grid) -> int:
@@ -108,7 +109,7 @@ def _safe_grid_op(fn: Callable) -> Callable:
             # Fallback to a clone of the original input
             if args and isinstance(args[0], np.ndarray):
                 return args[0].tolist()
-            return copy.deepcopy(args[0]) if args else []
+            return _clone(args[0]) if args else []
     _wrapped.__name__ = fn.__name__
     setattr(_wrapped, "_arc_numpy_safe", True)
     return _wrapped
