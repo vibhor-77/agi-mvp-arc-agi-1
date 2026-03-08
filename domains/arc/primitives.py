@@ -1600,6 +1600,48 @@ def g_remove_empty_rows(g: Grid) -> Grid:
     return _clone([r for r in g if any(c != 0 for c in r)])
 
 @_safe_grid_op
+def g_recolor_isolated(g: Grid, color: float) -> Grid:
+    """Change any pixel that has no 4-connected neighbors of its color."""
+    R, C = len(g), len(g[0])
+    out = _clone(g)
+    c_int = int(color) % 10
+    for r in range(R):
+        for c in range(C):
+            val = g[r][c]
+            if val == 0: continue
+            # Check 4-neighbors for same color
+            has_neighbor = False
+            for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                nr, nc = r + dr, c + dc
+                if 0 <= nr < R and 0 <= nc < C and g[nr][nc] == val:
+                    has_neighbor = True
+                    break
+            if not has_neighbor:
+                out[r][c] = c_int
+    return out
+
+@_safe_grid_op
+def g_fill_rects_by_color(g: Grid, color: float) -> Grid:
+    """For every object, find its bounding box and fill it with color."""
+    objs = _get_all_objects(g)
+    out = _clone(g)
+    c_int = int(color) % 10
+    for (min_r, min_c, box, _) in objs:
+        for r in range(len(box)):
+            for c in range(len(box[0])):
+                rr, cc = min_r + r, min_c + c
+                if 0 <= rr < len(out) and 0 <= cc < len(out[0]):
+                    out[rr][cc] = c_int
+    return out
+
+@_safe_grid_op
+def g_recolor_val(g: Grid, c1: float, c2: float) -> Grid:
+    """Replace all pixels of color c1 with color c2."""
+    src = int(c1) % 10
+    dst = int(c2) % 10
+    return [[dst if c == src else c for c in row] for row in g]
+
+@_safe_grid_op
 def g_remove_empty_cols(g: Grid) -> Grid:
     """Removes any column that is completely filled with 0s (Gravity Compression)."""
     if not g or not g[0]: return _clone(g)
@@ -1655,6 +1697,22 @@ def g_fractal_inflate(g: Grid) -> Grid:
     mask = (a != 0).astype(np.int8)
     # Output is Kronecker product of mask and original grid
     res = np.kron(mask, a)
+    return res.tolist()
+
+@_safe_grid_op
+def g_kron(g1: Grid, g2: Grid) -> Grid:
+    """
+    Kronecker product of two grids.
+    Each non-zero pixel in g1 is replaced by a copy of g2.
+    Zero pixels in g1 become blocks of zeros of g2's shape.
+    Used for stencil-like expansions (e.g. 8719f442).
+    """
+    a1 = np.array(g1)
+    a2 = np.array(g2)
+    mask = (a1 != 0).astype(np.int8)
+    res = np.kron(mask, a2)
+    # Restore colors from a1 if needed? Usually we just want to expand the pattern of g2.
+    # For now, let's keep it simple: kron(mask(g1), g2)
     return res.tolist()
 
 
@@ -2810,18 +2868,803 @@ def g_project_lines(g: Grid) -> Grid:
                     out[pr][pc] = color
     return out
 
+def g_move_to_corners(g: Grid) -> Grid:
+    """For each non-zero pixel in g, move it to the nearest corner of the grid."""
+    R, C = len(g), len(g[0])
+    out = [[0]*C for _ in range(R)]
+    for r in range(R):
+        for c in range(C):
+            v = g[r][c]
+            if v != 0:
+                # Target corner: (0,0), (0,C-1), (R-1,0), (R-1,C-1)
+                tr = 0 if r < R/2 else R-1
+                tc = 0 if c < C/2 else C-1
+                out[tr][tc] = v
+    return out
+
+@_safe_grid_op
+def g_recolor_objects_by_size(g: Grid) -> Grid:
+    """Recolor objects: smallest gets 1, next 2, ..., largest N. Cycle colors 1-8."""
+    objs = _get_all_objects(g)
+    if not objs: return _clone(g)
+    objs.sort(key=lambda x: len(x[3])) # Sort by area
+    out = [[0]*len(g[0]) for _ in range(len(g))]
+    for i, (min_r, min_c, box, pixels) in enumerate(objs):
+        color = (i % 8) + 1
+        for r, c in pixels:
+            out[r][c] = color
+    return out
+
+@_safe_grid_op
+def g_get_enclosed(g: Grid) -> Grid:
+    """Return a grid of all pixels that are fully enclosed by FG."""
+    from scipy.ndimage import binary_fill_holes
+    a = np.array(g)
+    mask = a > 0
+    filled = binary_fill_holes(mask)
+    holes = filled & (a == 0)
+    out = np.zeros_like(a)
+    out[holes] = 1 # Mark holes as 1
+    return out.tolist()
+
+@_safe_grid_op
+def g_color_matcher(g: Grid, target: Grid) -> Grid:
+    """
+    Advanced correction: discover a mapping from current pixels to target pixels.
+    Used during 'super_refine' by looking at the target output (for train pairs).
+    """
+    if not g or not target or len(g) != len(target) or len(g[0]) != len(target[0]):
+        return g
+    
+    # 1. Pixel-level color mapping (histogram alignment)
+    mapping = {} # current -> target
+    
+    # Group by non-zero colors
+    # For each non-zero color in g, find the most frequent non-zero color in target at those positions
+    g_arr = np.array(g)
+    t_arr = np.array(target)
+    
+    unique_colors = np.unique(g_arr)
+    for c in unique_colors:
+        # Find all cells in target where g has color c
+        mask = (g_arr == c)
+        target_colors = t_arr[mask]
+        
+        if target_colors.size > 0:
+            # Mode (most frequent) color in target for these pixels
+            # Safety: for color 0 (background), only map it if the target is significantly different
+            counts = np.bincount(target_colors[target_colors >= 0].astype(int))
+            if counts.size > 0:
+                mode_color = np.argmax(counts)
+                if c != 0 or counts[mode_color] > 0.5 * target_colors.size:
+                    mapping[c] = mode_color
+    
+    # Apply mapping
+    out = [row[:] for row in g]
+    for r in range(len(g)):
+        for c in range(len(g[0])):
+            curr = g[r][c]
+            if curr in mapping:
+                out[r][c] = int(mapping[curr])
+    return out
+
+@_safe_grid_op
+def g_set_pixel_at_center(g: Grid, color: float) -> Grid:
+    """Sets the center pixel (or top-left of center 2x2) to the given color."""
+    if not g: return g
+    R, C = len(g), len(g[0])
+    out = [row[:] for row in g]
+    out[R // 2][C // 2] = int(color) % 10
+    return out
+
+@_safe_grid_op
+def g_set_pixel_at_bottom_center(g: Grid, color: float) -> Grid:
+    """Sets the middle pixel of the bottom row to the given color."""
+    if not g: return g
+    R, C = len(g), len(g[0])
+    out = [row[:] for row in g]
+    out[R - 1][C // 2] = int(color) % 10
+    return out
+
+@_safe_grid_op
+def g_set_pixel_at_center_to_most_common(g: Grid) -> Grid:
+    """Sets the center pixel to the most common non-zero color in the grid."""
+    a = np.array(g)
+    counts = np.bincount(a[a > 0])
+    if counts.size == 0: return g
+    mc = int(counts.argmax())
+    R, C = len(g), len(g[0])
+    out = [row[:] for row in g]
+    out[R // 2][C // 2] = mc
+    return out
+
+@_safe_grid_op
+def g_set_pixel_at_bottom_center_to_most_common(g: Grid) -> Grid:
+    """Sets the bottom center pixel to the most common non-zero color."""
+    a = np.array(g)
+    counts = np.bincount(a[a > 0])
+    if counts.size == 0: return g
+    mc = int(counts.argmax())
+    R, C = len(g), len(g[0])
+    out = [row[:] for row in g]
+    out[R - 1][C // 2] = mc
+    return out
+
+@_safe_grid_op
+def g_fill_dom(g: Grid) -> Grid:
+    """Replaces all background (0) pixels with the most common non-zero color."""
+    a = np.array(g)
+    counts = np.bincount(a[a > 0])
+    if counts.size == 0: return g
+    mc = int(counts.argmax())
+    out = [row[:] for row in g]
+    for r in range(len(g)):
+        for c in range(len(g[0])):
+            if g[r][c] == 0: out[r][c] = mc
+    return out
+
+@_safe_grid_op
+def g_isolate_largest(g: Grid) -> Grid:
+    """Returns a grid containing only the largest 4-connected object."""
+
+    objs = _get_all_objects(g)
+    if not objs: return [[0]*len(g[0]) for _ in range(len(g))]
+    largest = max(objs, key=lambda x: len(x[3]))
+    out = [[0]*len(g[0]) for _ in range(len(g))]
+    for r, c in largest[3]: out[r][c] = largest[2] # Preserve original color
+    return out
+
+@_safe_grid_op
+def g_isolate_smallest(g: Grid) -> Grid:
+    """Returns a grid containing only the smallest 4-connected object."""
+    objs = _get_all_objects(g)
+    if not objs: return [[0]*len(g[0]) for _ in range(len(g))]
+    smallest = min(objs, key=lambda x: len(x[3]))
+    out = [[0]*len(g[0]) for _ in range(len(g))]
+    for r, c in smallest[3]: out[r][c] = smallest[2]
+    return out
+
+@_safe_grid_op
+def g_prop_color_tl(g: Grid) -> float:
+    return float(g[0][0]) if g and g[0] else 0.0
+
+@_safe_grid_op
+def g_prop_color_tr(g: Grid) -> float:
+    return float(g[0][-1]) if g and g[0] else 0.0
+
+@_safe_grid_op
+def g_prop_color_bl(g: Grid) -> float:
+    return float(g[-1][0]) if g and g[0] else 0.0
+
+@_safe_grid_op
+def g_prop_color_br(g: Grid) -> float:
+    return float(g[-1][-1]) if g and g[0] else 0.0
+
+@_safe_grid_op
+def g_prop_color_center(g: Grid) -> float:
+    if not g: return 0.0
+    return float(g[len(g)//2][len(g[0])//2])
+
+@_safe_grid_op
+def g_prop_mc_obj_color(g: Grid) -> float:
+    objs = _get_all_objects(g)
+    if not objs: return 0.0
+    largest = max(objs, key=lambda x: len(x[3]))
+    return float(largest[2])
+
+@_safe_grid_op
+def g_prop_lc_obj_color(g: Grid) -> float:
+    objs = _get_all_objects(g)
+    if not objs: return 0.0
+    smallest = min(objs, key=lambda x: len(x[3]))
+    return float(smallest[2])
+
+@_safe_grid_op
+def g_prop_num_objs(g: Grid) -> float:
+    return float(len(_get_all_objects(g)))
+
+@_safe_grid_op
+def g_fill_rect_interiors(g: Grid) -> Grid:
+    """Detect rectangles of any color and fill their 0-color interiors."""
+    import numpy as np
+    from .primitives import _get_all_objects
+    arr = np.array(g)
+    objs = _get_all_objects(g)
+    for _, _, box, pixels in objs:
+        # Check if box is a rectangle
+        min_r = min(p[0] for p in pixels)
+        max_r = max(p[0] for p in pixels)
+        min_c = min(p[1] for p in pixels)
+        max_c = max(p[1] for p in pixels)
+        color = g[min_r][min_c]
+        # Only fill if it looks like a border-only rect or has holes
+        for r in range(min_r, max_r + 1):
+            for c in range(min_c, max_c + 1):
+                if arr[r][c] == 0:
+                    arr[r][c] = color
+    return arr.tolist()
+
+@_safe_grid_op
+def g_extend_lines_to_contact(g: Grid) -> Grid:
+    """Connect horizontal/vertical segments of the same color."""
+    import numpy as np
+    arr = np.array(g)
+    R, C = arr.shape
+    # Horizontal
+    for r in range(R):
+        cols = np.where(arr[r] != 0)[0]
+        if len(cols) >= 2:
+            for i in range(len(cols)-1):
+                c1, c2 = cols[i], cols[i+1]
+                if arr[r][c1] == arr[r][c2]:
+                    # Only fill if all between are background
+                    if np.all(arr[r, c1+1:c2] == 0):
+                        arr[r, c1+1:c2] = arr[r, c1]
+    # Vertical
+    for c in range(C):
+        rows = np.where(arr[:, c] != 0)[0]
+        if len(rows) >= 2:
+            for i in range(len(rows)-1):
+                r1, r2 = rows[i], rows[i+1]
+                if arr[r1, c] == arr[r2, c]:
+                    # Only fill if all between are background
+                    if np.all(arr[r1+1:r2, c] == 0):
+                        arr[r1+1:r2, c] = arr[r1, c]
+    return arr.tolist()
+
+@_safe_grid_op
+def g_mark_intersections(g: Grid) -> Grid:
+    """Mark points where non-zero row/column segments intersect."""
+    import numpy as np
+    arr = np.array(g)
+    R, C = arr.shape
+    out = np.zeros_like(arr)
+    row_active = (arr != 0).any(axis=1)
+    col_active = (arr != 0).any(axis=0)
+    for r in range(R):
+        if not row_active[r]: continue
+        row_colors = np.unique(arr[r][arr[r] != 0])
+        if len(row_colors) != 1: continue
+        rc = row_colors[0]
+        for c in range(C):
+            if not col_active[c]: continue
+            col_colors = np.unique(arr[:, c][arr[:, c] != 0])
+            if len(col_colors) != 1: continue
+            cc = col_colors[0]
+            if rc == cc: # Same color line intersection
+                out[r, c] = rc
+    # Map back to original colors for context
+    return (arr | out).tolist()
+
+@_safe_grid_op
+def g_shift(g: Grid, dr: float, dc: float) -> Grid:
+    """Shift grid by (dr, dc) pixels, padding with 0."""
+    try:
+        dr_int, dc_int = int(round(float(dr))), int(round(float(dc)))
+    except: return g
+    if dr_int == 0 and dc_int == 0: return g
+    R, C = len(g), len(g[0])
+    out = [[0]*C for _ in range(R)]
+    for r in range(R):
+        for c in range(C):
+            nr, nc = r + dr_int, c + dc_int
+            if 0 <= nr < R and 0 <= nc < C: out[nr][nc] = g[r][c]
+    return out
+
+@_safe_grid_op
+def g_align_left(g: Grid) -> Grid:
+    """Snap foreground elements to the left border."""
+    arr = np.array(g)
+    coords = np.argwhere(arr > 0)
+    if coords.size == 0: return g
+    return g_shift(g, 0, -np.min(coords[:, 1]))
+
+@_safe_grid_op
+def g_align_right(g: Grid) -> Grid:
+    """Snap foreground elements to the right border."""
+    arr = np.array(g)
+    coords = np.argwhere(arr > 0)
+    if coords.size == 0: return g
+    return g_shift(g, 0, (len(g[0])-1) - np.max(coords[:, 1]))
+
+@_safe_grid_op
+def g_align_up(g: Grid) -> Grid:
+    """Snap foreground elements to the top border."""
+    arr = np.array(g)
+    coords = np.argwhere(arr > 0)
+    if coords.size == 0: return g
+    return g_shift(g, -np.min(coords[:, 0]), 0)
+
+@_safe_grid_op
+def g_align_down(g: Grid) -> Grid:
+    """Snap foreground elements to the bottom border."""
+    arr = np.array(g)
+    coords = np.argwhere(arr > 0)
+    if coords.size == 0: return g
+    return g_shift(g, (len(g)-1) - np.max(coords[:, 0]), 0)
+
+@_safe_grid_op
+def g_overlay(g1: Grid, g2: Grid) -> Grid:
+    """Combine two grids, with g2's non-zero pixels overwriting g1's."""
+    if not g1 or not g2 or len(g1) != len(g2) or len(g1[0]) != len(g2[0]): return g1
+    out = [row[:] for row in g1]
+    for r in range(len(g1)):
+        for c in range(len(g1[0])):
+            if g2[r][c] > 0: out[r][c] = g2[r][c]
+    return out
+
+@_safe_grid_op
+def g_mask(g1: Grid, g2: Grid) -> Grid:
+    """Keep pixels of g1 where g2 is non-zero."""
+    if not g1 or not g2 or len(g1) != len(g2) or len(g1[0]) != len(g2[0]): return g1
+    out = [[0]*len(g1[0]) for _ in range(len(g1))]
+    for r in range(len(g1)):
+        for c in range(len(g1[0])):
+            if g2[r][c] > 0: out[r][c] = g1[r][c]
+    return out
+
+@_safe_grid_op
+def g_xor(g1: Grid, g2: Grid) -> Grid:
+    """Keep pixels present in only one of the two grids."""
+    if not g1 or not g2 or len(g1) != len(g2) or len(g1[0]) != len(g2[0]): return g1
+    out = [[0]*len(g1[0]) for _ in range(len(g1))]
+    for r in range(len(g1)):
+        for c in range(len(g1[0])):
+            if (g1[r][c] > 0) ^ (g2[r][c] > 0):
+                out[r][c] = g1[r][c] if g1[r][c] > 0 else g2[r][c]
+    return out
+
+@_safe_grid_op
+def g_diff(g1: Grid, g2: Grid) -> Grid:
+    """Isolate pixels that differ between g1 and g2, returning values from g2."""
+    if not g1 or not g2 or len(g1) != len(g2) or len(g1[0]) != len(g2[0]): return g1
+    out = [[0]*len(g1[0]) for _ in range(len(g1))]
+    for r in range(len(g1)):
+        for c in range(len(g1[0])):
+            if g1[r][c] != g2[r][c]: out[r][c] = g2[r][c]
+    return out
+
+@_safe_grid_op
+def g_repeat_2x2(g: Grid) -> Grid:
+    """Repeat the entire grid in a 2x2 pattern."""
+    a = np.array(g)
+    if a.size == 0: return g
+    return np.tile(a, (2, 2)).tolist()
+
+@_safe_grid_op
+def g_repeat_3x3(g: Grid) -> Grid:
+    """Repeat the entire grid in a 3x3 pattern."""
+    a = np.array(g)
+    if a.size == 0: return g
+    return np.tile(a, (3, 3)).tolist()
+
+@_safe_grid_op
+def g_top_half(g: Grid) -> Grid:
+    """Split the grid and return the top half."""
+    R = len(g)
+    if R < 2: return g
+    return g[:R//2]
+
+@_safe_grid_op
+def g_bottom_half(g: Grid) -> Grid:
+    """Split the grid and return the bottom half."""
+    R = len(g)
+    if R < 2: return g
+    return g[R//2:]
+
+@_safe_grid_op
+def g_left_half(g: Grid) -> Grid:
+    """Split the grid and return the left half."""
+    R = len(g)
+    if not g or len(g[0]) < 2: return g
+    C = len(g[0])
+    return [row[:C//2] for row in g]
+
+@_safe_grid_op
+def g_right_half(g: Grid) -> Grid:
+    """Split the grid and return the right half."""
+    R = len(g)
+    if not g or len(g[0]) < 2: return g
+    C = len(g[0])
+    return [row[C//2:] for row in g]
+
+@_safe_grid_op
+def g_recolor_size(g: Grid, size: float, color: float) -> Grid:
+    """Recolor objects of specific area S with color C."""
+    objs = _get_all_objects(g)
+    out = [row[:] for row in g]
+    s_int, c_int = int(round(float(size))), int(round(float(color)))
+    for _, _, _, coords in objs:
+        if len(coords) == s_int:
+            for r, c in coords: out[r][c] = c_int
+    return out
+
+@_safe_grid_op
+def g_recolor_most_common(g: Grid, color: float) -> Grid:
+    """Recolor the most common non-zero color to C."""
+    a = np.array(g)
+    counts = np.bincount(a[a > 0])
+    if counts.size == 0: return g
+    most_common = int(counts.argmax())
+    c_int = int(round(float(color)))
+    out = [row[:] for row in g]
+    for r in range(len(g)):
+        for c in range(len(g[0])):
+            if g[r][c] == most_common: out[r][c] = c_int
+    return out
+
+@_safe_grid_op
+def g_recolor_least_common(g: Grid, color: float) -> Grid:
+    """Recolor the least common non-zero color to C."""
+    a = np.array(g)
+    counts = np.bincount(a[a > 0])
+    if counts.size == 0: return g
+    # Mask zeros to find the min non-zero
+    least_common = int(np.where(counts > 0)[0][np.argmin(counts[counts > 0])])
+    c_int = int(round(float(color)))
+    out = [row[:] for row in g]
+    for r in range(len(g)):
+        for c in range(len(g[0])):
+            if g[r][c] == least_common: out[r][c] = c_int
+    return out
+
+@_safe_grid_op
+def g_tile_mirror_2x2(g: Grid) -> Grid:
+    """Create a 2x2 grid where the tiles are mirrored versions of g."""
+    a = np.array(g)
+    if a.size == 0: return g
+    h_mir = np.fliplr(a)
+    v_mir = np.flipud(a)
+    hv_mir = np.fliplr(v_mir)
+    top = np.hstack([a, h_mir])
+    bot = np.hstack([v_mir, hv_mir])
+    return np.vstack([top, bot]).tolist()
+
+@_safe_grid_op
+def g_tile_mirror_3x3(g: Grid) -> Grid:
+    """Create a 3x3 grid with alternating mirrored tiles."""
+    a = np.array(g)
+    if a.size == 0: return g
+    h_mir = np.fliplr(a)
+    top = np.hstack([a, h_mir, a])
+    mid = np.fliplr(top) # Mirror the whole row? No, ARC usually does it tile-wise
+    # Let's check 00576224 again: 
+    # Row 0: R, Row 2: mirrored(R), Row 4: R
+    v_mir = np.flipud(a)
+    top_row = np.hstack([a, a, a])
+    mid_row = np.hstack([h_mir, h_mir, h_mir])
+    # Wait, 00576224 was actually simpler:
+    # Row 0: [8, 6, 8, 6, 8, 6]
+    # Row 2: [6, 8, 6, 8, 6, 8]
+    # This is just g_repeat_3x3(x) then recoloring? 
+    # No, it's (8,6) tile then (6,8) tile.
+    
+    # Better: generalized tile(rows, cols, reflect_rows, reflect_cols)
+    # But for now, let's just do a common checkerboard mirror
+    top = np.hstack([a, h_mir, a])
+    mid = np.hstack([np.flipud(a), np.flipud(h_mir), np.flipud(a)])
+    return np.vstack([top, mid, top]).tolist()
+
+@_safe_grid_op
+def g_ray_cast(g: Grid, color: float, direction: float) -> Grid:
+    """
+    From each non-zero pixel in g, cast a ray in specified direction with specified color.
+    direction: 0=UP, 1=RIGHT, 2=DOWN, 3=LEFT, 4=UR, 5=DR, 6=DL, 7=UL
+    """
+    a = np.array(g)
+    rows, cols = a.shape
+    if rows == 0 or cols == 0: return g
+    c_int = int(round(float(color)))
+    d_int = int(round(float(direction))) % 8
+    
+    # Offsets
+    dr_dc = [(-1,0), (0,1), (1,0), (0,-1), (-1,1), (1,1), (1,-1), (-1,-1)]
+    dr, dc = dr_dc[d_int]
+    
+    out = [row[:] for row in g]
+    for r in range(rows):
+        for c in range(cols):
+            if a[r,c] > 0:
+                curr_r, curr_c = r + dr, c + dc
+                while 0 <= curr_r < rows and 0 <= curr_c < cols:
+                    if out[curr_r][curr_c] == 0:
+                        out[curr_r][curr_c] = c_int
+                    curr_r += dr
+                    curr_c += dc
+    return out
+
+@_safe_grid_op
+def g_ray_cast_all(g: Grid, color: float) -> Grid:
+    """Cast rays from all FG pixels in 4 orthogonal directions."""
+    out = [row[:] for row in g]
+    for d in range(4):
+        res = g_ray_cast(g, color, float(d))
+        for r in range(len(g)):
+            for c in range(len(g[0])):
+                if out[r][c] == 0 and res[r][c] > 0:
+                    out[r][c] = res[r][c]
+    return out
+
+@_safe_grid_op
+def g_project_sequence(g: Grid, color: float) -> Grid:
+    """Detect periodicity in FG and continue the sequence with color C."""
+    a = np.array(g)
+    rows, cols = a.shape
+    coords = np.argwhere(a > 0)
+    if len(coords) < 2: return g
+    
+    # Try all pairs to find a baseline offset
+    # In ARC, usually the first two points define the step
+    c_int = int(round(float(color)))
+    out = [row[:] for row in g]
+    
+    # Sort coords to have a predictable order
+    coords = coords[np.lexsort((coords[:, 1], coords[:, 0]))]
+    
+    # Common case: same color pixels forming a line
+    for i in range(len(coords)):
+        for j in range(i + 1, len(coords)):
+            r1, c1 = coords[i]
+            r2, c2 = coords[j]
+            dr, dc = r2 - r1, c2 - c1
+            if dr == 0 and dc == 0: continue
+            
+            # Follow the ray
+            curr_r, curr_c = r2 + dr, c2 + dc
+            while 0 <= curr_r < rows and 0 <= curr_c < cols:
+                if out[curr_r][curr_c] == 0:
+                    out[curr_r][curr_c] = c_int
+                curr_r += dr
+                curr_c += dc
+    return out
+
+@_safe_grid_op
+def g_fill_holes(g: Grid) -> Grid:
+    """Fill interior holes in solid objects using pure numpy flood-fill from boundaries."""
+    a = np.array(g)
+    if a.size == 0: return g
+    mask = a > 0
+    rows, cols = a.shape
+    reachable = np.zeros_like(mask, dtype=bool)
+    stack = []
+    # Seed from border pixels that are 0
+    for r in range(rows):
+        if not mask[r,0]: stack.append((r,0))
+        if cols > 1 and not mask[r,cols-1]: stack.append((r,cols-1))
+    for c in range(1, cols-1):
+        if not mask[0,c]: stack.append((0,c))
+        if rows > 1 and not mask[rows-1,c]: stack.append((rows-1,c))
+    
+    # Flood-fill border-connected background
+    while stack:
+        r, c = stack.pop()
+        if reachable[r,c]: continue
+        reachable[r,c] = True
+        for dr, dc in [(-1,0), (1,0), (0,-1), (0,1)]:
+            nr, nc = r+dr, c+dc
+            if 0 <= nr < rows and 0 <= nc < cols and not mask[nr,nc] and not reachable[nr,nc]:
+                stack.append((nr,nc))
+    
+    # Holes are 0-pixels NOT reachable from borders
+    holes = ~reachable & ~mask
+    out = a.copy()
+    if np.any(a > 0):
+        # Pick dominant non-zero color
+        counts = np.bincount(a[a > 0])
+        dominant = int(counts.argmax())
+    return out
+
+@_safe_grid_op
+def g_connect_pixels_to_rect(grid: Grid) -> Grid:
+    """
+    Connect isolated non-bg pixels to the nearest rectangle border (H or V).
+    Handles 'shooting' or 'projection' patterns in ARC.
+    """
+    a = _to_np_grid(grid)
+    if a is None: return grid
+    rows, cols = a.shape
+    
+    # Background is most common
+    counts = np.bincount(a.flatten())
+    bg = int(counts.argmax())
+    
+    # 1. Find components
+    from scipy.ndimage import label
+    mask = (a != bg)
+    labeled, num_features = label(mask)
+    if num_features < 2: return grid
+    
+    components = []
+    for i in range(1, num_features + 1):
+        r_indices, c_indices = np.where(labeled == i)
+        if len(r_indices) == 0: continue
+        color = int(a[r_indices[0], c_indices[0]])
+        cells = list(zip(r_indices.tolist(), c_indices.tolist()))
+        components.append((color, cells))
+        
+    # 2. Separate isolated vs rects
+    isolated = []
+    rect_cells = []
+    for color, cells in components:
+        if len(cells) == 1:
+            r, c = cells[0]
+            is_iso = True
+            for dr, dc in [(-1,0),(1,0),(0,-1),(0,1)]:
+                nr, nc = r+dr, c+dc
+                if 0 <= nr < rows and 0 <= nc < cols and a[nr,nc] == color:
+                    is_iso = False; break
+            if is_iso: isolated.append((color, r, c))
+            else: rect_cells.extend(cells)
+        else:
+            rect_cells.extend(cells)
+            
+    if not isolated or not rect_cells: return grid
+    
+    out = a.copy()
+    for color, r, c in isolated:
+        # Find nearest aligned rect cell
+        best_dist = rows + cols
+        best_target = None
+        for rr, cc in rect_cells:
+            if rr == r or cc == c:
+                d = abs(rr - r) + abs(cc - c)
+                if d < best_dist:
+                    best_dist = d
+                    best_target = (rr, cc)
+        
+        if best_target:
+            tr, tc = best_target
+            if tr == r: # Horizontal line
+                c0, c1 = sorted([c, tc])
+                out[r, c0:c1+1] = color
+            else: # Vertical line
+                r0, r1 = sorted([r, tr])
+                out[r0:r1+1, c] = color
+    return out
+
+@_safe_grid_op
+def g_recolor_isolated_to_nearest(grid: Grid) -> Grid:
+    """
+    Recolors isolated pixels (size 1) using the color of the nearest non-bg neighbor.
+    """
+    a = _to_np_grid(grid)
+    if a is None: return grid
+    rows, cols = a.shape
+    counts = np.bincount(a.flatten())
+    bg = int(counts.argmax())
+    out = a.copy()
+    
+    for r in range(rows):
+        for c in range(cols):
+            v = a[r,c]
+            if v == bg: continue
+            # Check 4-way same-color neighbors
+            has_same = False
+            for dr, dc in [(-1,0),(1,0),(0,-1),(0,1)]:
+                nr, nc = r+dr, c+dc
+                if 0 <= nr < rows and 0 <= nc < cols and a[nr,nc] == v:
+                    has_same = True; break
+            if has_same: continue
+            
+            # Isolated! Find nearest non-bg, non-v color
+            best_d, best_v = rows + cols, None
+            for rr in range(rows):
+                for cc in range(cols):
+                    if a[rr,cc] != bg and a[rr,cc] != v:
+                        d = abs(r-rr) + abs(c-cc)
+                        if d < best_d:
+                            best_d, best_v = d, int(a[rr,cc])
+            if best_v is not None:
+                out[r,c] = best_v
+    return out
+
+@_safe_grid_op
+def g_get_enclosed(g: Grid) -> Grid:
+    """Isolate background pixels that are fully enclosed by FG."""
+    a = np.array(g)
+    if a.size == 0: return g
+    mask = a > 0
+    rows, cols = a.shape
+    reachable = np.zeros_like(mask, dtype=bool)
+    stack = []
+    for r in range(rows):
+        if not mask[r,0]: stack.append((r,0))
+        if cols > 1 and not mask[r,cols-1]: stack.append((r,cols-1))
+    for c in range(1, cols-1):
+        if not mask[0,c]: stack.append((0,c))
+        if rows > 1 and not mask[rows-1,c]: stack.append((rows-1,c))
+    while stack:
+        r, c = stack.pop()
+        if reachable[r,c]: continue
+        reachable[r,c] = True
+        for dr, dc in [(-1,0), (1,0), (0,-1), (0,1)]:
+            nr, nc = r+dr, c+dc
+            if 0 <= nr < rows and 0 <= nc < cols and not mask[nr,nc] and not reachable[nr,nc]:
+                stack.append((nr,nc))
+    holes = ~reachable & ~mask
+    out = np.zeros_like(a)
+    out[holes] = 1
+    return out.tolist()
+
 # Register Collective Ops
 _COLLECTIVE_OPS = {
-    "g_rainbow":  (g_rainbow_objects,    "Recolor objects 1,2,3..."),
-    "g_stack_v":  (g_stack_objects_v,    "Rigid body gravity stack"),
-    "g_stack_h":  (g_stack_objects_h,    "Horizontal gravity stack"),
-    "g_sort_h":   (g_sort_objects_h,     "Order objects by size (L->R)"),
-    "g_max_obj":  (g_find_largest_object,  "Isolate the largest object"),
-    "g_project":  (g_project_lines,       "Ray-cast from isolated pixels"),
+    "g_rainbow":  (g_rainbow_objects,    "Recolor objects 1,2,3...", 1),
+    "g_stack_v":  (g_stack_objects_v,    "Rigid body gravity stack", 1),
+    "g_stack_h":  (g_stack_objects_h,    "Horizontal gravity stack", 1),
+    "g_sort_h":   (g_sort_objects_h,     "Order objects by size (L->R)", 1),
+    "g_max_obj":  (g_find_largest_object,  "Isolate the largest object", 1),
+    "g_isolate_largest": (g_isolate_largest, "Isolate the largest object", 1),
+    "g_isolate_smallest": (g_isolate_smallest, "Isolate the smallest object", 1),
+    "g_color_matcher": (g_color_matcher, "Align colors to training target", 2),
+    "g_project":  (g_project_lines,       "Ray-cast from isolated pixels", 1),
+    "g_recolor_isolated": (g_recolor_isolated, "Recolor 1-pixel objects", 2),
+    "g_recolor_objects_by_size": (g_recolor_objects_by_size, "Recolor by area: 1=small, 2=large", 1),
+    "g_fill_rects_by_color": (g_fill_rects_by_color, "Fill bounding boxes of objects", 2),
+    "g_recolor_val": (g_recolor_val, "Replace color C1 with C2", 3),
+    "g_move_to_corners": (g_move_to_corners, "Move pixels to nearest corner", 1),
+    "g_kron": (g_kron, "Kronecker mask expansion", 2),
+    "g_checker_2x2": (lambda g: [[1, 2], [2, 1]], "2x2 checkerboard pattern", 1),
+    # New structural & merger ops
+    "g_shift": (g_shift, "Shift grid by (DR, DC)", 3),
+    "g_overlay": (g_overlay, "Overlay g2 on top of g1", 2),
+    "g_mask": (g_mask, "Mask g1 by g2", 2),
+    "g_xor": (g_xor, "Logical XOR between grids", 2),
+    "g_diff": (g_diff, "Difference between grids", 2),
+    "g_align_left": (g_align_left, "Snap FG to left border", 1),
+    "g_align_right": (g_align_right, "Snap FG to right border", 1),
+    "g_align_up": (g_align_up, "Snap FG to top border", 1),
+    "g_align_down": (g_align_down, "Snap FG to bottom border", 1),
+    "g_repeat_2x2": (g_repeat_2x2, "Repeat 2x2 tiling", 1),
+    "g_repeat_3x3": (g_repeat_3x3, "Repeat 3x3 tiling", 1),
+    "g_tile_mirror_2x2": (g_tile_mirror_2x2, "Mirrored 2x2 tiling", 1),
+    "g_tile_mirror_3x3": (g_tile_mirror_3x3, "Mirrored 3x3 tiling", 1),
+    "g_top_half": (g_top_half, "Extract top half of grid", 1),
+    "g_bottom_half": (g_bottom_half, "Extract bottom half of grid", 1),
+    "g_left_half": (g_left_half, "Extract left half of grid", 1),
+    "g_right_half": (g_right_half, "Extract right half of grid", 1),
+    "g_sub_00": (lambda g: g[:len(g)//2][:len(g[0])//2] if g and len(g)>1 and len(g[0])>1 else g, "Top-Left quadrant", 1),
+    "g_sub_01": (lambda g: [r[len(g[0])//2:] for r in g[:len(g)//2]] if g and len(g)>1 and len(g[0])>1 else g, "Top-Right quadrant", 1),
+    "g_sub_10": (lambda g: g[len(g)//2:][:len(g[0])//2] if g and len(g)>1 and len(g[0])>1 else g, "Bottom-Left quadrant", 1),
+    "g_sub_11": (lambda g: [r[len(g[0])//2:] for r in g[len(g)//2:]] if g and len(g)>1 and len(g[0])>1 else g, "Bottom-Right quadrant", 1),
+    "g_recolor_size": (g_recolor_size, "Recolor objects of specific area", 3),
+    "g_recolor_most_common": (g_recolor_most_common, "Recolor the most common color", 2),
+    "g_recolor_least_common": (g_recolor_least_common, "Recolor the least common color", 2),
+    "g_ray_cast": (g_ray_cast, "Directional ray cast from pixels", 3),
+    "g_ray_cast_all": (g_ray_cast_all, "Orthogonal ray cast in 4 dims", 2),
+    "g_project_sequence": (g_project_sequence, "Continue periodic pattern", 2),
+    "g_fill_holes": (g_fill_holes, "Fill interior of shapes", 1),
+    "g_get_enclosed": (g_get_enclosed, "Isolate enclosed background regions", 1),
+    "g_set_pixel_at_center": (g_set_pixel_at_center, "Set center pixel", 2),
+    "g_set_pixel_at_bottom_center": (g_set_pixel_at_bottom_center, "Set bottom center pixel", 2),
+    "g_set_pixel_at_center_mc": (g_set_pixel_at_center_to_most_common, "Set center to MF color", 1),
+    "g_set_pixel_at_bottom_center_mc": (g_set_pixel_at_bottom_center_to_most_common, "Set bottom center to MF color", 1),
+    "g_fill_dom": (g_fill_dom, "Fill background with dominant color", 1),
+    "g_tile_mirror_v": (lambda g: np.vstack([g, np.flipud(g)]).tolist(), "Mirror vertically", 1),
+    "g_tile_mirror_h": (lambda g: np.hstack([g, np.fliplr(g)]).tolist(), "Mirror horizontally", 1),
+    "g_tile_self": (lambda g: np.tile(g, (2, 2)).tolist(), "Tile 2x2", 1),
+    # Scalar properties (Dynamic Parameters)
+    "g_prop_mc": (lambda g: float(np.argmax(np.bincount(np.array(g)[np.array(g)>0].astype(int)))) if np.any(np.array(g)>0) else 0.0, "Most common non-zero color", 1),
+    "g_prop_lc": (lambda g: float(np.where(np.bincount(np.array(g)[np.array(g)>0].astype(int))>0)[0][np.argmin(np.bincount(np.array(g)[np.array(g)>0].astype(int))[np.bincount(np.array(g)[np.array(g)>0].astype(int))>0])]) if np.any(np.array(g)>0) else 0.0, "Least common non-zero color", 1),
+    "g_prop_width": (lambda g: float(len(g[0])) if g else 0.0, "Grid width", 1),
+    "g_prop_height": (lambda g: float(len(g)) if g else 0.0, "Grid height", 1),
+    "g_prop_color_tl": (g_prop_color_tl, "TL color", 1),
+    "g_prop_color_tr": (g_prop_color_tr, "TR color", 1),
+    "g_prop_color_bl": (g_prop_color_bl, "BL color", 1),
+    "g_prop_color_br": (g_prop_color_br, "BR color", 1),
+    "g_prop_color_center": (g_prop_color_center, "Center color", 1),
+    "g_prop_mc_obj_color": (g_prop_mc_obj_color, "Largest object color", 1),
+    "g_prop_lc_obj_color": (g_prop_lc_obj_color, "Smallest object color", 1),
+    "g_prop_num_objs": (g_prop_num_objs, "Number of objects", 1),
+    # High-level Semantic Primitives
+    "g_fill_rect_interiors": (g_fill_rect_interiors, "Fill rectangle interiors", 1),
+    "g_extend_lines_to_contact": (g_extend_lines_to_contact, "Extend lines within grid", 1),
+    "g_mark_intersections": (g_mark_intersections, "Mark grid intersections", 1),
+    "g_connect_pixels_to_rect": (g_connect_pixels_to_rect, "Connect isolated pixels to rect", 1),
+    "g_recolor_isolated_to_nearest": (g_recolor_isolated_to_nearest, "Recolor noise to nearest color", 1),
 }
 
-for _name, (_fn, _desc) in _COLLECTIVE_OPS.items():
-    registry.register(_name, _safe_grid_op(_fn), domain="arc", description=_desc)
+for _name, (_fn, _desc, _arity) in _COLLECTIVE_OPS.items():
+    registry.register(_name, _safe_grid_op(_fn), domain="arc", description=_desc, arity=_arity, overwrite=True)
 
 # Spatial & Anchor Ops
 _SPATIAL_OPS = {

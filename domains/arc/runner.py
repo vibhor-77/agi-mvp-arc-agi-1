@@ -156,6 +156,7 @@ class BenchmarkConfig:
     lam: float = 0.05
     verbose: bool = True
     baseline_only: bool = False
+    expanded_only: bool = False
     seed: int | None = None
     timeout_s: float | None = None  # Optional wall-clock safety (off by default for deterministic budgets)
     max_evals: int | None = 1000000  # 1M evaluations (Baseline Deterministic Limit)
@@ -238,11 +239,11 @@ class BenchmarkReport:
 
     @property
     def n_solved(self) -> int:
-        return sum(1 for r in self.results if r.solved)
+        return sum(1 for r in self.results if r and r.solved)
 
     @property
     def n_near(self) -> int:
-        return sum(1 for r in self.results if r.near_solved)
+        return sum(1 for r in self.results if r and r.near_solved)
 
     @property
     def pct_solved(self) -> float:
@@ -250,17 +251,18 @@ class BenchmarkReport:
 
     @property
     def mean_test_acc(self) -> float:
-        if not self.results:
+        valid = [r for r in self.results if r]
+        if not valid:
             return 0.0
-        return sum(r.test_acc for r in self.results) / len(self.results)
+        return sum(r.test_acc for r in valid) / len(valid)
 
     @property
     def total_evals(self) -> int:
-        return sum(int(r.n_evals) for r in self.results)
+        return sum(int(r.n_evals) for r in self.results if r)
 
     @property
     def total_cost(self) -> int:
-        return sum(int(r.n_cost) for r in self.results)
+        return sum(int(r.n_cost) for r in self.results if r)
 
     @property
     def solved_per_million_evals(self) -> float:
@@ -322,7 +324,7 @@ class BenchmarkReport:
             "total_cost": self.total_cost,
             "solves_per_million_evals": round(self.solved_per_million_evals, 2),
             "solves_per_million_cost": round(self.solved_per_million_cost, 2),
-            "results": [r.as_dict() for r in self.results],
+            "results": [r.as_dict() for r in self.results if r],
         }
 
     def grid_to_html_table(self, grid: list[list[int]]) -> str:
@@ -491,6 +493,7 @@ def _run_task_process(
     learned_ops: dict[str, dict] | None = None,
     worker_idx: int = 0,
     progress_hook: Any | None = None,
+    seed_programs: list[Node] | None = None,
 ) -> tuple[int, TaskResult]:
     global _worker_idx, _worker_shared_evals, _worker_shared_costs
     _worker_idx = worker_idx
@@ -553,6 +556,7 @@ def _run_task_process(
         task,
         lam=cfg.lam,
         primitive_subset=selected_ops,
+        seed_programs=seed_programs,
         profile_primitives=cfg.profile_primitives,
         max_eval_cost=search_cfg.max_eval_cost,
     )
@@ -565,19 +569,24 @@ def _run_task_process(
     test_acc  = domain.test_accuracy(tree)
     solved    = domain.check_solution(tree)
     
-    # NEW: Local Refinement for Near-Misses (80%+)
-    if not solved and tree is not None and test_acc >= 0.80:
-        refined_tree = domain.refine_near_miss(tree)
-        refined_acc = domain.test_accuracy(refined_tree)
-        if refined_acc > test_acc:
-            tree = refined_tree
-            test_acc = refined_acc
-            train_acc = domain.train_accuracy(tree)
-            solved = domain.check_solution(tree)
-            # Update the result object so it gets saved correctly
-            result.best_tree = tree
-            result.best_fitness = domain.evaluate_candidate(tree)[0] # Includes lam penalty
-            result.solved = solved
+    # LOCAL REFINEMENT: Try to fix near-misses (80%+) on top candidates
+    if not solved and result.top_candidates:
+        # Refine top 2 (usually winner + runner-up)
+        for _, cand_tree, _, _ in result.top_candidates[:2]:
+            cand_train_acc = domain.train_accuracy(cand_tree)
+            if cand_train_acc >= 0.80:
+                refined_tree = domain.super_refine(cand_tree)
+                refined_train_acc = domain.train_accuracy(refined_tree)
+                if refined_train_acc > train_acc:
+                    tree = refined_tree
+                    train_acc = refined_train_acc
+                    test_acc = domain.test_accuracy(tree)
+                    solved = domain.check_solution(tree)
+                    # Update result
+                    result.best_tree = tree
+                    result.best_fitness = domain.evaluate_candidate(tree)[0]
+                    result.solved = solved
+                    if solved: break
 
     near      = test_acc >= 0.80
     elapsed   = time.time() - task_t0
@@ -672,6 +681,7 @@ def _worker_wrapper(
     conn,
     shared_evals,
     shared_costs,
+    seed_programs=None,
 ):
     """Top-level wrapper for multiprocessing processes."""
     global _worker_shared_evals, _worker_shared_costs
@@ -679,10 +689,11 @@ def _worker_wrapper(
     _worker_shared_costs = shared_costs
     try:
         from domains.arc.runner import _run_task_process
-        _, tr = _run_task_process(idx, task, cfg, op_subset, inner_workers, transition_matrix, learned_ops, slot)
+        _, tr = _run_task_process(
+            idx, task, cfg, op_subset, inner_workers, transition_matrix, learned_ops, slot, seed_programs=seed_programs
+        )
         conn.send(tr)
     except Exception as e:
-        # Avoid crashing the parent if worker fails
         conn.send(None)
     finally:
         conn.close()
@@ -916,6 +927,10 @@ def evaluate_tasks(
         task_queue = list(enumerate(tasks))
         free_slots = list(range(cfg.task_workers))
 
+        # Culture buffer (Persistent memory for compounding)
+        culture_exprs: set[str] = set()
+        culture_seeds: list[Node] = []
+
         try:
             while task_queue or active_processes:
                 while free_slots and task_queue:
@@ -924,6 +939,10 @@ def evaluate_tasks(
                     if cfg.verbose:
                         print(f"  → [{task_idx+1:3d}] STARTING  {task.name}", flush=True)
                     parent_conn, child_conn = mp.Pipe()
+                    
+                    # Pass the CURRENT culture seeds to the worker
+                    current_seeds = [s.clone() for s in culture_seeds]
+                    
                     p = mp.Process(
                         target=_worker_wrapper,
                         args=(
@@ -938,6 +957,7 @@ def evaluate_tasks(
                             child_conn,
                             shared_evals,
                             shared_costs,
+                            current_seeds,
                         ),
                     )
                     p.start()
@@ -964,6 +984,16 @@ def evaluate_tasks(
                             tr = None
                         if tr is None:
                             tr = _worker_error(tasks[task_idx], elapsed, timed_out=False)
+                        
+                        # CUMULATIVE CULTURE: If solved, add to future seed programs
+                        if tr.solved and tr.best_tree:
+                            expr = str(tr.best_tree)
+                            if expr not in culture_exprs:
+                                culture_exprs.add(expr)
+                                culture_seeds.append(tr.best_tree.clone())
+                                if cfg.verbose:
+                                    print(f"  [Culture] New Pattern Discovered: {expr[:60]}... (Total Seeds: {len(culture_seeds)})")
+
                         _on_done(task_idx, tr, tasks[task_idx])
                         p.join()
                         finished_slots.append(slot)
@@ -1089,10 +1119,16 @@ def run_benchmark(
     if cfg.task_workers > 1:
         print(f"Task parallelism: {cfg.task_workers} threads (inner workers forced to 1)")
 
-    print(f"\n{'='*65}")
-    print(f"  BASELINE ({len(baseline_ops)} ops)")
-    print(f"{'='*65}")
-    baseline = evaluate_tasks(tasks, baseline_ops, cfg, f"Baseline ({len(baseline_ops)} ops)")
+    baseline: BenchmarkReport | None = None
+    if not cfg.expanded_only:
+        print(f"\n{'='*65}")
+        print(f"  BASELINE ({len(baseline_ops)} ops)")
+        print(f"{'='*65}")
+        baseline = evaluate_tasks(tasks, baseline_ops, cfg, f"Baseline ({len(baseline_ops)} ops)")
+    else:
+        # Create a dummy report so downstream logic doesn't crash
+        baseline = BenchmarkReport(label="Skipped", n_ops=len(baseline_ops))
+        baseline.results = [None] * len(tasks)
 
     expanded: BenchmarkReport | None = None
     if not cfg.baseline_only:
@@ -1101,6 +1137,7 @@ def run_benchmark(
         print(f"{'='*65}")
         expanded = evaluate_tasks(tasks, expanded_ops, cfg, f"Expanded ({len(expanded_ops)} ops)")
 
+    if expanded and not cfg.baseline_only and not cfg.expanded_only:
         # Head-to-head
         new = [
             e for b, e in zip(baseline.results, expanded.results)
@@ -1153,6 +1190,7 @@ if __name__ == "__main__":
                         help="Path to directory of ARC JSON files (e.g. arc_data/data/evaluation). "
                              "If omitted, uses the built-in 76-task programmatic benchmark.")
     parser.add_argument("--baseline-only",action="store_true", help="Run baseline only")
+    parser.add_argument("--expanded-only",action="store_true", help="Run expanded DSL only")
     parser.add_argument("--workers",      type=int, default=1,
                         help="Beam-search candidate workers per task (default 1). "
                              "Auto-forced to 1 when --task-workers > 1.")
@@ -1183,18 +1221,20 @@ if __name__ == "__main__":
     parser.add_argument("--progress-interval-s", type=float, default=5.0, help="Progress heartbeat interval.")
     parser.add_argument("--progress-log", type=str, default=None, help="JSONL progress log path.")
     parser.add_argument("--max-rss-gb", type=float, default=0.0, help="Abort if process RSS reaches this limit (0=off).")
-    parser.add_argument("--tasks",        type=int, default=None, help="Limit number of tasks")
+    parser.add_argument("--tasks",        type=str, default=None, help="Limit number of tasks or path to ID list")
+    parser.add_argument("--beam-size",     type=int, default=10, help="Symbolic beam width.")
     parser.add_argument("--save",         type=str, default="results.json", help="Output JSON path")
     args = parser.parse_args()
 
     cfg = BenchmarkConfig(
-        beam_size    = 10,
+        beam_size    = args.beam_size,
         offspring    = 20,
         generations  = args.generations,
         workers      = args.workers,
         task_workers = args.task_workers,
         verbose      = True,
         baseline_only = args.baseline_only,
+        expanded_only = args.expanded_only,
         seed         = None,
         timeout_s    = (None if args.timeout <= 0 else args.timeout),
         max_evals    = args.max_evals,
@@ -1221,6 +1261,18 @@ if __name__ == "__main__":
         tasks = build_benchmark()
 
     if args.tasks:
-        tasks = tasks[: args.tasks]
+        import os
+        if os.path.exists(str(args.tasks)):
+            with open(str(args.tasks), "r") as f:
+                ids = [line.strip() for line in f if line.strip()]
+            tasks = [t for t in tasks if t.name in ids]
+            print(f"Filtered to {len(tasks)} tasks from file {args.tasks}.")
+        else:
+            try:
+                limit = int(args.tasks)
+                tasks = tasks[:limit]
+                print(f"Limited to first {limit} tasks.")
+            except ValueError:
+                pass
 
     run_benchmark(tasks, cfg, save_path=args.save)

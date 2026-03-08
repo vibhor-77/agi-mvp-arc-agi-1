@@ -106,9 +106,13 @@ The system is split into three core specialized layers:
 ### 3. Task-Adaptive Meta-Learning (`domains/arc/domain.py`)
 *   **Feature Extraction**: Analyzes input grids for geometric signatures: Symmetry (H/V), Object Density, Color Entropy, and Resizing trends.
 *   **Dynamic Biasing**: Automatically adjusts the Search Transition Matrix to prioritize relevant primitive families (e.g., boosting **Geometric** for symmetric tasks, **Collective** for high-object tasks).
-*   **ROOT Weighting**: Guides the very first primitive choice in the AST, significantly reducing search entropy for complex multi-stage tasks.
+*   **Cumulative Culture**: Maintains a global pool of successful program ASTs. Successful solutions are "seeded" into future tasks, enabling **Zero-Shot Transfer** and compound learning.
 
-### 4. Unified Interface (`agi.py`)
+### 4. Reward Shaping & Structural Scorer
+*   **Multi-Factor SSIM**: Replaces binary bit-matching with a weighted similarity score that rewards Dimension Match (20%), Color Palette Overlap (20%), Non-Zero Density (10%), and exact Pixel Alignment (50%).
+*   **Smooth Landscape**: This scoring allows the beam search to "feel" its way toward bit-perfection by rewarding near-misses and structural alignment.
+
+### 5. Unified Interface (`agi.py`)
 A single, professional CLI for orchestrating training and evaluation runs.
 
 ---
@@ -119,6 +123,8 @@ The system includes a specialized **G-Family** of primitives for multi-object ma
 *   **`g_rainbow`**: Sequentially recolors objects (1, 2, 3...) based on their discovery order.
 *   **`g_stack_v` / `g_stack_h`**: Rigid body gravity simulation (vertical and horizontal).
 *   **`g_sort_h`**: Orders objects horizontally based on pixel area (MDL-efficient sorting).
+*   **`g_connect_pixels_to_rect`**: Projects isolated markers to the nearest aligned object border.
+*   **`g_recolor_isolated_to_nearest`**: Sophisticated noise reduction for "floating" pixel artifacts.
 *   **`g_place_like`**: Context-aware spatial anchoring (placing objects relative to a reference grid).
 
 ---
